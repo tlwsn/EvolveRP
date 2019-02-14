@@ -367,7 +367,7 @@ function main()
     while true do wait(0)
         if #tkills > 50 then
             table.remove(tkills, 1)
-        end 
+        end
         warningsKey()
         local oTime = os.time()
         if not isPauseMenuActive() then
@@ -783,7 +783,7 @@ function imgui.OnDrawFrame()
                     imgui.CentrText(u8 'AirBrake')
                     imgui.Separator()
                 elseif data.imgui.cheat == 2 then
-                    local godModeB = imgui.ImBool(cfg.cheat.autogm) 
+                    local godModeB = imgui.ImBool(cfg.cheat.autogm)
                     imgui.CentrText(u8 'GodMode')
                     imgui.Separator()
                     if imgui.ToggleButton(u8 'Включить чекер##1', godModeB) then cfg.cheat.autogm = godModeB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Автоматически включать ГМ при входе в игру')
@@ -1101,11 +1101,11 @@ function getVehicleRotationMatrix(car)
         rx = readFloatArray(mat, 0)
         ry = readFloatArray(mat, 1)
         rz = readFloatArray(mat, 2)
-  
+
         fx = readFloatArray(mat, 4)
         fy = readFloatArray(mat, 5)
         fz = readFloatArray(mat, 6)
-  
+
         ux = readFloatArray(mat, 8)
         uy = readFloatArray(mat, 9)
         uz = readFloatArray(mat, 10)
@@ -1121,11 +1121,11 @@ function setVehicleRotationMatrix(car, rx, ry, rz, fx, fy, fz, ux, uy, uz)
         writeFloatArray(mat, 0, rx)
         writeFloatArray(mat, 1, ry)
         writeFloatArray(mat, 2, rz)
-  
+
         writeFloatArray(mat, 4, fx)
         writeFloatArray(mat, 5, fy)
         writeFloatArray(mat, 6, fz)
-  
+
         writeFloatArray(mat, 8, ux)
         writeFloatArray(mat, 9, uy)
         writeFloatArray(mat, 10, uz)
@@ -2353,7 +2353,7 @@ function goposk()
     end
 end
 --24 = mongols
---26 = warlocks 
+--26 = warlocks
 --29 = pagans
 function fonl(pam)
     lua_thread.create(function()
@@ -2411,12 +2411,12 @@ function ags(pam)
     if #pam ~= 0 then
         if id ~= nil then
             if sampIsPlayerConnected(id) then
-                sampSendChat('/agetstats '..sampGetPlayerNickname(id))
+                atext('/agetstats '..sampGetPlayerNickname(id))
             else
-                sampSendChat('/agetstats ' ..id)
+                atext('/agetstats ' ..id)
             end
         else
-            sampSendChat('/agetstats '..pam)
+            atext('/agetstats '..pam)
         end
     else
         atext('Введите /ags [id/nick]')
