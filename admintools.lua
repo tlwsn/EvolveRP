@@ -2411,12 +2411,12 @@ function ags(pam)
     if #pam ~= 0 then
         if id ~= nil then
             if sampIsPlayerConnected(id) then
-                atext('/agetstats '..sampGetPlayerNickname(id))
+                sampSendChat('/agetstats '..sampGetPlayerNickname(id))
             else
-                atext('/agetstats ' ..id)
+                sampSendChat('/agetstats ' ..id)
             end
         else
-            atext('/agetstats '..pam)
+            sampSendChat('/agetstats '..pam)
         end
     else
         atext('¬ведите /ags [id/nick]')
