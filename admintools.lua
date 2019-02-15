@@ -1336,6 +1336,7 @@ function onScriptTerminate(scr)
         fa:write(encodeJson(config_keys))
         fa:close()
     end
+	showCursor(false)
 end
 function sampev.onServerMessage(color, text)
     if checkfraks then
