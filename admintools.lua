@@ -526,15 +526,15 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Использование: /ags [id/nick]')
             end
             if imgui.CollapsingHeader('/sbiv', btn_size) then
-                imgui.TextWrapped(u8 'Описание: Посадить игрока на '..cfg.timers.sbivtimer..' минут в деморган по причине "Сбив анимации"')
+                imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "Сбив анимации"'):format(cfg.timers.sbivtimer))
                 imgui.TextWrapped(u8 'Использование: /sbiv [id]')
             end
             if imgui.CollapsingHeader('/csbiv', btn_size) then
-                imgui.TextWrapped(u8 'Описание: Посадить игрока на '..cfg.timers.csbivtimer..' минут в деморган по причине "Сбив анимации"')
+                imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "Сбив анимации"'):format(cfg.timers.csbivtimer))
                 imgui.TextWrapped(u8 'Использование: /csbiv [id]')
             end
             if imgui.CollapsingHeader('/cbug', btn_size) then
-                imgui.TextWrapped(u8 'Описание: Посадить игрока на '..cfg.timers.cbugtimer..' минут в деморган по причине "+с вне гетто"')
+                imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "+с вне гетто"'):format(cfg.timers.cbugtimer))
                 imgui.TextWrapped(u8 'Использование: /cbug [id]')
             end
             if imgui.CollapsingHeader('/kills', btn_size) then
