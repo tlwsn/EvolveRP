@@ -754,6 +754,7 @@ function imgui.OnDrawFrame()
                 if imgui.MenuItem(u8 '  Чекер админов') then data.imgui.checker = 1 end
                 if imgui.MenuItem(u8 '  Чекер игроков') then data.imgui.checker = 2 end
             end
+						if imgui.Selectable(u8 'Настройка таймеров') then data.imgui.menu = 4 end
             imgui.EndChild()
             imgui.SameLine()
             imgui.BeginChild('##set1', imgui.ImVec2(740, 400), true)
@@ -818,7 +819,16 @@ function imgui.OnDrawFrame()
                         if imgui.Button(u8 'Изменить##2') then data.imgui.playercheckpos = true; mainwindow.v = false end
                     end
                 end
-            end
+            elseif data.imgui.menu == 4 then
+								local sbivb = imgui.ImInt(cfg.timers.sbivtimer)
+								local csbivb = imgui.ImInt(cfg.timers.csbivtimer)
+								local cbugb = imgui.ImInt(cfg.timers.cbugtimer)
+								imgui.CentrText(u8 'Настройка таймеров')
+								imgui.Separator()
+								if imgui.InputInt(u8 'Таймер сбива', sbivb, 0) then cfg.timers.sbivtimer = sbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
+								if imgui.InputInt(u8 'Таймер клео сбива', sbivb, 0) then cfg.timers.csbivtimer = csbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
+								if imgui.InputInt(u8 'Таймер сбива', cbugb, 0) then cfg.timers.cbugtimer = sbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
+						end
             imgui.EndChild()
             imgui.End()
         end
