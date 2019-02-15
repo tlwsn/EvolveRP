@@ -31,6 +31,8 @@ airspeed = nil
 reid = '-1'
 cwid = nil
 admins = {}
+tpcount = 0
+tprep = false
 checkf = {}
 config_keys = {
     banipkey = {v = {190}},
@@ -322,6 +324,9 @@ function main()
     sampRegisterChatCommand('addplayer', addplayer)
     sampRegisterChatCommand('delplayer', delplayer)
     sampRegisterChatCommand('deladm', deladm)
+	sampRegisterChatCommand('tpstart', tpstart)
+	sampRegisterChatCommand('tpstop', tpstop)
+	sampRegisterChatCommand('tpcount', tpcount)
     initializeRender()
     apply_custom_style()
     loadadmins()
@@ -2477,5 +2482,35 @@ function cheat(pam)
 		end
 	else
 		atext('Введите /cheat [id]')
+	end
+end
+function tpstart()
+	tpstatus = not tpstatus
+	if tpstatus then
+		atext('Сбор игроков для телепорта начат. Для начала телепортирования введите /tpstart еще раз')
+	else
+		atext('Начинаю телепорт игроков. Всего игроков в очереди: ')
+		tpactive = lua_thread.create(function()
+		end)
+	end
+end
+function tpstop()
+	if tpstatus then
+		tpstatus = false
+		atext("Сбор игроков остановлен")
+	else
+		if tpactive:status() == 'running' then
+			atext("Телепортация остановлена")
+			tpactive:terminate()
+		end
+	end
+end
+function tpcount(pam)
+	if pam:match("%d+ %d+") then
+		local count, rep = pam:match("(%d+) (%d+)")
+		tpcount = count
+		if rep == 0 then tprep = true else tprep = false end
+	else
+		atext("Введите: /tpcount [ко-во игроков/0(Для снятия ограничения)] [0/1(выключение/включение повторения игроков)]")
 	end
 end
