@@ -449,6 +449,7 @@ end
 function imgui.OnDrawFrame()
     if recon.v then
         imgui.ShowCursor = false
+		imgui.LockPlayer = false
         local ImVec4 = imgui.ImVec4
         local imvsize = imgui.GetWindowSize()
         local spacing, height = 140.0, 162.0
