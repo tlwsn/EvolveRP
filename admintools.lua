@@ -2499,9 +2499,11 @@ function tpstop()
 		tpstatus = false
 		atext("Сбор игроков остановлен")
 	else
-		if tpactive:status() == 'running' then
-			atext("Телепортация остановлена")
-			tpactive:terminate()
+		if tpactive ~= nil then
+			if tpactive:status() == 'running' then
+				atext("Телепортация остановлена")
+				tpactive:terminate()
+			end
 		end
 	end
 end
