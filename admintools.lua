@@ -2450,39 +2450,41 @@ function ags(pam)
     end
 end
 function cheat(pam)
-	local id = tonumber(pam)
-	if id ~= nil then
-		if sampIsPlayerConnected(id) then
-			local lvl = sampGetPlayerScore(id)
-			if lvl < 3 then
-				sampSendChat(string.format('/ban %s cheat', id))
-			else
-				warnst = true
-				local wnick = sampGetPlayerNickname(id)
-				sampSendChat('/getstats '..id)
-				while not checkstatdone do wait(0) end
-				wait(1200)
-				if sampGetPlayerNickname(id) == wnick then
-					if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
-						sampSendChat(string.format('/warn %s 21 cheat [%s/%s]', id, getFrak(wbfrak), getRank(wbfrak, wbrang)))
-					else
-						sampSendChat(string.format('/warn %s 21 cheat', id))
-					end
+	lua_thread.create(function()
+		local id = tonumber(pam)
+		if id ~= nil then
+			if sampIsPlayerConnected(id) then
+				local lvl = sampGetPlayerScore(id)
+				if lvl < 3 then
+					sampSendChat(string.format('/ban %s cheat', id))
 				else
-					atext('»грок '..wnick..' вышел из игры')
+					warnst = true
+					local wnick = sampGetPlayerNickname(id)
+					sampSendChat('/getstats '..id)
+					while not checkstatdone do wait(0) end
+					wait(1200)
+					if sampGetPlayerNickname(id) == wnick then
+						if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
+							sampSendChat(string.format('/warn %s 21 cheat [%s/%s]', id, getFrak(wbfrak), getRank(wbfrak, wbrang)))
+						else
+							sampSendChat(string.format('/warn %s 21 cheat', id))
+						end
+					else
+						atext('»грок '..wnick..' вышел из игры')
+					end
+					checkstatdone = false
+					warnst = false
+					wbfrak = nil
+					wbrang = nil
+					wnick = nil
 				end
-				checkstatdone = false
-				warnst = false
-				wbfrak = nil
-				wbrang = nil
-				wnick = nil
+			else
+				atext('»грок оффлайн')
 			end
 		else
-			atext('»грок оффлайн')
+			atext('¬ведите /cheat [id]')
 		end
-	else
-		atext('¬ведите /cheat [id]')
-	end
+	end)
 end
 --[[function tpstart()
 	tpstatus = not tpstatus
