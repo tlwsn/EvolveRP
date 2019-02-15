@@ -142,6 +142,11 @@ config = {
         posy = screeny/2,
         enable = false
     },
+		timers = {
+				sbivtimer = 30,
+				csbivtimer = 60,
+				cbugtimer = 60
+		},
     other = {
         password = " ",
         adminpass = " "
@@ -521,15 +526,15 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Использование: /ags [id/nick]')
             end
             if imgui.CollapsingHeader('/sbiv', btn_size) then
-                imgui.TextWrapped(u8 'Описание: Посадить игрока на 30 минут в деморган по причине "Сбив анимации"')
+                imgui.TextWrapped(u8 'Описание: Посадить игрока на '..cfg.timers.sbivtimer..' минут в деморган по причине "Сбив анимации"')
                 imgui.TextWrapped(u8 'Использование: /sbiv [id]')
             end
             if imgui.CollapsingHeader('/csbiv', btn_size) then
-                imgui.TextWrapped(u8 'Описание: Посадить игрока на 60 минут в деморган по причине "Сбив анимации"')
+                imgui.TextWrapped(u8 'Описание: Посадить игрока на '..cfg.timers.csbivtimer..' минут в деморган по причине "Сбив анимации"')
                 imgui.TextWrapped(u8 'Использование: /csbiv [id]')
             end
             if imgui.CollapsingHeader('/cbug', btn_size) then
-                imgui.TextWrapped(u8 'Описание: Посадить игрока на 60 минут в деморган по причине "+с вне гетто"')
+                imgui.TextWrapped(u8 'Описание: Посадить игрока на '..cfg.timers.cbugtimer..' минут в деморган по причине "+с вне гетто"')
                 imgui.TextWrapped(u8 'Использование: /cbug [id]')
             end
             if imgui.CollapsingHeader('/kills', btn_size) then
@@ -2290,7 +2295,7 @@ function sbiv(pam)
     local id = tonumber(pam)
     if id ~= nil then
         if sampIsPlayerConnected(id) then
-            sampSendChat('/prison '..id..' 30 Сбив анимации')
+            sampSendChat('/prison '..id..' '..cfg.timers.sbivtimer..' Сбив анимации')
         else
             atext('Игрок оффлайн')
         end
@@ -2302,7 +2307,7 @@ function csbiv(pam)
     local id = tonumber(pam)
     if id ~= nil then
         if sampIsPlayerConnected(id) then
-            sampSendChat('/prison '..id..' 60 Сбив анимации')
+            sampSendChat('/prison '..id..' '..cfg.timers.csbivtimer..' Сбив анимации')
         else
             atext('Игрок оффлайн')
         end
@@ -2314,7 +2319,7 @@ function cbug(pam)
     local id = tonumber(pam)
     if id ~= nil then
         if sampIsPlayerConnected(id) then
-            sampSendChat('/prison '..id..' 60 +с вне гетто')
+            sampSendChat('/prison '..id..' '..cfg.timers.cbug..' +с вне гетто')
         else
             atext('Игрок оффлайн')
         end
