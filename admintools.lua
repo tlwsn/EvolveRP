@@ -324,9 +324,9 @@ function main()
     sampRegisterChatCommand('addplayer', addplayer)
     sampRegisterChatCommand('delplayer', delplayer)
     sampRegisterChatCommand('deladm', deladm)
-	sampRegisterChatCommand('tpstart', tpstart)
+	--[[sampRegisterChatCommand('tpstart', tpstart)
 	sampRegisterChatCommand('tpstop', tpstop)
-	sampRegisterChatCommand('tpcount', tpcount)
+	sampRegisterChatCommand('tpcount', tpcount)]]
     initializeRender()
     apply_custom_style()
     loadadmins()
@@ -2484,7 +2484,7 @@ function cheat(pam)
 		atext('Введите /cheat [id]')
 	end
 end
-function tpstart()
+--[[function tpstart()
 	tpstatus = not tpstatus
 	if tpstatus then
 		atext('Сбор игроков для телепорта начат. Для начала телепортирования введите /tpstart еще раз')
@@ -2500,6 +2500,7 @@ function tpstop()
 		atext("Сбор игроков остановлен")
 	else
 		if tpactive ~= nil then
+			atext(tpactive:status())
 			if tpactive:status() == 'running' then
 				atext("Телепортация остановлена")
 				tpactive:terminate()
@@ -2515,4 +2516,4 @@ function tpcount(pam)
 	else
 		atext("Введите: /tpcount [ко-во игроков/0(Для снятия ограничения)] [0/1(выключение/включение повторения игроков)]")
 	end
-end
+end]]
