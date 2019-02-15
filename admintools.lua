@@ -30,6 +30,7 @@ u8 = encoding.UTF8
 airspeed = nil
 reid = '-1'
 cwid = nil
+check = false
 admins = {}
 tpcount = 0
 tprep = false
@@ -39,7 +40,8 @@ config_keys = {
     warningkey = {v = {key.VK_Z}},
     reportkey = {v = {key.VK_X}},
     saveposkey = {v = {key.VK_M}},
-    goposkey = {v = {key.VK_J}}
+    goposkey = {v = {key.VK_J}},
+	tpmetka = {v = {key.VK_K}}
 }
 frakrang = {
     Mayor = {
@@ -354,6 +356,7 @@ function main()
     banipbind = rkeys.registerHotKey(config_keys.banipkey.v, true, banipk)
     saveposbind = rkeys.registerHotKey(config_keys.saveposkey.v, true, saveposk)
     goposbind = rkeys.registerHotKey(config_keys.goposkey.v, true, goposk)
+	tpmetkabind = rkeys.registerHotKey(config_keys.tpmetka.v, true, tpmetkak)
     if cfg.cheat.autogm then
         funcsStatus.Inv = true
     end
@@ -2341,7 +2344,7 @@ function cbug(pam)
     local id = tonumber(pam)
     if id ~= nil then
         if sampIsPlayerConnected(id) then
-            sampSendChat('/prison '..id..' '..cfg.timers.cbug..' +с вне гетто')
+            sampSendChat('/prison '..id..' '..cfg.timers.cbugtimer..' +с вне гетто')
         else
             atext('Игрок оффлайн')
         end
@@ -2519,3 +2522,15 @@ function tpcount(pam)
 		atext("Введите: /tpcount [ко-во игроков/0(Для снятия ограничения)] [0/1(выключение/включение повторения игроков)]")
 	end
 end]]
+function getTargetBlipCoordinatesFixed()
+    local bool, x, y, z = getTargetBlipCoordinates(); if not bool then return false end
+    requestCollision(x, y); loadScene(x, y, z)
+    local bool, x, y, z = getTargetBlipCoordinates()
+    return bool, x, y, z
+end
+function tpmetkak()
+	local result, x, y, z = getTargetBlipCoordinatesFixed()
+	if result then
+		setCharCoordinates(PLAYER_PED, x, y, z)
+	end
+end
