@@ -309,6 +309,7 @@ function main()
     sampRegisterChatCommand('cbug', cbug)
     sampRegisterChatCommand('sbiv', sbiv)
     sampRegisterChatCommand('csbiv', csbiv)
+	sampRegisterChatCommand('cheat', cheat)
     sampRegisterChatCommand('gs', gs)
     sampRegisterChatCommand('ags', ags)
     sampRegisterChatCommand('wl', wl)
@@ -537,6 +538,10 @@ function imgui.OnDrawFrame()
             if imgui.CollapsingHeader('/cbug', btn_size) then
                 imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "+с вне гетто"'):format(cfg.timers.cbugtimer))
                 imgui.TextWrapped(u8 'Использование: /cbug [id]')
+            end
+			if imgui.CollapsingHeader('/cheat', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Забанить(1-2 уровни) / заварнить(3+ уровни) по причине "cheat"')
+                imgui.TextWrapped(u8 'Использование: /cheat [id]')
             end
             if imgui.CollapsingHeader('/kills', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Узнать 50 последний убийств из килл-листа')
@@ -2438,4 +2443,39 @@ function ags(pam)
     else
         atext('Введите /ags [id/nick]')
     end
+end
+function cheat(pam)
+	local id = tonumber(pam)
+	if id ~= nil then
+		if sampIsPlayerConnected(id) then
+			local lvl = sampGetPlayerScore(id)
+			if lvl < 3 then
+				sampSendChat(string.format('/ban %s cheat', id))
+			else
+				warnst = true
+				local wnick = sampGetPlayerNickname(id)
+				sampSendChat('/getstats '..id)
+				while not checkstatdone do wait(0) end
+				wait(1200)
+				if sampGetPlayerNickname(id) == wnick then
+					if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
+						sampSendChat(string.format('/warn %s 21 cheat [%s/%s]', id, getFrak(wbfrak), getRank(wbfrak, wbrang)))
+					else
+						sampSendChat(string.format('/warn %s 21 cheat', id))
+					end
+				else
+					atext('Игрок '..wnick..' вышел из игры')
+				end
+				checkstatdone = false
+				warnst = false
+				wbfrak = nil
+				wbrang = nil
+				wnick = nil
+			end
+		else
+			atext('Игрок оффлайн')
+		end
+	else
+		atext('Введите /cheat [id]')
+	end
 end
