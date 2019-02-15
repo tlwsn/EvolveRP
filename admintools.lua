@@ -826,7 +826,7 @@ function imgui.OnDrawFrame()
 								imgui.CentrText(u8 'Настройка таймеров')
 								imgui.Separator()
 								if imgui.InputInt(u8 'Таймер сбива', sbivb, 0) then cfg.timers.sbivtimer = sbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
-								if imgui.InputInt(u8 'Таймер клео сбива', sbivb, 0) then cfg.timers.csbivtimer = csbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
+								if imgui.InputInt(u8 'Таймер клео сбива', csbivb, 0) then cfg.timers.csbivtimer = csbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
 								if imgui.InputInt(u8 'Таймер сбива', cbugb, 0) then cfg.timers.cbugtimer = sbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
 						end
             imgui.EndChild()
