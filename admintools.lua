@@ -838,6 +838,7 @@ function getFrak(frak)
     if frak:match('.+ Gang') then
         frak = frak:match('(.+) Gang')
     end
+	if frak == 'Russian Mafia' then frak = 'RM' end
     return frak
 end
 function getRank(frak, rang)
