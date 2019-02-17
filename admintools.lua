@@ -297,10 +297,18 @@ struct stKillInfo
 } __attribute__ ((packed));
 bool DwmEnableComposition(int uCompositionAction);
 ]]
+function rainbow(speed, alpha)
+	local r = math.floor(math.sin(os.clock() * speed) * 127 + 128)
+	local g = math.floor(math.sin(os.clock() * speed + 2) * 127 + 128)
+	local b = math.floor(math.sin(os.clock() * speed + 4) * 127 + 128)
+	return r,g,b,alpha
+end
 function main()
     local samp = getModuleHandle('samp.dll')
 	mem.fill(samp + 0x9D31A, nop, 12, true)
 	mem.fill(samp + 0x9D329, nop, 12, true)
+	local DWMAPI = ffi.load('dwmapi')
+    DWMAPI.DwmEnableComposition(1)
     while not isSampAvailable() do wait(0) end
     cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     lua_thread.create(wh)
@@ -457,12 +465,16 @@ function rkeys.onHotKey(id, keys)
 end
 function imgui.OnDrawFrame()
     if recon.v then
+		local style = imgui.GetStyle()
+		local colors = style.Colors
+		local clr = imgui.Col
+		local ImVec4 = imgui.ImVec4
         imgui.ShowCursor = false
 		imgui.LockPlayer = false
-        local ImVec4 = imgui.ImVec4
         local imvsize = imgui.GetWindowSize()
         local spacing, height = 140.0, 162.0
         local imkx, imky = convertGameScreenCoordsToWindowScreenCoords(530, 199)
+		--imgui.PushStyleColor(imgui.Col.WindowBg, imgui.ImVec4(1, 0, 0, 1))
         imgui.SetNextWindowPos(imgui.ImVec2(cfg.crecon.posx, cfg.crecon.posy), imgui.ImVec2(0.5, 0.5))
         imgui.SetNextWindowSize(imgui.ImVec2(260, 280), imgui.Cond.FirstUseEver)
         imgui.Begin(u8'Слежка за игроком', _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove)
@@ -491,6 +503,7 @@ function imgui.OnDrawFrame()
         --[[imgui.SameLine()
         imgui.Text(string.format('%s', imgui.GetWindowSize().y))]]
         imgui.End()
+		--imgui.PopStyleColor()
     end
     if mainwindow.v then
         imgui.LockPlayer = true
