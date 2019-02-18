@@ -2266,9 +2266,9 @@ function ban(pam)
                 if sampGetPlayerScore(id) < 3 then
                     sampSendChat(string.format('/ban %s %s', id, reason))
                 else
-                    if reason == '1' or reason == 'dmg' then
+                    --if reason == '1' or reason == 'dmg' then
                         sampSendChat(string.format('/ban %s %s', id, reason))
-                    else
+                    --else
                         local wnick = sampGetPlayerNickname(id)
                         warnst = true
                         sampSendChat('/getstats '..id)
@@ -2288,7 +2288,7 @@ function ban(pam)
                         wbfrak = nil
                         wbrang = nil
                         warnst = false
-                    end
+                    --end
                 end
             else
                 atext("ָדנמך מפפכאים")
