@@ -35,6 +35,7 @@ admins = {}
 tpcount = 0
 tprep = false
 checkf = {}
+PlayersNickname = {}
 config_keys = {
     banipkey = {v = {190}},
     warningkey = {v = {key.VK_Z}},
@@ -160,7 +161,7 @@ config = {
 function atext(text)
     sampAddChatMessage(string.format(' [Admin Tools] {ffffff}%s', text), 0xa1dd4e)
 end
-function apply_custom_style()
+--[[function apply_custom_style()
 	imgui.SwitchContext()
 	local style = imgui.GetStyle()
 	local colors = style.Colors
@@ -234,6 +235,81 @@ function apply_custom_style()
 	colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
 	colors[clr.TextSelectedBg]         = ImVec4(0.26, 0.59, 0.98, 0.35)
 	colors[clr.ModalWindowDarkening]   = ImVec4(0.80, 0.80, 0.80, 0.35)
+end]]
+function apply_custom_style()
+    imgui.SwitchContext()
+    local style = imgui.GetStyle()
+    local colors = style.Colors
+    local clr = imgui.Col
+    local ImVec4 = imgui.ImVec4
+    local ImVec2 = imgui.ImVec2
+
+    style.WindowPadding = ImVec2(15, 15)
+    style.WindowRounding = 5.0
+    style.FramePadding = ImVec2(5, 5)
+    style.FrameRounding = 4.0
+    style.ItemSpacing = ImVec2(12, 8)
+    style.ItemInnerSpacing = ImVec2(8, 6)
+    style.IndentSpacing = 25.0
+    style.ScrollbarSize = 15.0
+    style.ScrollbarRounding = 9.0
+    style.GrabMinSize = 5.0
+    style.GrabRounding = 3.0
+
+    colors[clr.Text] = ImVec4(0.80, 0.80, 0.83, 1.00)
+    colors[clr.TextDisabled] = ImVec4(0.24, 0.23, 0.29, 1.00)
+    colors[clr.WindowBg] = ImVec4(0.06, 0.05, 0.07, 1.00)
+    colors[clr.ChildWindowBg] = ImVec4(0.07, 0.07, 0.09, 1.00)
+    colors[clr.PopupBg] = ImVec4(0.07, 0.07, 0.09, 1.00)
+    colors[clr.Border] = ImVec4(0.80, 0.80, 0.83, 0.88)
+    colors[clr.BorderShadow] = ImVec4(0.92, 0.91, 0.88, 0.00)
+    colors[clr.FrameBg] = ImVec4(0.10, 0.09, 0.12, 1.00)
+    colors[clr.FrameBgHovered] = ImVec4(0.24, 0.23, 0.29, 1.00)
+    colors[clr.FrameBgActive] = ImVec4(0.56, 0.56, 0.58, 1.00)
+    colors[clr.TitleBg] = ImVec4(0.10, 0.09, 0.12, 1.00)
+    colors[clr.TitleBgCollapsed] = ImVec4(1.00, 0.98, 0.95, 0.75)
+    colors[clr.TitleBgActive] = ImVec4(0.07, 0.07, 0.09, 1.00)
+    colors[clr.MenuBarBg] = ImVec4(0.10, 0.09, 0.12, 1.00)
+    colors[clr.ScrollbarBg] = ImVec4(0.10, 0.09, 0.12, 1.00)
+    colors[clr.ScrollbarGrab] = ImVec4(0.80, 0.80, 0.83, 0.31)
+    colors[clr.ScrollbarGrabHovered] = ImVec4(0.56, 0.56, 0.58, 1.00)
+    colors[clr.ScrollbarGrabActive] = ImVec4(0.06, 0.05, 0.07, 1.00)
+    colors[clr.ComboBg] = ImVec4(0.19, 0.18, 0.21, 1.00)
+    colors[clr.CheckMark] = ImVec4(0.80, 0.80, 0.83, 0.31)
+    colors[clr.SliderGrab] = ImVec4(0.80, 0.80, 0.83, 0.31)
+    colors[clr.SliderGrabActive] = ImVec4(0.06, 0.05, 0.07, 1.00)
+    colors[clr.Button] = ImVec4(0.10, 0.09, 0.12, 1.00)
+    colors[clr.ButtonHovered] = ImVec4(0.24, 0.23, 0.29, 1.00)
+    colors[clr.ButtonActive] = ImVec4(0.56, 0.56, 0.58, 1.00)
+    colors[clr.Header] = ImVec4(0.10, 0.09, 0.12, 1.00)
+    colors[clr.HeaderHovered] = ImVec4(0.56, 0.56, 0.58, 1.00)
+    colors[clr.HeaderActive] = ImVec4(0.06, 0.05, 0.07, 1.00)
+    colors[clr.ResizeGrip] = ImVec4(0.00, 0.00, 0.00, 0.00)
+    colors[clr.ResizeGripHovered] = ImVec4(0.56, 0.56, 0.58, 1.00)
+    colors[clr.ResizeGripActive] = ImVec4(0.06, 0.05, 0.07, 1.00)
+    colors[clr.CloseButton] = ImVec4(0.40, 0.39, 0.38, 0.16)
+    colors[clr.CloseButtonHovered] = ImVec4(0.40, 0.39, 0.38, 0.39)
+    colors[clr.CloseButtonActive] = ImVec4(0.40, 0.39, 0.38, 1.00)
+    colors[clr.PlotLines] = ImVec4(0.40, 0.39, 0.38, 0.63)
+    colors[clr.PlotLinesHovered] = ImVec4(0.25, 1.00, 0.00, 1.00)
+    colors[clr.PlotHistogram] = ImVec4(0.40, 0.39, 0.38, 0.63)
+    colors[clr.PlotHistogramHovered] = ImVec4(0.25, 1.00, 0.00, 1.00)
+    colors[clr.TextSelectedBg] = ImVec4(0.25, 1.00, 0.00, 0.43)
+    colors[clr.ModalWindowDarkening] = ImVec4(1.00, 0.98, 0.95, 0.73)
+end
+function sampGetPlayerID(PlayerName)
+ 	for i = 0, 999 do
+    	if PlayerName == PlayersNickname[i] then
+      		return i
+    	end
+  	end
+end
+function getPlayersNickname()
+ 	for i = 0, 999 do
+    	if sampIsPlayerConnected(i) or select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)) == i then
+      		PlayersNickname[i] = sampGetPlayerNickname(i)
+    	end
+  	end
 end
 function calcScreenCoors(fX,fY,fZ)
     local memory = require 'memory'
@@ -312,6 +388,7 @@ function main()
     while not isSampAvailable() do wait(0) end
     cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     lua_thread.create(wh)
+	sampRegisterChatCommand('mmm', function(pam) id = tonumber(pam) checkfont = renderCreateFont("Arial", 9, id) end)
     sampRegisterChatCommand('al', function() sampSendChat('/alogin') end)
     sampRegisterChatCommand('at_reload', function() showCursor(false); nameTagOn(); thisScript():reload() end)
     sampRegisterChatCommand('checkrangs', checkrangs)
@@ -368,7 +445,6 @@ function main()
     if cfg.cheat.autogm then
         funcsStatus.Inv = true
     end
-	font = renderCreateFont("Arial", 9, 5)
 	for k, v in ipairs(admins) do
 		local id = sampGetPlayerIdByNickname(v)
 		if id ~= nil then
@@ -476,7 +552,7 @@ function imgui.OnDrawFrame()
         local imkx, imky = convertGameScreenCoordsToWindowScreenCoords(530, 199)
 		--imgui.PushStyleColor(imgui.Col.WindowBg, imgui.ImVec4(1, 0, 0, 1))
         imgui.SetNextWindowPos(imgui.ImVec2(cfg.crecon.posx, cfg.crecon.posy), imgui.ImVec2(0.5, 0.5))
-        imgui.SetNextWindowSize(imgui.ImVec2(260, 280), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowSize(imgui.ImVec2(260, 310), imgui.Cond.FirstUseEver)
         imgui.Begin(u8'Слежка за игроком', _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove)
         imgui.CentrText(imtextnick)
         imgui.CentrText(('ID: %s'):format(reid))
@@ -1112,8 +1188,9 @@ function initializeRender()
     deathfont = renderCreateFont('Arial', 10, 5)
     nizfont = renderCreateFont('Arial', 10, 0)
     gunfont = renderCreateFont(getGameDirectory()..'\\gtaweap3.ttf', 10, 0)
-    whfont = renderCreateFont("Arial", 8, 5)
-    whhpfont = renderCreateFont("Arial", 8, 5)
+    whfont = renderCreateFont("Arial", 8, 4)
+    whhpfont = renderCreateFont("Arial", 8, 4)
+	checkfont = renderCreateFont("Arial", 9, 4)
 end
 function rotateCarAroundUpAxis(car, vec)
     local mat = Matrix3X3(getVehicleRotationMatrix(car))
@@ -1359,183 +1436,183 @@ function sampev.onServerMessage(color, text)
             local crang = tonumber(crang)
             if check_frak == 1 or check_frak == 10 or check_frak == 21 then
                 if lvl < frakrang.PD.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                 end
                 if crang == 11 then
                     if lvl < frakrang.PD.rang_11 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 12 then
                     if lvl < frakrang.PD.rang_12 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 13 then
                     if lvl < frakrang.PD.rang_13 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
             elseif check_frak == 2 then
                 if lvl < frakrang.FBI.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                 end
                 if crang == 6 then
                     if lvl < frakrang.FBI.rang_6 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 7 then
                     if lvl < frakrang.FBI.rang_7 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 8 then
                     if lvl < frakrang.FBI.rang_8 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 9 then
                     if lvl < frakrang.FBI.rang_9 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
             elseif check_frak == 3 or check_frak == 19 then
                 if lvl < frakrang.Army.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                 end
                 if crang == 12 then
                     if lvl < frakrang.Army.rang_12 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 13 then
                     if lvl < frakrang.Army.rang_13 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 14 then
                     if lvl < frakrang.Army.rang_14 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
             elseif check_frak == 5 or check_frak == 6 or check_frak == 14 then
                 if lvl < frakrang.Mafia.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                 end
                 if crang == 7 then
                     if lvl < frakrang.Mafia.rang_7 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 8 then
                     if lvl < frakrang.Mafia.rang_8 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 9 then
                     if lvl < frakrang.Mafia.rang_9 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
             elseif check_frak == 11 then
                 if lvl < frakrang.Autoschool.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                 end
                 if crang == 7 then
                     if lvl < frakrang.Autoschool.rang_7 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 8 then
                     if lvl < frakrang.Autoschool.rang_8 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 9 then
                     if lvl < frakrang.Autoschool.rang_9 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
             elseif check_frak == 12 or check_frak == 13 or check_frak == 15 or check_frak == 17 or check_frak == 18 then
                 if lvl < frakrang.Gangs.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                 end
                 if crang == 7 then
                     if lvl < frakrang.Gangs.rang_7 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 8 then
                     if lvl < frakrang.Gangs.rang_8 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 9 then
                     if lvl < frakrang.Gangs.rang_9 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
             elseif check_frak == 22 then
                 if lvl < frakrang.MOH.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                 end
                 if crang == 7 then
                     if lvl < frakrang.MOH.rang_7 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 8 then
                     if lvl < frakrang.MOH.rang_8 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 9 then
                     if lvl < frakrang.MOH.rang_9 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
             elseif check_frak == 24 or check_frak == 26 or check_frak == 29 then
                 if lvl < frakrang.Bikers.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                 end
                 if crang == 5 then
                     if lvl < frakrang.Bikers.rang_5 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 6 then
                     if lvl < frakrang.Bikers.rang_6 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 7 then
                     if lvl < frakrang.Bikers.rang_7 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 8 then
                     if lvl < frakrang.Bikers.rang_8 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
             elseif check_frak == 9 or check_frak == 16 or check_frak == 20 then
                 if lvl < frakrang.News.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                 end
                 if crang == 7 then
                     if lvl < frakrang.News.rang_7 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 8 then
                     if lvl < frakrang.News.rang_8 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
                 if crang == 9 then
                     if lvl < frakrang.News.rang_9 then
-                        table.insert(checkf, string.format('Nick: %s | LVL: %s | Rang: %s', cnick, lvl, crang))
+                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
                 end
             end
@@ -1575,6 +1652,26 @@ function sampev.onServerMessage(color, text)
     if text:match('Жалоба от%: .+%[%d+%]%:') and color == -646512470 then
         reportid = text:match('Жалоба от%: .+%[(%d+)%]%:')
     end
+	getPlayersNickname() -- Подгружаем список игроков на сервере. Делается для снижения нагрузки, т.к. используется в одном цикле несколько раз.
+    Enter = false -- Переменная ввода сообщения в чат.
+    for i = 0, 999 do
+    	if (sampIsPlayerConnected(i) or select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)) == i) and PlayersNickname[i] then
+        	if string.find(text, " "..PlayersNickname[i]) and not string.find(text, " "..PlayersNickname[i].."%["..i.."%]") then -- Если в чате есть имя игрока и оно уже не содержит ID.
+          		PlayerName = string.match(text, PlayersNickname[i])
+          		if PlayerName then
+            		PlayerID = sampGetPlayerID(PlayerName)
+            		if PlayerID then
+              			text = string.gsub(text, " "..PlayerName, " "..PlayerName.." ["..PlayerID.."]")
+              			return {color, text}
+            		end
+          		end
+        	end
+      	end
+    end
+    --[[if Enter then -- Если строка была измепена скриптом, то сообщение вводится им же.
+    	sampAddChatMessage(text, bit.rshift(color, 8))
+      	return false
+    end]]
 end
 function sampev.onTextDrawSetString(id, text)
     if id == 2163 then
@@ -1671,16 +1768,16 @@ function renderChecker()
         local admrenderPosY = cfg.admchecker.posy
         local playerRenderPosY = cfg.playerChecker.posy
         if cfg.admchecker.enable then
-            renderFontDrawText(font, "Admins Online ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY, -1)
+            renderFontDrawText(checkfont, "Админы онлайн ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY, -1)
             for _, v in ipairs(admins_online) do
-                renderFontDrawText(font,string.format('%s [%s] %s', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.admchecker.posx, admrenderPosY + 20, -1)
+                renderFontDrawText(checkfont,string.format('%s [%s] %s', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.admchecker.posx, admrenderPosY + 20, -1)
                 admrenderPosY = admrenderPosY + 15
             end
         end
         if cfg.playerChecker.enable then
-            renderFontDrawText(font, "Players Online ["..#players_online.."]:", cfg.playerChecker.posx, playerRenderPosY, -1)
+            renderFontDrawText(checkfont, "Игроки онлайн ["..#players_online.."]:", cfg.playerChecker.posx, playerRenderPosY, -1)
             for _, v in ipairs(players_online) do
-                renderFontDrawText(font,string.format('%s [%s] %s', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.playerChecker.posx, playerRenderPosY + 20, -1)
+                renderFontDrawText(checkfont,string.format('%s [%s] %s', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.playerChecker.posx, playerRenderPosY + 20, -1)
                 playerRenderPosY = playerRenderPosY + 15
             end
         end
@@ -2134,7 +2231,7 @@ function wh()
                                 local cpedlvl = sampGetPlayerScore(i)
                                 local posy = headposy
                                 local posx = headposx - 50
-                                renderFontDrawText(whfont, string.format('{%s}%s[%s] %s', color, nick, i, isAfk and '{cccccc}[AFK]' or ''), posx, posy, -1)
+                                renderFontDrawText(whfont, string.format('{%s}%s [%s] %s', color, nick, i, isAfk and '{cccccc}[AFK]' or ''), posx, posy, -1)
                                 local hp2 = cpedHealth
                                 if cpedHealth > 100 then cpedHealth = 100 end
                                 if cpedArmor > 100 then cpedArmor = 100 end
