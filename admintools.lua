@@ -12,6 +12,7 @@ local key = require 'vkeys'
 local Matrix3X3 = require 'matrix3x3'
 local Vector3D = require 'vector3d'
 local ffi = require 'ffi'
+local effil = require 'effil'
 local getBonePosition = ffi.cast("int (__thiscall*)(void*, float*, int, bool)", 0x5E4280)
 local mem = require 'memory'
 local screenx, screeny = getScreenResolution()
@@ -35,6 +36,8 @@ admins = {}
 tpcount = 0
 tprep = false
 checkf = {}
+ips = {}
+rnick = nil
 PlayersNickname = {}
 config_keys = {
     banipkey = {v = {190}},
@@ -157,7 +160,44 @@ config = {
         adminpass = " "
     }
 }
-
+function asyncHttpRequest(method, url, args, resolve, reject)
+   local request_thread = effil.thread(function (method, url, args)
+      local requests = require 'requests'
+      local result, response = pcall(requests.request, method, url, args)
+      if result then
+         response.json, response.xml = nil, nil
+         return true, response
+      else
+         return false, response
+      end
+   end)(method, url, args)
+   -- Если запрос без функций обработки ответа и ошибок.
+   if not resolve then resolve = function() end end
+   if not reject then reject = function() end end
+   -- Проверка выполнения потока
+   lua_thread.create(function()
+      local runner = request_thread
+      while true do
+         local status, err = runner:status()
+         if not err then
+            if status == 'completed' then
+               local result, response = runner:get()
+               if result then
+                  resolve(response)
+               else
+                  reject(response)
+               end
+               return
+            elseif status == 'canceled' then
+               return reject(status)
+            end
+         else
+            return reject(err)
+         end
+         wait(0)
+      end
+   end)
+end
 function atext(text)
     sampAddChatMessage(string.format(' [Admin Tools] {ffffff}%s', text), 0xa1dd4e)
 end
@@ -297,20 +337,6 @@ function apply_custom_style()
     colors[clr.TextSelectedBg] = ImVec4(0.25, 1.00, 0.00, 0.43)
     colors[clr.ModalWindowDarkening] = ImVec4(1.00, 0.98, 0.95, 0.73)
 end
-function sampGetPlayerID(PlayerName)
- 	for i = 0, 999 do
-    	if PlayerName == PlayersNickname[i] then
-      		return i
-    	end
-  	end
-end
-function getPlayersNickname()
- 	for i = 0, 999 do
-    	if sampIsPlayerConnected(i) or select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)) == i then
-      		PlayersNickname[i] = sampGetPlayerNickname(i)
-    	end
-  	end
-end
 function calcScreenCoors(fX,fY,fZ)
     local memory = require 'memory'
 	local dwM = 0xB6FA2C
@@ -374,9 +400,9 @@ struct stKillInfo
 bool DwmEnableComposition(int uCompositionAction);
 ]]
 function rainbow(speed, alpha)
-	local r = math.floor(math.sin(os.clock() * speed) * 127 + 128)
-	local g = math.floor(math.sin(os.clock() * speed + 2) * 127 + 128)
-	local b = math.floor(math.sin(os.clock() * speed + 4) * 127 + 128)
+	local r = math.sin(os.clock() * speed)
+	local g = math.sin(os.clock() * speed + 2)
+	local b = math.sin(os.clock() * speed + 4)
 	return r,g,b,alpha
 end
 function main()
@@ -388,6 +414,7 @@ function main()
     while not isSampAvailable() do wait(0) end
     cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     lua_thread.create(wh)
+	sampRegisterChatCommand('cip', cip)
 	sampRegisterChatCommand('mmm', function(pam) id = tonumber(pam) checkfont = renderCreateFont("Arial", 9, id) end)
     sampRegisterChatCommand('al', function() sampSendChat('/alogin') end)
     sampRegisterChatCommand('at_reload', function() showCursor(false); nameTagOn(); thisScript():reload() end)
@@ -540,6 +567,9 @@ function rkeys.onHotKey(id, keys)
     end
 end
 function imgui.OnDrawFrame()
+	local ir, ig, ib, ia = rainbow(1, 1)
+	imgui.PushStyleColor(imgui.Col.Border, imgui.ImVec4(ir, ig, ib, ia))
+	imgui.PushStyleColor(imgui.Col.Separator, imgui.ImVec4(ir, ig, ib, ia))
     if recon.v then
 		local style = imgui.GetStyle()
 		local colors = style.Colors
@@ -936,6 +966,8 @@ function imgui.OnDrawFrame()
             imgui.End()
         end
     end
+	imgui.PopStyleColor()
+	imgui.PopStyleColor()
 end
 function getFrak(frak)
     if frak:match('.+ Gang') then
@@ -1641,7 +1673,10 @@ function sampev.onServerMessage(color, text)
         reportid = text:match("Жалоба от .+%[%d+%] на .+%[(%d+)%]%: .+")
     end
     if text:match("Nik %[.+%]  R%-IP %[.+%]  L%-IP %[.+%]  IP %[(.+)%]") and color == -10270806 then
-        bip = text:match("Nik %[.+%]  R%-IP %[.+%]  L%-IP %[.+%]  IP %[(.+)%]")
+        local nick, rip, ip = text:match("Nik %[(.+)%]  R%-IP %[(.+)%]  L%-IP %[.+%]  IP %[(.+)%]")
+		ips = {{query = rip}, {query = ip}}
+		rnick = nick
+		bip = ip
     end
     if text:match('<Warning> .+%[%d+%]%: .+') and color == -16763905 then
         cwid = text:match('<Warning> .+%[(%d+)%]%: .+')
@@ -1652,26 +1687,17 @@ function sampev.onServerMessage(color, text)
     if text:match('Жалоба от%: .+%[%d+%]%:') and color == -646512470 then
         reportid = text:match('Жалоба от%: .+%[(%d+)%]%:')
     end
-	getPlayersNickname() -- Подгружаем список игроков на сервере. Делается для снижения нагрузки, т.к. используется в одном цикле несколько раз.
-    Enter = false -- Переменная ввода сообщения в чат.
-    for i = 0, 999 do
-    	if (sampIsPlayerConnected(i) or select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)) == i) and PlayersNickname[i] then
-        	if string.find(text, " "..PlayersNickname[i]) and not string.find(text, " "..PlayersNickname[i].."%["..i.."%]") then -- Если в чате есть имя игрока и оно уже не содержит ID.
-          		PlayerName = string.match(text, PlayersNickname[i])
-          		if PlayerName then
-            		PlayerID = sampGetPlayerID(PlayerName)
-            		if PlayerID then
-              			text = string.gsub(text, " "..PlayerName, " "..PlayerName.." ["..PlayerID.."]")
-              			return {color, text}
-            		end
-          		end
-        	end
-      	end
-    end
-    --[[if Enter then -- Если строка была измепена скриптом, то сообщение вводится им же.
-    	sampAddChatMessage(text, bit.rshift(color, 8))
-      	return false
-    end]]
+	local _, myid = sampGetPlayerIdByCharHandle(playerPed)
+    for i = 0, 1000 do
+       if sampIsPlayerConnected(i) or i == myid then
+         local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
+         local a = text:gsub('{.+}', '')
+           if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find(nick..'%('..i..'%)') then
+              text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+          end
+        end
+      end
+    return { color, text }
 end
 function sampev.onTextDrawSetString(id, text)
     if id == 2163 then
@@ -2364,7 +2390,7 @@ function ban(pam)
                     sampSendChat(string.format('/ban %s %s', id, reason))
                 else
                     --if reason == '1' or reason == 'dmg' then
-                        sampSendChat(string.format('/ban %s %s', id, reason))
+                        --sampSendChat(string.format('/ban %s %s', id, reason))
                     --else
                         local wnick = sampGetPlayerNickname(id)
                         warnst = true
@@ -2643,5 +2669,47 @@ function tpmetkak()
 	local result, x, y, z = getTargetBlipCoordinatesFixed()
 	if result then
 		setCharCoordinates(PLAYER_PED, x, y, z)
+	end
+end
+function distance_cord(lat1, lon1, lat2, lon2)
+	if lat1 == nil or lon1 == nil or lat2 == nil or lon2 == nil or lat1 == "" or lon1 == "" or lat2 == "" or lon2 == "" then
+		return 0
+	end
+	local dlat = math.rad(lat2 - lat1)
+	local dlon = math.rad(lon2 - lon1)
+	local sin_dlat = math.sin(dlat / 2)
+	local sin_dlon = math.sin(dlon / 2)
+	local a =
+		sin_dlat * sin_dlat + math.cos(math.rad(lat1)) * math.cos(
+			math.rad(lat2)
+		) * sin_dlon * sin_dlon
+	local c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+	local d = 6378 * c
+	return d
+end
+function cip()
+	if #ips == 2 then
+		local jsonips = encodeJson(ips)
+		asyncHttpRequest("POST", "http://ip-api.com/batch?fields=25305&lang=ru", { data = jsonips },
+		function(response)
+			local rdata = decodeJson(u8:decode(response.text))
+					--[[atext(rdata[i]["query"])
+					atext(rdata[i]["country"])
+					atext(rdata[i]["city"])
+					atext(rdata[i]["isp"])
+					atext(math.floor(distances))]]
+			if rdata[1]["status"] == "success" and rdata[2]["status"] == "success" then
+				local distances = distance_cord(rdata[1]["lat"], rdata[1]["lon"], rdata[2]["lat"], rdata[2]["lon"])
+				sampAddChatMessage((' Страна: {a1dd4e}%s{ffffff} | Город: {a1dd4e}%s{ffffff} | ISP: {a1dd4e}%s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
+				sampAddChatMessage((' Страна: {a1dd4e}%s{ffffff} | Город:{a1dd4e} %s{ffffff} | ISP: {a1dd4e}%s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
+				sampAddChatMessage((' Расстояние: {a1dd4e}%s {ffffff}км. | Ник: {a1dd4e}%s'):format(math.floor(distances), rnick), -1)
+			end
+		end,
+		function(err)
+			atext('Произошла ошибка')
+		end
+		)
+	else
+		atext('Не найдено IP адресов для сравнения')
 	end
 end
