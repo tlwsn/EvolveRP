@@ -414,6 +414,7 @@ function main()
     while not isSampAvailable() do wait(0) end
     cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     lua_thread.create(wh)
+	lua_thread.create(renderHud)
 	sampRegisterChatCommand('cip', cip)
 	sampRegisterChatCommand('mmm', function(pam) id = tonumber(pam) checkfont = renderCreateFont("Arial", 9, id) end)
     sampRegisterChatCommand('al', function() sampSendChat('/alogin') end)
@@ -1220,9 +1221,10 @@ function initializeRender()
     deathfont = renderCreateFont('Arial', 10, 5)
     nizfont = renderCreateFont('Arial', 10, 0)
     gunfont = renderCreateFont(getGameDirectory()..'\\gtaweap3.ttf', 10, 0)
-    whfont = renderCreateFont("Arial", 8, 4)
-    whhpfont = renderCreateFont("Arial", 8, 4)
+    whfont = renderCreateFont("Verdana", 8, 4)
+    whhpfont = renderCreateFont("Verdana", 8, 4)
 	checkfont = renderCreateFont("Arial", 9, 4)
+	hudfont = renderCreateFont("Times New Roman", 10, 4)
 end
 function rotateCarAroundUpAxis(car, vec)
     local mat = Matrix3X3(getVehicleRotationMatrix(car))
@@ -2721,5 +2723,16 @@ function cip(pam)
 		)
 	else
 		atext('Не найдено IP адресов для сравнения')
+	end
+end
+function renderHud()
+	while true do wait(0)
+		local memory = require 'memory'
+		local posx, posy, posz = getCharCoordinates(PLAYER_PED)
+		local posint = getActiveInterior()
+		local hpos = ("%0.2f %0.2f %0.2f"):format(posx, posy, posz)
+		local fps = memory.getfloat(0xB7CB50, 4, false)
+		local sx, sy = getScreenResolution()
+		renderFontDrawText(hudfont, ('%s %s %s [%s %s] [FPS: %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, posint, math.floor(fps)), 5, sy-20, -1)
 	end
 end
