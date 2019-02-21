@@ -2687,7 +2687,7 @@ function distance_cord(lat1, lon1, lat2, lon2)
 	local d = 6378 * c
 	return d
 end
-function cip()
+function cip(pam)
 	if #ips == 2 then
 		local jsonips = encodeJson(ips)
 		asyncHttpRequest("POST", "http://ip-api.com/batch?fields=25305&lang=ru", { data = jsonips },
@@ -2700,9 +2700,19 @@ function cip()
 					atext(math.floor(distances))]]
 			if rdata[1]["status"] == "success" and rdata[2]["status"] == "success" then
 				local distances = distance_cord(rdata[1]["lat"], rdata[1]["lon"], rdata[2]["lat"], rdata[2]["lon"])
-				sampAddChatMessage((' Страна: {a1dd4e}%s{ffffff} | Город: {a1dd4e}%s{ffffff} | ISP: {a1dd4e}%s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
-				sampAddChatMessage((' Страна: {a1dd4e}%s{ffffff} | Город:{a1dd4e} %s{ffffff} | ISP: {a1dd4e}%s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
-				sampAddChatMessage((' Расстояние: {a1dd4e}%s {ffffff}км. | Ник: {a1dd4e}%s'):format(math.floor(distances), rnick), -1)
+				if tonumber(pam) == nil then
+					sampAddChatMessage((' Страна: {a1dd4e}%s{ffffff} | Город: {a1dd4e}%s{ffffff} | ISP: {a1dd4e}%s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
+					sampAddChatMessage((' Страна: {a1dd4e}%s{ffffff} | Город:{a1dd4e} %s{ffffff} | ISP: {a1dd4e}%s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
+					sampAddChatMessage((' Расстояние: {a1dd4e}%s {ffffff}км. | Ник: {a1dd4e}%s'):format(math.floor(distances), rnick), -1)
+				else
+					lua_thread.create(function()
+						sampAddChatMessage(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
+						wait(1200)
+						sampAddChatMessage(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
+						wait(1200)
+						sampAddChatMessage(('/a Расстояние: %s км. | Ник: %s'):format(math.floor(distances), rnick), -1)
+					end)
+				end
 			end
 		end,
 		function(err)
