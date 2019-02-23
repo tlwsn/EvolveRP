@@ -37,6 +37,8 @@ tpcount = 0
 tprep = false
 checkf = {}
 ips = {}
+temp_checker = {}
+temp_checker_online = {}
 rnick = nil
 PlayersNickname = {}
 config_keys = {
@@ -141,6 +143,11 @@ config = {
         posx = screenx/2,
         posy = screeny/2
     },
+	tempChecker = {
+		enable = true,
+		posx = screenx/2,
+        posy = screeny/2
+	},
     cheat = {
         airbrkspeed = 0.5,
         autogm = true
@@ -150,11 +157,11 @@ config = {
         posy = screeny/2,
         enable = false
     },
-		timers = {
-				sbivtimer = 30,
-				csbivtimer = 60,
-				cbugtimer = 60
-		},
+	timers = {
+		sbivtimer = 30,
+		csbivtimer = 60,
+		cbugtimer = 60
+	},
     other = {
         password = " ",
         adminpass = " "
@@ -405,6 +412,20 @@ function rainbow(speed, alpha)
 	local b = math.sin(os.clock() * speed + 4)
 	return r,g,b,alpha
 end
+function sampGetStreamedPlayers()
+	local t = {}
+	for i = 0, sampGetMaxPlayerId(false) do
+		if sampIsPlayerConnected(i) then
+			local result, sped = sampGetCharHandleBySampPlayerId(i)
+			if result then
+				if doesCharExist(sped) then
+					table.insert(t, i)
+				end
+			end
+		end
+	end
+	return t
+end
 function main()
     local samp = getModuleHandle('samp.dll')
 	mem.fill(samp + 0x9D31A, nop, 12, true)
@@ -415,6 +436,10 @@ function main()
     cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     lua_thread.create(wh)
 	lua_thread.create(renderHud)
+	sampRegisterChatCommand('addtemp', addtemp)
+	sampRegisterChatCommand('deltemp', deltemp)
+	sampRegisterChatCommand('massgun', massgun)
+	sampRegisterChatCommand('masshp', masshp)
 	sampRegisterChatCommand('cip', cip)
 	sampRegisterChatCommand('mmm', function(pam) id = tonumber(pam) checkfont = renderCreateFont("Arial", 9, id) end)
     sampRegisterChatCommand('al', function() sampSendChat('/alogin') end)
@@ -452,6 +477,16 @@ function main()
         local fa = io.open("moonloader/config/Admin Tools/keys.json", 'r')
         if fa then
             config_keys = decodeJson(fa:read('*a'))
+			if config_keys == nil then
+				config_keys = {
+				    banipkey = {v = {190}},
+				    warningkey = {v = {key.VK_Z}},
+				    reportkey = {v = {key.VK_X}},
+				    saveposkey = {v = {key.VK_M}},
+				    goposkey = {v = {key.VK_J}},
+					tpmetka = {v = {key.VK_K}}
+				}
+			end
         end
     end
     if not doesFileExist("moonloader/config/Admin Tools/rangset.json") then
@@ -527,10 +562,17 @@ function main()
             cfg.playerChecker.posx = curX
             cfg.playerChecker.posy = curY
         end
-        if isKeyJustPressed(key.VK_LBUTTON) and (data.imgui.admcheckpos or data.imgui.playercheckpos or data.imgui.reconpos) then
+		if data.imgui.tempcheckpos then
+            sampToggleCursor(true)
+            local curX, curY = getCursorPos()
+            cfg.tempChecker.posx = curX
+            cfg.tempChecker.posy = curY
+        end
+        if isKeyJustPressed(key.VK_LBUTTON) and (data.imgui.admcheckpos or data.imgui.playercheckpos or data.imgui.reconpos or data.imgui.tempcheckpos) then
             data.imgui.admcheckpos = false
             data.imgui.playercheckpos = false
             data.imgui.reconpos = false
+			data.imgui.tempcheckpos = false
             recon.v = false
             sampToggleCursor(false)
             mainwindow.v = true
@@ -887,6 +929,7 @@ function imgui.OnDrawFrame()
             if data.imgui.menu == 3 then
                 if imgui.MenuItem(u8 '  Чекер админов') then data.imgui.checker = 1 end
                 if imgui.MenuItem(u8 '  Чекер игроков') then data.imgui.checker = 2 end
+				if imgui.MenuItem(u8 '  Временный чекер') then data.imgui.checker = 3 end
             end
 						if imgui.Selectable(u8 'Настройка таймеров') then data.imgui.menu = 4 end
             imgui.EndChild()
@@ -952,7 +995,17 @@ function imgui.OnDrawFrame()
                         imgui.SameLine()
                         if imgui.Button(u8 'Изменить##2') then data.imgui.playercheckpos = true; mainwindow.v = false end
                     end
-                end
+                elseif data.imgui.checker == 3 then
+					local tempChetckerB = imgui.ImBool(cfg.tempChecker.enable)
+					imgui.CentrText(u8 'Временный чекер')
+					imgui.Separator()
+					if imgui.ToggleButton(u8 'Включить чекер##3', tempChetckerB) then cfg.tempChecker.enable = tempChetckerB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
+					if cfg.tempChecker.enable then
+                        imgui.Text(u8 'Местоположение чекера')
+                        imgui.SameLine()
+                        if imgui.Button(u8 'Изменить##3') then data.imgui.tempcheckpos = true; mainwindow.v = false end
+                    end
+				end
             elseif data.imgui.menu == 4 then
 								local sbivb = imgui.ImInt(cfg.timers.sbivtimer)
 								local csbivb = imgui.ImInt(cfg.timers.csbivtimer)
@@ -1681,7 +1734,11 @@ function sampev.onServerMessage(color, text)
 		bip = ip
     end
     if text:match('<Warning> .+%[%d+%]%: .+') and color == -16763905 then
-        cwid = text:match('<Warning> .+%[(%d+)%]%: .+')
+        local ccwid = text:match('<Warning> .+%[(%d+)%]%: .+')
+		cwid = ccwid
+		local cnick = sampGetPlayerNickname(ccwid)
+		table.insert(temp_checker_online, {nick = cnick, id = ccwid})
+		table.insert(temp_checker, cnick)
     end
     if text:match('Репорт от .+%[%d+%]%:') and color == -646512470 then
         reportid = text:match('Репорт от .+%[(%d+)%]%:')
@@ -1743,6 +1800,12 @@ function sampev.onPlayerQuit(id, reason)
 			break
 		end
     end
+	for i, v in ipairs(temp_checker_online) do
+		if v["id"] == id then
+			table.remove(temp_checker_online, i)
+			break
+		end
+    end
 end
 function sampev.onPlayerDeathNotification(killerId, killedId, reason)
 	local kill = ffi.cast('struct stKillInfo*', sampGetKillInfoPtr())
@@ -1790,23 +1853,37 @@ function sampev.onPlayerJoin(id, clist, isNPC, nick)
 			break
 		end
 	end
+	for i, v in ipairs(temp_checker) do
+		if nick == v then
+			table.insert(temp_checker_online, {nick = nick, id = id})
+			break
+		end
+	end
 end
 function renderChecker()
     while true do wait(0)
         local admrenderPosY = cfg.admchecker.posy
         local playerRenderPosY = cfg.playerChecker.posy
+		local tempRenderPosY = cfg.tempChecker.posy
         if cfg.admchecker.enable then
-            renderFontDrawText(checkfont, "Админы онлайн ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY, -1)
+            renderFontDrawText(checkfont, "{00ff00}Админы онлайн ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY, -1)
             for _, v in ipairs(admins_online) do
                 renderFontDrawText(checkfont,string.format('%s [%s] %s', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.admchecker.posx, admrenderPosY + 20, -1)
                 admrenderPosY = admrenderPosY + 15
             end
         end
         if cfg.playerChecker.enable then
-            renderFontDrawText(checkfont, "Игроки онлайн ["..#players_online.."]:", cfg.playerChecker.posx, playerRenderPosY, -1)
+            renderFontDrawText(checkfont, "{FFFF00}Игроки онлайн ["..#players_online.."]:", cfg.playerChecker.posx, playerRenderPosY, -1)
             for _, v in ipairs(players_online) do
                 renderFontDrawText(checkfont,string.format('%s [%s] %s', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.playerChecker.posx, playerRenderPosY + 20, -1)
                 playerRenderPosY = playerRenderPosY + 15
+            end
+        end
+		if cfg.tempChecker.enable then
+            renderFontDrawText(checkfont, "{ff0000}Temp Checker ["..#temp_checker_online.."]:", cfg.tempChecker.posx, tempRenderPosY, -1)
+            for _, v in ipairs(temp_checker_online) do
+                renderFontDrawText(checkfont,string.format('%s [%s] %s', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.tempChecker.posx, tempRenderPosY + 20, -1)
+                tempRenderPosY = tempRenderPosY + 15
             end
         end
     end
@@ -1839,13 +1916,13 @@ function addadm(pam)
             local nick = sampGetPlayerNickname(pId)
             table.insert(admins_online, {nick = nick, id = pId})
             table.insert(admins, nick)
-            atext('Игрок с ником '..nick..' ['..pId..'] добавлен в чекер админов')
+            atext('Игрок '..nick..' ['..pId..'] добавлен в чекер админов')
             local open = io.open("moonloader/config/Admin Tools/adminlist.txt", 'a')
             open:write('\n'..nick)
             open:close()
         else
             table.insert(admins, pId)
-            atext('Игрок с ником '..pId..' добавлен в чекер админов')
+            atext('Игрок '..pId..' добавлен в чекер админов')
             local open = io.open("moonloader/config/Admin Tools/adminlist.txt", 'a')
             open:write('\n'..pId)
             open:close()
@@ -1854,9 +1931,9 @@ function addadm(pam)
         if sampGetPlayerIdByNickname(tostring(pam)) ~= nil then
             local bpId = sampGetPlayerIdByNickname(tostring(pam))
             table.insert(admins_online, {nick = pam, id = bpId})
-            atext('Игрок с ником '..pam..' ['..bpId..'] добавлен в чекер админов')
+            atext('Игрок '..pam..' ['..bpId..'] добавлен в чекер админов')
         else
-            atext('Игрок с ником '..pam..' добавлен в чекер админов')
+            atext('Игрок '..pam..' добавлен в чекер админов')
         end
         table.insert(admins, pam)
         local open = io.open("moonloader/config/Admin Tools/adminlist.txt", 'a')
@@ -1873,13 +1950,13 @@ function addplayer(pam)
             local nick = sampGetPlayerNickname(pId)
             table.insert(players_online, {nick = nick, id = pId})
             table.insert(players, nick)
-            atext('Игрок с ником '..nick..' ['..pId..'] добавлен в чекер игроков')
+            atext('Игрок '..nick..' ['..pId..'] добавлен в чекер игроков')
             local open = io.open("moonloader/config/Admin Tools/playerlist.txt", 'a')
             open:write('\n'..nick)
             open:close()
         else
             table.insert(players, pId)
-            atext('Игрок с ником '..pId..' добавлен в чекер игроков')
+            atext('Игрок '..pId..' добавлен в чекер игроков')
             local open = io.open("moonloader/config/Admin Tools/playerlist.txt", 'a')
             open:write('\n'..pId)
             open:close()
@@ -1888,9 +1965,9 @@ function addplayer(pam)
         if sampGetPlayerIdByNickname(tostring(pam)) ~= nil then
             local bpId = sampGetPlayerIdByNickname(tostring(pam))
             table.insert(players_online, {nick = pam, id = bpId})
-            atext('Игрок с ником '..pam..' ['..bpId..'] добавлен в чекер игроков')
+            atext('Игрок '..pam..' ['..bpId..'] добавлен в чекер игроков')
         else
-            atext('Игрок с ником '..pam..' добавлен в чекер игроков')
+            atext('Игрок '..pam..' добавлен в чекер игроков')
         end
         table.insert(players, pam)
         local open = io.open("moonloader/config/Admin Tools/playerlist.txt", 'a')
@@ -2029,7 +2106,7 @@ function deladm(pam)
                         i = i + 1
                     end
                 end
-                atext('Игрок '..pId..' удален из чекера игроков')
+                atext('Игрок '..pId..' удален из чекера админов')
                 local open = io.open("moonloader/config/Admin Tools/adminlist.txt", "w")
                 for k, v in pairs(admins) do
                     open:write('\n'..v)
@@ -2062,7 +2139,7 @@ function deladm(pam)
                 end
                 open:close()
                 open = nil
-                atext('Игрок '..pam..' ['..bpId..'] удален из чекера игроков')
+                atext('Игрок '..pam..' ['..bpId..'] удален из чекера админов')
             else
                 local i = 1
                 while i <= #admins do
@@ -2735,4 +2812,122 @@ function renderHud()
 		local sx, sy = getScreenResolution()
 		renderFontDrawText(hudfont, ('%s %s %s [%s %s] [FPS: %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, posint, math.floor(fps)), 5, sy-20, -1)
 	end
+end
+function massgun(pam)
+	lua_thread.create(function()
+		local gun, pt = pam:match('(%d+) (%d+)')
+		if gun and pt then
+			for k, v in pairs(sampGetStreamedPlayers()) do
+				atext(("/givegun %s %s %s"):format(v, gun, pt))
+				wait(1200)
+			end
+			atext('Выдача закончена')
+		else
+			atext('Введите /massgun [оружие] [патроны]')
+		end
+	end)
+end
+function masshp(pam)
+	lua_thread.create(function()
+		local hp = pam:match('(%d+)')
+		if hp then
+			for k, v in pairs(sampGetStreamedPlayers()) do
+				atext(("/sethp %s %s"):format(v, hp))
+				wait(1200)
+			end
+			atext('Выдача закончена')
+		else
+			atext('Введите /masshp [уровень хп]')
+		end
+	end)
+end
+function addtemp(pam)
+    local pId = tonumber(pam)
+    if pId ~= nil then
+        if sampIsPlayerConnected(pId) then
+            local nick = sampGetPlayerNickname(pId)
+            table.insert(temp_checker_online, {nick = nick, id = pId})
+            table.insert(temp_checker, nick)
+            atext('Игрок '..nick..' ['..pId..'] добавлен в временный чекер')
+        else
+            table.insert(temp_checker, pId)
+            atext('Игрок '..pId..' добавлен в временный чекер')
+        end
+    elseif pId == nil and #pam ~= 0 then
+        if sampGetPlayerIdByNickname(tostring(pam)) ~= nil then
+            local bpId = sampGetPlayerIdByNickname(tostring(pam))
+            table.insert(temp_checker, {nick = pam, id = bpId})
+            atext('Игрок '..pam..' ['..bpId..'] добавлен в временный чекер')
+        else
+            atext('Игрок '..pam..' добавлен в временный чекер')
+        end
+        table.insert(temp_checker, pam)
+    elseif #pam == 0 then
+        atext('Введите /addtemp [id/nick]')
+    end
+end
+function deltemp(pam)
+    lua_thread.create(function()
+        local pId = tonumber(pam)
+        if pId ~= nil then
+            if sampIsPlayerConnected(pId) then
+                local nick = sampGetPlayerNickname(pId)
+                local i = 1
+                while i <= #temp_checker do
+                    if temp_checker[i] == nick then
+                        table.remove(temp_checker, i)
+                    else
+                        i = i + 1
+                    end
+                end
+                atext('Игрок '..nick..' ['..pId..'] удален из временного чекера')
+                local oi = 1
+                while oi <= #temp_checker_online do
+                    if temp_checker_online[oi].nick == nick then
+                        table.remove(temp_checker_online, oi)
+                    else
+                        oi = oi + 1
+                    end
+                end
+            else
+                local i = 1
+                while i <= #temp_checker do
+                    if temp_checker[i] == pId then
+                        table.remove(temp_checker, i)
+                    else
+                        i = i + 1
+                    end
+                end
+            end
+        elseif pId == nil and #pam ~= 0 then
+            if sampGetPlayerIdByNickname(tostring(pam)) ~= nil then
+                local bpId = sampGetPlayerIdByNickname(tostring(pam))
+                local i = 1
+                while i <= #temp_checker do
+                    if temp_checker[i] == tostring(pam) then
+                        table.remove(temp_checker, i)
+                    else
+                        i = i + 1
+                    end
+                end
+                local oi = 1
+                while oi <= #temp_checker_online do
+                    if temp_checker_online[oi].nick == tostring(pam) then
+                        table.remove(temp_checker_online, oi)
+                    else
+                        oi = oi + 1
+                    end
+                end
+            else
+                local i = 1
+                while i <= #temp_checker do
+                    if temp_checker[i] == tostring(pam) then
+                        table.remove(temp_checker, i)
+                    else
+                        i = i + 1
+                    end
+                end
+            end
+        end
+    end)
 end
