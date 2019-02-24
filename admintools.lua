@@ -15,6 +15,7 @@ local ffi = require 'ffi'
 local effil = require 'effil'
 local getBonePosition = ffi.cast("int (__thiscall*)(void*, float*, int, bool)", 0x5E4280)
 local mem = require 'memory'
+local wm = require 'lib.windows.message'
 local screenx, screeny = getScreenResolution()
 encoding.default = 'CP1251'
 imgui = require 'imgui'
@@ -26,6 +27,9 @@ settingwindows = imgui.ImBool(false)
 tpwindow = imgui.ImBool(false)
 recon = imgui.ImBool(false)
 cmdwindow = imgui.ImBool(false)
+bMainWindow = imgui.ImBool(false)
+sInputEdit = imgui.ImBuffer(256)
+bIsEnterEdit = imgui.ImBool(false)
 local nop = 0x90
 u8 = encoding.UTF8
 airspeed = nil
@@ -35,6 +39,7 @@ check = false
 admins = {}
 tpcount = 0
 tprep = false
+nametag = true
 checkf = {}
 ips = {}
 temp_checker = {}
@@ -48,6 +53,10 @@ config_keys = {
     saveposkey = {v = {key.VK_M}},
     goposkey = {v = {key.VK_J}},
 	tpmetka = {v = {key.VK_K}}
+}
+local tEditData = {
+	id = -1,
+	inputActive = false
 }
 frakrang = {
     Mayor = {
@@ -110,6 +119,23 @@ frakrang = {
         rang_8 = 11,
         inv = 4
     }
+}
+tBindList = {
+	[1] = {
+		text = "",
+		v = {},
+		time = 0
+	},
+	[2] = {
+		text = "",
+		v = {},
+		time = 0
+	},
+	[3] = {
+		text = "",
+		v = {},
+		time = 0
+	}
 }
 tkills = {}
 BulletSync = {lastId = 0, maxLines = 15}
@@ -436,6 +462,14 @@ function main()
     cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     lua_thread.create(wh)
 	lua_thread.create(renderHud)
+	sampRegisterChatCommand('ip', function() asyncHttpRequest('GET', 'http://ipinfo.io/ip', nil, function(response) atext(response.text) end, function(err) atext(err) end) end)
+	sampRegisterChatCommand('wh', function()
+		if nameTag then
+			nameTagOff()
+		else
+			nameTagOn()
+		end
+	end)
 	sampRegisterChatCommand('addtemp', addtemp)
 	sampRegisterChatCommand('deltemp', deltemp)
 	sampRegisterChatCommand('massgun', massgun)
@@ -489,6 +523,34 @@ function main()
 			end
         end
     end
+	if not doesFileExist("moonloader/config/Admin Tools/binder.json") then
+		local fb = io.open("moonloader/config/Admin Tools/binder.json", "w")
+		fb:close()
+	else
+		local fb = io.open("moonloader/config/Admin Tools/binder.json", "r")
+		if fb then
+			tBindList = decodeJson(fb:read('*a'))
+			if tBindList == nil then
+				tBindList = {
+			        [1] = {
+			            text = "",
+			            v = {},
+			            time = 0
+			        },
+			        [2] = {
+			            text = "",
+			            v = {},
+			            time = 0
+			        },
+			        [3] = {
+			            text = "",
+			            v = {},
+			            time = 0
+			        }
+			    }
+			end
+		end
+	end
     if not doesFileExist("moonloader/config/Admin Tools/rangset.json") then
         local fr = io.open("moonloader/config/Admin Tools/rangset.json", "w")
         fr:write(encodeJson(frakrang))
@@ -499,12 +561,29 @@ function main()
             frakrang = decodeJson(fr:read('*a'))
         end
     end
+	for k, v in pairs(tBindList) do
+        rkeys.registerHotKey(v.v, true, onHotKey)
+        if v.time == nil then v.time = 0 end
+    end
     reportbind = rkeys.registerHotKey(config_keys.reportkey.v, true, reportk)
     warningbind = rkeys.registerHotKey(config_keys.warningkey.v, true, warningk)
     banipbind = rkeys.registerHotKey(config_keys.banipkey.v, true, banipk)
     saveposbind = rkeys.registerHotKey(config_keys.saveposkey.v, true, saveposk)
     goposbind = rkeys.registerHotKey(config_keys.goposkey.v, true, goposk)
 	tpmetkabind = rkeys.registerHotKey(config_keys.tpmetka.v, true, tpmetkak)
+	addEventHandler("onWindowMessage", function (msg, wparam, lparam)
+        if msg == wm.WM_KEYDOWN or msg == wm.WM_SYSKEYDOWN then
+            if tEditData.id > -1 then
+                if wparam == key.VK_ESCAPE then
+                    tEditData.id = -1
+                    consumeWindowMessage(true, true)
+                elseif wparam == key.VK_TAB then
+                    bIsEnterEdit.v = not bIsEnterEdit.v
+                    consumeWindowMessage(true, true)
+                end
+            end
+        end
+    end)
     if cfg.cheat.autogm then
         funcsStatus.Inv = true
     end
@@ -664,6 +743,7 @@ function imgui.OnDrawFrame()
         if imgui.Button(u8 'Настройки', btn_size) then settingwindows.v = not settingwindows.v end
         if imgui.Button(u8 'Телепорты', btn_size) then tpwindow.v = not tpwindow.v end
         if imgui.Button(u8 'Команды скрипта', btn_size) then cmdwindow.v = not cmdwindow.v end
+		if imgui.Button(u8 'Биндер', btn_size) then bMainWindow.v = not bMainWindow.v end
         imgui.End()
         if cmdwindow.v then
             imgui.SetNextWindowSize(imgui.ImVec2(500, 500), imgui.Cond.FirstUseEver)
@@ -1019,9 +1099,95 @@ function imgui.OnDrawFrame()
             imgui.EndChild()
             imgui.End()
         end
+		if bMainWindow.v then
+			imgui.LockPlayer = true
+			imgui.ShowCursor = true
+			imgui.DisableInput = false
+			local iScreenWidth, iScreenHeight = getScreenResolution()
+			imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+			imgui.SetNextWindowSize(imgui.ImVec2(1000, 560), imgui.Cond.FirstUseEver)
+			imgui.Begin(u8("Admin Tools | Биндер##main"), bMainWindow, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize)
+			imgui.Text(u8'Для корректной работы биндера рекомендуется перезагрузить скрипт после изменения настроек биндера.')
+			imgui.Separator()
+			imgui.BeginChild("##bindlist", imgui.ImVec2(995, 442))
+			for k, v in ipairs(tBindList) do
+				if imgui.HotKey("##HK" .. k, v, tLastKeys, 100) then
+					if not rkeys.isHotKeyDefined(v.v) then
+						if rkeys.isHotKeyDefined(tLastKeys.v) then
+							rkeys.unRegisterHotKey(tLastKeys.v)
+						end
+						rkeys.registerHotKey(v.v, true, onHotKey)
+					end
+				end
+				imgui.SameLine()
+				if tEditData.id ~= k then
+					local sText = v.text:gsub("%[enter%]$", "")
+					imgui.BeginChild("##cliclzone" .. k, imgui.ImVec2(500, 30))
+					imgui.AlignTextToFramePadding()
+					if sText:len() > 0 then
+						imgui.Text(u8(sText))
+					else
+						imgui.TextDisabled(u8("Пустое сообщение ..."))
+					end
+					imgui.EndChild()
+					if imgui.IsItemClicked() then
+						sInputEdit.v = sText:len() > 0 and u8(sText) or ""
+						bIsEnterEdit.v = string.match(v.text, "(.)%[enter%]$") ~= nil
+						tEditData.id = k
+						tEditData.inputActve = true
+					end
+				else
+					local btimeb = imgui.ImInt(v.time)
+					imgui.PushAllowKeyboardFocus(false)
+					imgui.PushItemWidth(500)
+					local save = imgui.InputText("##Edit" .. k, sInputEdit, imgui.InputTextFlags.EnterReturnsTrue)
+					imgui.PopItemWidth()
+					imgui.PopAllowKeyboardFocus()
+					imgui.SameLine()
+					imgui.Checkbox(u8("Ввод") .. "##editCH" .. k, bIsEnterEdit)
+					imgui.SameLine()
+					imgui.PushItemWidth(50)
+					if imgui.InputInt(u8'Задержка', btimeb, 0) then v.time = btimeb.v end
+					imgui.PopItemWidth()
+					if save then
+						tBindList[tEditData.id].text = u8:decode(sInputEdit.v) .. (bIsEnterEdit.v and "[enter]" or "")
+						tEditData.id = -1
+					end
+					if tEditData.inputActve then
+						tEditData.inputActve = false
+						imgui.SetKeyboardFocusHere(-1)
+					end
+				end
+			end
+			imgui.EndChild()
+			imgui.Separator()
+			if imgui.Button(u8"Добавить клавишу") then
+				tBindList[#tBindList + 1] = {text = "", v = {}, time = 0}
+			end
+			imgui.End()
+		end
     end
 	imgui.PopStyleColor()
 	imgui.PopStyleColor()
+end
+function onHotKey(id, keys)
+    lua_thread.create(function()
+        local sKeys = tostring(table.concat(keys, " "))
+        for k, v in pairs(tBindList) do
+            if sKeys == tostring(table.concat(v.v, " ")) then
+                if tostring(v.text):len() > 0 then
+                    local bIsEnter = string.match(v.text, "(.)%[enter%]$") ~= nil
+                    if bIsEnter then
+                        sampSendChat(v.text:gsub("%[enter%]$", ""))
+                    else
+                        sampSetChatInputText(v.text)
+                        sampSetChatInputEnabled(true)
+                    end
+                    wait(v.time)
+                end
+            end
+        end
+    end)
 end
 function getFrak(frak)
     if frak:match('.+ Gang') then
@@ -1505,13 +1671,22 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 function onScriptTerminate(scr)
+	nameTagOn()
 	if doesFileExist('moonloader/config/Admin Tools/keys.json') then
         os.remove('moonloader/config/Admin Tools/keys.json')
+    end
+	if doesFileExist("moonloader/config/Admin Tools/binder.json") then
+        os.remove("moonloader/config/Admin Tools/binder.json")
     end
     local fa = io.open("moonloader/config/Admin Tools/keys.json", "w")
     if fa then
         fa:write(encodeJson(config_keys))
         fa:close()
+    end
+	local fb = io.open("moonloader/config/Admin Tools/binder.json", "w")
+    if fb then
+        fb:write(encodeJson(tBindList))
+        fb:close()
     end
 	showCursor(false)
 end
@@ -1818,7 +1993,7 @@ function sampev.onPlayerDeathNotification(killerId, killedId, reason)
 		if n_killer then kill.killEntry[4].szKiller = ffi.new('char[25]', ( n_killer .. '[' .. killerId .. ']' ):sub(1, 24) ) end
 		if n_killed then kill.killEntry[4].szVictim = ffi.new('char[25]', ( n_killed .. '[' .. killedId .. ']' ):sub(1, 24) ) end
     end)
-    table.insert(tkills, ('{'..("%06X"):format(bit.band(sampGetPlayerColor(killerId), 0xFFFFFF))..'}%s[%s]\t{'..("%06X"):format(bit.band(sampGetPlayerColor(killedId), 0xFFFFFF))..'}%s[%s]\t{ffffff}%s'):format(sampGetPlayerNickname(killerId),killerId, sampGetPlayerNickname(killedId),killedId, weapons.get_name(reason)))
+    table.insert(tkills, ('{'..("%06X"):format(bit.band(sampGetPlayerColor(killerId), 0xFFFFFF))..'}%s[%s]\t{'..("%06X"):format(bit.band(sampGetPlayerColor(killedId), 0xFFFFFF))..'}%s[%s]\t{ffffff}%s'):format(sampGetPlayerNickname(killerId),killerId, sampGetPlayerNickname(killedId),killedId, sampGetDeathReason(reason)))
 end
 function sampev.onTogglePlayerControllable(bool)
     return false
@@ -2369,7 +2544,62 @@ function nameTagOn()
 	mem.setint8(pStSet + 56, 1)
 	nameTag = true
 end
-
+function sampGetDeathReason(id)
+	local names = {
+		[0] = 'Кулак',
+		[1] = 'Кастет',
+		[2] = 'Клюшка для гольфа',
+		[3] = 'Полицейская дубинка',
+		[4] = 'Нож',
+		[5] = 'Бита',
+		[6] = 'Лопата',
+		[7] = 'Кий',
+		[8] = 'Катана',
+		[9] = 'Бензопила',
+		[10] = 'Фиолетовый дилдо',
+		[11] = 'Короткий вибратор',
+		[12] = 'Длинный вибратор',
+		[13] = 'Белый дилдо',
+		[14] = 'Цветы',
+		[15] = 'Трость',
+		[16] = 'Граната',
+		[17] = 'Cлезоточивый газ',
+		[18] = 'Слезоточивый газ',
+		[22] = 'Пистолет',
+		[23] = 'Пистолет с глушителем',
+		[24] = 'Дигл',
+		[25] = 'Шотган',
+		[26] = 'Обрез',
+		[27] = 'Боевой дробовик',
+		[28] = 'Узи',
+		[29] = 'МП5',
+		[30] = 'АК47',
+		[31] = 'М4',
+		[32] = 'Tec 9',
+		[33] = 'Винтовка',
+		[34] = 'Снайперская винтовка',
+		[35] = 'РПГ',
+		[36] = 'РПГ с самонаводкой',
+		[37] = 'Огнемет',
+		[38] = 'Миниган',
+		[39] = 'Сумка для зарядки',
+		[40] = 'Детонатор',
+		[41] = 'Балончик с краской',
+		[42] = 'Огнетушитель',
+		[43] = 'Фотоопарат',
+		[44] = 'Очки ночного виденья',
+		[45] = 'Тепловизор',
+		[46] = 'Парашют',
+		[47] = 'Фейк пистолет',
+		[49] = 'Транспорт',
+		[50] = 'Винты вертолета',
+		[51] = 'Взрыв',
+		[53] = 'Утонул',
+		[54] = 'От падения',
+		[255] = 'Суицид'
+	}
+	return names[id]
+end
 function nameTagOff()
 	local pStSet = sampGetServerSettingsPtr();
 	mem.setfloat(pStSet + 39, NTdist)
@@ -2415,12 +2645,12 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
             return false
         end
     end
-    if id == 1 and #cfg.other.password >=6 then
-        sampSendDialogResponse(id, 1, _, cfg.other.password)
+    if id == 1 and #tostring(cfg.other.password) >=6 then
+        sampSendDialogResponse(id, 1, _, tostring(cfg.other.password))
         return false
     end
-    if id == 1227 and #cfg.other.adminpass >=6 then
-        sampSendDialogResponse(id, 1, _, cfg.other.adminpass)
+    if id == 1227 and #tostring(cfg.other.adminpass) >=6 then
+        sampSendDialogResponse(id, 1, _, tostring(cfg.other.adminpass))
         return false
     end
 end
@@ -2769,6 +2999,7 @@ end
 function cip(pam)
 	if #ips == 2 then
 		local jsonips = encodeJson(ips)
+		atext('Идет проверка IP адресов. Ожидайте..')
 		asyncHttpRequest("POST", "http://ip-api.com/batch?fields=25305&lang=ru", { data = jsonips },
 		function(response)
 			local rdata = decodeJson(u8:decode(response.text))
@@ -2795,7 +3026,7 @@ function cip(pam)
 			end
 		end,
 		function(err)
-			atext('Произошла ошибка')
+			atext('Произошла ошибка проверки IP адресов')
 		end
 		)
 	else
