@@ -30,6 +30,7 @@ cmdwindow = imgui.ImBool(false)
 bMainWindow = imgui.ImBool(false)
 sInputEdit = imgui.ImBuffer(256)
 bIsEnterEdit = imgui.ImBool(false)
+wrecon = {}
 local nop = 0x90
 u8 = encoding.UTF8
 airspeed = nil
@@ -149,6 +150,25 @@ admins_online = {}
 players_online = {}
 local funcsStatus = {ClickWarp = false, Inv = false, AirBrk = false}
 tLastKeys = {}
+aafk = false
+function WorkInBackground(work)
+    local memory = require 'memory'
+    if work then -- on
+        memory.setuint8(7634870, 1)
+        memory.setuint8(7635034, 1)
+        memory.fill(7623723, 144, 8)
+        memory.fill(5499528, 144, 6)
+		atext('тру')
+		aafk = true
+    else -- off
+        memory.setuint8(7634870, 0)
+        memory.setuint8(7635034, 0)
+        memory.hex2bin('5051FF1500838500', 7623723, 8)
+        memory.hex2bin('0F847B010000', 5499528, 6)
+		atext('фолс')
+		aafk = false
+    end
+end
 data = {
     imgui = {
         menu = 1,
@@ -189,6 +209,8 @@ config = {
 		cbugtimer = 60
 	},
     other = {
+		passb = false,
+		apassb = false,
         password = " ",
         adminpass = " "
     }
@@ -457,25 +479,28 @@ function main()
 	mem.fill(samp + 0x9D31A, nop, 12, true)
 	mem.fill(samp + 0x9D329, nop, 12, true)
 	local DWMAPI = ffi.load('dwmapi')
+	local directors = {'moonloader/Admin Tools', 'moonloader/config', 'moonloader/config/Admin Tools'}
+	for k, v in pairs(directors) do
+		if not doesDirectoryExist(v) then createDirectory(v) end
+	end
     DWMAPI.DwmEnableComposition(1)
     while not isSampAvailable() do wait(0) end
     cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     lua_thread.create(wh)
 	lua_thread.create(renderHud)
-	sampRegisterChatCommand('ip', function() asyncHttpRequest('GET', 'http://ipinfo.io/ip', nil, function(response) atext(response.text) end, function(err) atext(err) end) end)
-	sampRegisterChatCommand('wh', function()
-		if nameTag then
-			nameTagOff()
+	--[[sampRegisterChatCommand('aafk', function()
+		if aafk then
+			WorkInBackground(false)
 		else
-			nameTagOn()
+			WorkInBackground(true)
 		end
-	end)
+	end)]]
 	sampRegisterChatCommand('addtemp', addtemp)
 	sampRegisterChatCommand('deltemp', deltemp)
 	sampRegisterChatCommand('massgun', massgun)
 	sampRegisterChatCommand('masshp', masshp)
+	sampRegisterChatCommand('massarm', massarm)
 	sampRegisterChatCommand('cip', cip)
-	sampRegisterChatCommand('mmm', function(pam) id = tonumber(pam) checkfont = renderCreateFont("Arial", 9, id) end)
     sampRegisterChatCommand('al', function() sampSendChat('/alogin') end)
     sampRegisterChatCommand('at_reload', function() showCursor(false); nameTagOn(); thisScript():reload() end)
     sampRegisterChatCommand('checkrangs', checkrangs)
@@ -821,6 +846,18 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Описание: Удалить игрока из чекера игроков')
                 imgui.TextWrapped(u8 'Использование: /delplayer [id/nick]')
             end
+			if imgui.CollapsingHeader('/masshp', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Выдать ХП игрока в зоне стрима')
+                imgui.TextWrapped(u8 'Использование: /masshp [кол-во хп]')
+            end
+			if imgui.CollapsingHeader('/massarm', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Выдать броню игрокам в зоне стрима')
+                imgui.TextWrapped(u8 'Использование: /massarm [кол-во брони]')
+            end
+			if imgui.CollapsingHeader('/massgun', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Выдать оружие игрокам в зоне стрима')
+                imgui.TextWrapped(u8 'Использование: /massgun [id оружия] [кол-во патронов]')
+            end
             imgui.End()
         end
         if tpwindow.v then
@@ -1011,12 +1048,12 @@ function imgui.OnDrawFrame()
                 if imgui.MenuItem(u8 '  Чекер игроков') then data.imgui.checker = 2 end
 				if imgui.MenuItem(u8 '  Временный чекер') then data.imgui.checker = 3 end
             end
-						if imgui.Selectable(u8 'Настройка таймеров') then data.imgui.menu = 4 end
+			if imgui.Selectable(u8 'Настройка таймеров') then data.imgui.menu = 4 end
+			if imgui.Selectable(u8 'Остальные настройки') then data.imgui.menu = 5 end
             imgui.EndChild()
             imgui.SameLine()
             imgui.BeginChild('##set1', imgui.ImVec2(740, 400), true)
             if data.imgui.menu == 1 then
-                local creconB = imgui.ImBool(cfg.crecon.enable)
                 if imgui.HotKey('##warningkey', config_keys.warningkey, tLastKeys, 100) then
                     rkeys.changeHotKey(warningbind, config_keys.warningkey.v)
                 end
@@ -1037,22 +1074,21 @@ function imgui.OnDrawFrame()
                     rkeys.changeHotKey(goposbind, config_keys.goposkey.v)
                 end
                 imgui.SameLine(); imgui.Text(u8 'Клавиша телепорта на сохраненные координаты')
-                imgui.Text(u8 'Местоположение рекона')
-                imgui.SameLine()
-                if imgui.Button(u8 'Изменить##3') then data.imgui.reconpos = true; mainwindow.v = false end
-                if imgui.ToggleButton(u8 'Включить замененный рекон##1', creconB) then cfg.crecon.enable = creconB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Включить замененный рекон')
             elseif data.imgui.menu == 2 then
                 if data.imgui.cheat == 1 then
+					local airfloat = imgui.ImFloat(cfg.cheat.airbrkspeed)
                     imgui.CentrText(u8 'AirBrake')
                     imgui.Separator()
+					if imgui.SliderFloat(u8 'Начальная скорость', airfloat, 0.05, 50) then cfg.cheat.airbrkspeed = airfloat.v inicfg.save(config, 'Admin Tools\\config.ini') end
                 elseif data.imgui.cheat == 2 then
                     local godModeB = imgui.ImBool(cfg.cheat.autogm)
                     imgui.CentrText(u8 'GodMode')
                     imgui.Separator()
-                    if imgui.ToggleButton(u8 'Включить чекер##1', godModeB) then cfg.cheat.autogm = godModeB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Автоматически включать ГМ при входе в игру')
+                    if imgui.ToggleButton(u8 'Включить гмм##11', godModeB) then cfg.cheat.autogm = godModeB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Автоматически включать ГМ при входе в игру')
                 elseif data.imgui.cheat == 3 then
                     imgui.CentrText(u8 'WallHack')
                     imgui.Separator()
+					imgui.Text(u8'Пока без настроек =)')
                 end
             elseif data.imgui.menu == 3 then
                 if data.imgui.checker == 1 then
@@ -1079,7 +1115,7 @@ function imgui.OnDrawFrame()
 					local tempChetckerB = imgui.ImBool(cfg.tempChecker.enable)
 					imgui.CentrText(u8 'Временный чекер')
 					imgui.Separator()
-					if imgui.ToggleButton(u8 'Включить чекер##3', tempChetckerB) then cfg.tempChecker.enable = tempChetckerB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
+					if imgui.ToggleButton(u8 'Включить чекер##3', tempChetckerB) then cfg.tempChecker.enable = tempChetckerB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер') imgui.SameLine() imgui.TextQuestion(u8 'Оно пока баганное, не рекомендую использовать')
 					if cfg.tempChecker.enable then
                         imgui.Text(u8 'Местоположение чекера')
                         imgui.SameLine()
@@ -1087,15 +1123,37 @@ function imgui.OnDrawFrame()
                     end
 				end
             elseif data.imgui.menu == 4 then
-								local sbivb = imgui.ImInt(cfg.timers.sbivtimer)
-								local csbivb = imgui.ImInt(cfg.timers.csbivtimer)
-								local cbugb = imgui.ImInt(cfg.timers.cbugtimer)
-								imgui.CentrText(u8 'Настройка таймеров')
-								imgui.Separator()
-								if imgui.InputInt(u8 'Таймер сбива', sbivb, 0) then cfg.timers.sbivtimer = sbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
-								if imgui.InputInt(u8 'Таймер клео сбива', csbivb, 0) then cfg.timers.csbivtimer = csbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
-								if imgui.InputInt(u8 'Таймер +с вне гетто', cbugb, 0) then cfg.timers.cbugtimer = cbugb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
-						end
+				local sbivb = imgui.ImInt(cfg.timers.sbivtimer)
+				local csbivb = imgui.ImInt(cfg.timers.csbivtimer)
+				local cbugb = imgui.ImInt(cfg.timers.cbugtimer)
+				imgui.CentrText(u8 'Настройка таймеров')
+				imgui.Separator()
+				if imgui.InputInt(u8 'Таймер сбива', sbivb, 0) then cfg.timers.sbivtimer = sbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
+				if imgui.InputInt(u8 'Таймер клео сбива', csbivb, 0) then cfg.timers.csbivtimer = csbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
+				if imgui.InputInt(u8 'Таймер +с вне гетто', cbugb, 0) then cfg.timers.cbugtimer = cbugb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
+			elseif data.imgui.menu == 5 then
+				local creconB = imgui.ImBool(cfg.crecon.enable)
+				local ipassb = imgui.ImBool(cfg.other.passb)
+				local iapassb = imgui.ImBool(cfg.other.apassb)
+				local ipass = imgui.ImBuffer(tostring(cfg.other.password), 256)
+				local iapass = imgui.ImBuffer(tostring(cfg.other.adminpass), 256)
+				imgui.CentrText(u8 'Остальное')
+				imgui.Separator()
+				imgui.Text(u8 'Местоположение рекона')
+                imgui.SameLine()
+                if imgui.Button(u8 'Изменить##3') then data.imgui.reconpos = true; mainwindow.v = false end
+                if imgui.ToggleButton(u8 'Включить замененный рекон##1', creconB) then cfg.crecon.enable = creconB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Включить замененный рекон')
+				if imgui.ToggleButton(u8 'Автологин##11', ipassb) then cfg.other.passb = ipassb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Автологин')
+				if imgui.ToggleButton(u8 'Автоалогин##11', iapassb) then cfg.other.apassb = iapassb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Автоалогин')
+				if ipassb.v then
+					if imgui.InputText(u8 'Введите ваш пароль', ipass, imgui.InputTextFlags.Password) then cfg.other.password = u8:decode(ipass.v) inicfg.save(config, 'Admin Tools\\config.ini') end
+					if imgui.Button(u8 'Узнать пароль##1') then atext('Ваш пароль: {a1dd4e}'..cfg.other.password) end
+				end
+				if iapassb.v then
+					if imgui.InputText(u8 'Введите ваш админский пароль', iapass, imgui.InputTextFlags.Password) then cfg.other.adminpass = u8:decode(iapass.v) inicfg.save(config, 'Admin Tools\\config.ini') end
+					if imgui.Button(u8 'Узнать пароль##2') then atext('Ваш админский пароль: {a1dd4e}'..cfg.other.adminpass) end
+				end
+			end
             imgui.EndChild()
             imgui.End()
         end
@@ -1963,6 +2021,7 @@ function sampev.onTextDrawHide(id)
     if cfg.crecon.enable then if id == 2164 then recon.v = false; reid = nil end end
 end
 function sampev.onPlayerQuit(id, reason)
+	if reason == 1 or reason == 2 then table.insert(wrecon, {nick = sampGetPlayerNickname(id), time = os.time()}) end
 	for i, v in ipairs(admins_online) do
 		if v["id"] == id then
 			table.remove(admins_online, i)
@@ -2016,6 +2075,13 @@ function sampev.onBulletSync(playerid, data)
 	end
 end
 function sampev.onPlayerJoin(id, clist, isNPC, nick)
+	for i, v in ipairs(wrecon) do
+		if v["nick"] == nick then
+			if (os.time() - v["time"]) < 5 and (os.time() - v["time"]) > 0 then
+				atext(('Игрок {a1dd4e}%s [%s] {ffffff}возможно клео реконнект. Время перехода: %s секунд'):format(nick, id, os.time() - v["time"]))
+			end
+		end
+	end
 	for i, v in ipairs(admins) do
 		if nick == v then
 			table.insert(admins_online, {nick = nick, id = id})
@@ -2043,7 +2109,7 @@ function renderChecker()
         if cfg.admchecker.enable then
             renderFontDrawText(checkfont, "{00ff00}Админы онлайн ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY, -1)
             for _, v in ipairs(admins_online) do
-                renderFontDrawText(checkfont,string.format('%s [%s] %s', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.admchecker.posx, admrenderPosY + 20, -1)
+                renderFontDrawText(checkfont,string.format('%s [%s] %s{ffffff}', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.admchecker.posx, admrenderPosY + 20, -1)
                 admrenderPosY = admrenderPosY + 15
             end
         end
@@ -2706,12 +2772,16 @@ function ban(pam)
                         sampSendChat('/getstats '..id)
                         while not checkstatdone do wait(0) end
                         wait(1200)
-                        if sampGetPlayerNickname(id) == wnick then
-                            if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
-                                sampSendChat(string.format('/ban %s %s [%s/%s]', id, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
-                            else
-                                sampSendChat(string.format('/ban %s %s', id, reason))
-                            end
+                        if sampGetPlayerNickname(id)~= nil then
+							if sampGetPlayerNickname(id) == wnick then
+	                            if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
+	                                sampSendChat(string.format('/ban %s %s [%s/%s]', id, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
+	                            else
+	                                sampSendChat(string.format('/ban %s %s', id, reason))
+	                            end
+							else
+								atext('Игрок '..wnick..' вышел из игры')
+							end
                         else
                             atext('Игрок '..wnick..' вышел из игры')
                         end
@@ -3049,7 +3119,7 @@ function massgun(pam)
 		local gun, pt = pam:match('(%d+) (%d+)')
 		if gun and pt then
 			for k, v in pairs(sampGetStreamedPlayers()) do
-				atext(("/givegun %s %s %s"):format(v, gun, pt))
+				sampSendChat(("/givegun %s %s %s"):format(v, gun, pt))
 				wait(1200)
 			end
 			atext('Выдача закончена')
@@ -3063,12 +3133,26 @@ function masshp(pam)
 		local hp = pam:match('(%d+)')
 		if hp then
 			for k, v in pairs(sampGetStreamedPlayers()) do
-				atext(("/sethp %s %s"):format(v, hp))
+				sampSendChat(("/sethp %s %s"):format(v, hp))
 				wait(1200)
 			end
 			atext('Выдача закончена')
 		else
 			atext('Введите /masshp [уровень хп]')
+		end
+	end)
+end
+function massarm(pam)
+	lua_thread.create(function()
+		local arm = pam:match('(%d+)')
+		if arm then
+			for k, v in pairs(sampGetStreamedPlayers()) do
+				sampSendChat(("/setarm %s %s"):format(v, hp))
+				wait(1200)
+			end
+			atext('Выдача закончена')
+		else
+			atext('Введите /massarm [уровень брони]')
 		end
 	end)
 end
