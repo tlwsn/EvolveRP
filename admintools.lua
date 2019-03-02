@@ -158,15 +158,21 @@ function WorkInBackground(work)
         memory.setuint8(7635034, 1)
         memory.fill(7623723, 144, 8)
         memory.fill(5499528, 144, 6)
-		atext('тру')
 		aafk = true
     else -- off
         memory.setuint8(7634870, 0)
         memory.setuint8(7635034, 0)
         memory.hex2bin('5051FF1500838500', 7623723, 8)
         memory.hex2bin('0F847B010000', 5499528, 6)
-		atext('фолс')
 		aafk = false
+    end
+end
+function saveData(table, path)
+	if doesFileExist(path) then os.remove(path) end
+    local sfa = io.open(path, "w")
+    if sfa then
+        sfa:write(encodeJson(table))
+        sfa:close()
     end
 end
 data = {
@@ -212,7 +218,8 @@ config = {
 		passb = false,
 		apassb = false,
         password = " ",
-        adminpass = " "
+        adminpass = " ",
+		reconw = true
     }
 }
 function asyncHttpRequest(method, url, args, resolve, reject)
@@ -483,18 +490,22 @@ function main()
 	for k, v in pairs(directors) do
 		if not doesDirectoryExist(v) then createDirectory(v) end
 	end
+	if not doesFileExist('moonloader/Admin Tools/chatlog_all.txt') then
+		local file = io.open('moonloader/Admin Tools/chatlog_all.txt', 'w')
+		file:close()
+	end
     DWMAPI.DwmEnableComposition(1)
     while not isSampAvailable() do wait(0) end
     cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     lua_thread.create(wh)
 	lua_thread.create(renderHud)
-	--[[sampRegisterChatCommand('aafk', function()
+	sampRegisterChatCommand('aafk', function()
 		if aafk then
 			WorkInBackground(false)
 		else
 			WorkInBackground(true)
 		end
-	end)]]
+	end)
 	sampRegisterChatCommand('addtemp', addtemp)
 	sampRegisterChatCommand('deltemp', deltemp)
 	sampRegisterChatCommand('massgun', massgun)
@@ -1056,22 +1067,27 @@ function imgui.OnDrawFrame()
             if data.imgui.menu == 1 then
                 if imgui.HotKey('##warningkey', config_keys.warningkey, tLastKeys, 100) then
                     rkeys.changeHotKey(warningbind, config_keys.warningkey.v)
+					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                 end
                 imgui.SameLine(); imgui.Text(u8 'Клавиша перехода по варнингам')
                 if imgui.HotKey('##reportkey', config_keys.reportkey, tLastKeys, 100) then
                     rkeys.changeHotKey(reportbind, config_keys.reportkey.v)
+					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                 end
                 imgui.SameLine(); imgui.Text(u8 'Клавиша перехода по репорту')
                 if imgui.HotKey('##banipkey', config_keys.banipkey, tLastKeys, 100) then
                     rkeys.changeHotKey(banipbind, config_keys.banipkey.v)
+					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                 end
                 imgui.SameLine(); imgui.Text(u8 'Клавиша бана IP адреса')
                 if imgui.HotKey('##saveposkey', config_keys.saveposkey, tLastKeys, 100) then
                     rkeys.changeHotKey(saveposbind, config_keys.saveposkey.v)
+					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                 end
                 imgui.SameLine(); imgui.Text(u8 'Клавиша сохранения координат')
                 if imgui.HotKey('##goposkey', config_keys.goposkey, tLastKeys, 100) then
                     rkeys.changeHotKey(goposbind, config_keys.goposkey.v)
+					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                 end
                 imgui.SameLine(); imgui.Text(u8 'Клавиша телепорта на сохраненные координаты')
             elseif data.imgui.menu == 2 then
@@ -1135,10 +1151,12 @@ function imgui.OnDrawFrame()
 				local creconB = imgui.ImBool(cfg.crecon.enable)
 				local ipassb = imgui.ImBool(cfg.other.passb)
 				local iapassb = imgui.ImBool(cfg.other.apassb)
+				local reconwb = imgui.ImBool(cfg.other.reconw)
 				local ipass = imgui.ImBuffer(tostring(cfg.other.password), 256)
 				local iapass = imgui.ImBuffer(tostring(cfg.other.adminpass), 256)
 				imgui.CentrText(u8 'Остальное')
 				imgui.Separator()
+				if imgui.ToggleButton(u8 'reconw##1', reconwb) then cfg.other.reconw = reconwb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Варнинги на клео реконнект')
 				imgui.Text(u8 'Местоположение рекона')
                 imgui.SameLine()
                 if imgui.Button(u8 'Изменить##3') then data.imgui.reconpos = true; mainwindow.v = false end
@@ -1210,6 +1228,7 @@ function imgui.OnDrawFrame()
 					if save then
 						tBindList[tEditData.id].text = u8:decode(sInputEdit.v) .. (bIsEnterEdit.v and "[enter]" or "")
 						tEditData.id = -1
+						saveData(tBindList, "moonloader/config/Admin Tools/binder.json")
 					end
 					if tEditData.inputActve then
 						tEditData.inputActve = false
@@ -1222,6 +1241,8 @@ function imgui.OnDrawFrame()
 			if imgui.Button(u8"Добавить клавишу") then
 				tBindList[#tBindList + 1] = {text = "", v = {}, time = 0}
 			end
+			imgui.SameLine()
+			if imgui.Button(u8'Сохранить биндер') then saveData(tBindList, "moonloader/config/Admin Tools/binder.json") end
 			imgui.End()
 		end
     end
@@ -1729,26 +1750,16 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 function onScriptTerminate(scr)
-	nameTagOn()
-	if doesFileExist('moonloader/config/Admin Tools/keys.json') then
-        os.remove('moonloader/config/Admin Tools/keys.json')
-    end
-	if doesFileExist("moonloader/config/Admin Tools/binder.json") then
-        os.remove("moonloader/config/Admin Tools/binder.json")
-    end
-    local fa = io.open("moonloader/config/Admin Tools/keys.json", "w")
-    if fa then
-        fa:write(encodeJson(config_keys))
-        fa:close()
-    end
-	local fb = io.open("moonloader/config/Admin Tools/binder.json", "w")
-    if fb then
-        fb:write(encodeJson(tBindList))
-        fb:close()
-    end
+	--nameTagOn()
 	showCursor(false)
 end
 function sampev.onServerMessage(color, text)
+	if doesFileExist('moonloader/Admin Tools/chatlog_all.txt') then
+		local file = io.open('moonloader/Admin Tools/chatlog_all.txt', 'a')
+		file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
+		file:close()
+		file = nil
+	end
     if checkfraks then
         if text:match('^ ID: %d+ |.+') then
             local cid, cnick, crang = text:match('^ ID%: (%d+) | %d+%:%d+ %d+%.%d+%.%d+ | (.+)%: .+%[(%d+)%]')
@@ -2078,7 +2089,10 @@ function sampev.onPlayerJoin(id, clist, isNPC, nick)
 	for i, v in ipairs(wrecon) do
 		if v["nick"] == nick then
 			if (os.time() - v["time"]) < 5 and (os.time() - v["time"]) > 0 then
-				atext(('Игрок {a1dd4e}%s [%s] {ffffff}возможно клео реконнект. Время перехода: %s секунд'):format(nick, id, os.time() - v["time"]))
+				if cfg.other.reconw then
+					atext(('Игрок {a1dd4e}%s [%s] {ffffff}возможно клео реконнект. Время перехода: %s секунд'):format(nick, id, os.time() - v["time"]))
+				end
+				table.remove(wrecon, i)
 			end
 		end
 	end
