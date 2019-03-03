@@ -198,7 +198,8 @@ config = {
 	tempChecker = {
 		enable = true,
 		posx = screenx/2,
-        posy = screeny/2
+        posy = screeny/2,
+		wadd = true
 	},
     cheat = {
         airbrkspeed = 0.5,
@@ -481,10 +482,29 @@ function sampGetStreamedPlayers()
 	end
 	return t
 end
+function registerFastAnswer()
+	for line in io.lines('moonloader/config/Admin Tools/fa.txt') do
+        local cmd, text = line:match('(.+) = (.+)')
+        if cmd and text then
+            if sampIsChatCommandDefined(cmd) then sampUnregisterChatCommand(cmd) end
+            sampRegisterChatCommand(cmd, function(pam)
+                cID = tonumber(pam)
+                if cID ~= nil then
+                    sampSendChat('/pm '..cID..' '..text, -1)
+                else
+                    if pam ~= nil then
+                        sampSendChat('/'..cmd..' '..pam, -1)
+                    end
+                end
+            end)
+        end
+    end
+end
 function main()
     local samp = getModuleHandle('samp.dll')
 	mem.fill(samp + 0x9D31A, nop, 12, true)
 	mem.fill(samp + 0x9D329, nop, 12, true)
+	require('memory').fill(0x00531155, 0x90, 5, true)
 	local DWMAPI = ffi.load('dwmapi')
 	local directors = {'moonloader/Admin Tools', 'moonloader/config', 'moonloader/config/Admin Tools'}
 	for k, v in pairs(directors) do
@@ -494,11 +514,16 @@ function main()
 		local file = io.open('moonloader/Admin Tools/chatlog_all.txt', 'w')
 		file:close()
 	end
+	if not doesFileExist('moonloader/config/Admin Tools/fa.txt') then
+		local file = io.open('moonloader/config/Admin Tools/fa.txt', 'w')
+		file:close()
+	end
     DWMAPI.DwmEnableComposition(1)
     while not isSampAvailable() do wait(0) end
     cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     lua_thread.create(wh)
 	lua_thread.create(renderHud)
+	registerFastAnswer()
 	sampRegisterChatCommand('aafk', function()
 		if aafk then
 			WorkInBackground(false)
@@ -1095,7 +1120,7 @@ function imgui.OnDrawFrame()
 					local airfloat = imgui.ImFloat(cfg.cheat.airbrkspeed)
                     imgui.CentrText(u8 'AirBrake')
                     imgui.Separator()
-					if imgui.SliderFloat(u8 'Начальная скорость', airfloat, 0.05, 50) then cfg.cheat.airbrkspeed = airfloat.v inicfg.save(config, 'Admin Tools\\config.ini') end
+					if imgui.SliderFloat(u8 'Начальная скорость', airfloat, 0.05, 10, '%0.2f') then cfg.cheat.airbrkspeed = airfloat.v inicfg.save(config, 'Admin Tools\\config.ini') end
                 elseif data.imgui.cheat == 2 then
                     local godModeB = imgui.ImBool(cfg.cheat.autogm)
                     imgui.CentrText(u8 'GodMode')
@@ -1131,11 +1156,13 @@ function imgui.OnDrawFrame()
 					local tempChetckerB = imgui.ImBool(cfg.tempChecker.enable)
 					imgui.CentrText(u8 'Временный чекер')
 					imgui.Separator()
-					if imgui.ToggleButton(u8 'Включить чекер##3', tempChetckerB) then cfg.tempChecker.enable = tempChetckerB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер') imgui.SameLine() imgui.TextQuestion(u8 'Оно пока баганное, не рекомендую использовать')
+					if imgui.ToggleButton(u8 'Включить чекер##3', tempChetckerB) then cfg.tempChecker.enable = tempChetckerB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
 					if cfg.tempChecker.enable then
+						local tempWarningB = imgui.ImBool(cfg.tempChecker.wadd)
                         imgui.Text(u8 'Местоположение чекера')
                         imgui.SameLine()
                         if imgui.Button(u8 'Изменить##3') then data.imgui.tempcheckpos = true; mainwindow.v = false end
+						if imgui.ToggleButton(u8 'Добавлять в черер игроков по варнингу', tempWarningB) then cfg.tempChecker.wadd = tempWarningB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Добавлять в черер игроков по варнингу')
                     end
 				end
             elseif data.imgui.menu == 4 then
@@ -1981,8 +2008,10 @@ function sampev.onServerMessage(color, text)
         local ccwid = text:match('<Warning> .+%[(%d+)%]%: .+')
 		cwid = ccwid
 		local cnick = sampGetPlayerNickname(ccwid)
-		table.insert(temp_checker_online, {nick = cnick, id = ccwid})
-		table.insert(temp_checker, cnick)
+		if cfg.tempChecker.wadd then
+			table.insert(temp_checker_online, {nick = cnick, id = tonumber(ccwid)})
+			table.insert(temp_checker, cnick)
+		end
     end
     if text:match('Репорт от .+%[%d+%]%:') and color == -646512470 then
         reportid = text:match('Репорт от .+%[(%d+)%]%:')
@@ -1995,7 +2024,7 @@ function sampev.onServerMessage(color, text)
        if sampIsPlayerConnected(i) or i == myid then
          local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
          local a = text:gsub('{.+}', '')
-           if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find(nick..'%('..i..'%)') then
+           if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
               text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
           end
         end
