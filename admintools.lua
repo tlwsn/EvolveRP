@@ -2121,8 +2121,8 @@ function sampev.onPlayerJoin(id, clist, isNPC, nick)
 				if cfg.other.reconw then
 					atext(('Игрок {a1dd4e}%s [%s] {ffffff}возможно клео реконнект. Время перехода: %s секунд'):format(nick, id, os.time() - v["time"]))
 				end
-				table.remove(wrecon, i)
 			end
+			table.remove(wrecon, i)
 		end
 	end
 	for i, v in ipairs(admins) do
@@ -2733,6 +2733,15 @@ function warningsKey()
     if wtext:match("<Warning> {.+}.+%[%d+%] возможно попал сквозь текстуру в {.+}.+%[%d+%] из .+ %(model: %d+%)") then
         cwid = wtext:match("<Warning> {.+}.+%[(%d+)%] возможно попал сквозь текстуру в {.+}.+%[%d+%] из .+ %(model: %d+%)")
     end
+	if wtext:match('^<Warning> {.+}.+%[%d+%] {FFFFFF}.+') then
+		cwid = wtext:match('^<Warning> {.+}.+%[(%d+)%] {FFFFFF}.+')
+	end
+	if wtext:match('^Warning:{.+} .+%[%d+%] .+') and not wtext:match('^Warning:{.+} .+%[%d+%] возможно попал сквозь текстуру в{.+} .+%[%d+%] из: .+ %(texture: %d+%)') then
+		cwid = wtext:match('^Warning:{.+} .+%[(%d+)%] .+')
+	end
+	if wtext:match('^Warning:{.+} .+%[%d+%] возможно попал сквозь текстуру в{.+} .+%[%d+%] из: .+ %(texture: %d+%)') then
+		cwid = wtext:match('^Warning:{.+} .+%[(%d+)%] возможно попал сквозь текстуру в{.+} .+%[%d+%] из: .+ %(texture: %d+%)')
+	end
 end
 function gun(pam)
     lua_thread.create(function()
