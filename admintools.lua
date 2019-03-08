@@ -53,7 +53,8 @@ config_keys = {
     reportkey = {v = {key.VK_X}},
     saveposkey = {v = {key.VK_M}},
     goposkey = {v = {key.VK_J}},
-	tpmetka = {v = {key.VK_K}}
+	tpmetka = {v = {key.VK_K}},
+	cwarningkey = {v = {226}}
 }
 local tEditData = {
 	id = -1,
@@ -579,8 +580,12 @@ function main()
 				    reportkey = {v = {key.VK_X}},
 				    saveposkey = {v = {key.VK_M}},
 				    goposkey = {v = {key.VK_J}},
-					tpmetka = {v = {key.VK_K}}
+					tpmetka = {v = {key.VK_K}},
+					cwarningkey = {v = {226}}
 				}
+			end
+			if config_keys.cwarningkey == nil then
+				config_keys.cwarningkey = {v = {226}}
 			end
         end
     end
@@ -632,6 +637,7 @@ function main()
     saveposbind = rkeys.registerHotKey(config_keys.saveposkey.v, true, saveposk)
     goposbind = rkeys.registerHotKey(config_keys.goposkey.v, true, goposk)
 	tpmetkabind = rkeys.registerHotKey(config_keys.tpmetka.v, true, tpmetkak)
+	cwarningbind = rkeys.registerHotKey(config_keys.cwarningkey.v, true, cwarningk)
 	addEventHandler("onWindowMessage", function (msg, wparam, lparam)
         if msg == wm.WM_KEYDOWN or msg == wm.WM_SYSKEYDOWN then
             if tEditData.id > -1 then
@@ -874,6 +880,10 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Описание: Добавить игрока в чекер игроков')
                 imgui.TextWrapped(u8 'Использование: /addplayer [id/nick]')
             end
+			if imgui.CollapsingHeader('/addtemp', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Добавить игрока в временный чекер')
+                imgui.TextWrapped(u8 'Использование: /addtemp [id/nick]')
+            end
             if imgui.CollapsingHeader('/deladm', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Удалить игрока из чекера админов')
                 imgui.TextWrapped(u8 'Использование: /deladm [id/nick]')
@@ -881,6 +891,10 @@ function imgui.OnDrawFrame()
             if imgui.CollapsingHeader('/delplayer', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Удалить игрока из чекера игроков')
                 imgui.TextWrapped(u8 'Использование: /delplayer [id/nick]')
+            end
+			if imgui.CollapsingHeader('/deltemp', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Удалить игрока из временного чекера')
+                imgui.TextWrapped(u8 'Использование: /deltemp [id/nick]')
             end
 			if imgui.CollapsingHeader('/masshp', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Выдать ХП игрока в зоне стрима')
@@ -1094,7 +1108,12 @@ function imgui.OnDrawFrame()
                     rkeys.changeHotKey(warningbind, config_keys.warningkey.v)
 					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                 end
-                imgui.SameLine(); imgui.Text(u8 'Клавиша перехода по варнингам')
+                imgui.SameLine(); imgui.Text(u8 'Клавиша перехода по серверным варнингам')
+				if imgui.HotKey('##warningkey1', config_keys.cwarningkey, tLastKeys, 100) then
+                    rkeys.changeHotKey(cwarningbind, config_keys.cwarningkey.v)
+					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
+                end
+                imgui.SameLine(); imgui.Text(u8 'Клавиша перехода по скриптовым варнингам')
                 if imgui.HotKey('##reportkey', config_keys.reportkey, tLastKeys, 100) then
                     rkeys.changeHotKey(reportbind, config_keys.reportkey.v)
 					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
@@ -1739,7 +1758,7 @@ function clickF()
                                             tpIntoCar = car
                                             color = 0xFFFFFFFF
                                         end
-                                        renderFontDrawText(font2, "Hold right mouse button to teleport into the car", sx, sy - hoffs * 3, color)
+                                        renderFontDrawText(font2, "Зажмите правую кнопку мыши для телепорта в авто", sx, sy - hoffs * 3, color)
                                     end
                                 end
                                 createPointMarker(pos.x, pos.y, pos.z)
@@ -1779,6 +1798,7 @@ end
 function onScriptTerminate(scr)
 	--nameTagOn()
 	showCursor(false)
+	removePointMarker()
 end
 function sampev.onServerMessage(color, text)
 	if doesFileExist('moonloader/Admin Tools/chatlog_all.txt') then
@@ -2004,9 +2024,14 @@ function sampev.onServerMessage(color, text)
 		rnick = nick
 		bip = ip
     end
+	if text:match('^ Nik %[.+%]   R%-IP %[.+%]   L%-IP %[.+%]   IP %[.+%]$') then
+		local nick, rip, ip = text:match('^ Nik %[(.+)%]   R%-IP %[(.+)%]   L%-IP %[.+%]   IP %[(.+)%]$')
+		ips = {{query = rip}, {query = ip}}
+		rnick = nick
+	end
     if text:match('<Warning> .+%[%d+%]%: .+') and color == -16763905 then
         local ccwid = text:match('<Warning> .+%[(%d+)%]%: .+')
-		cwid = ccwid
+		wid = ccwid
 		local cnick = sampGetPlayerNickname(ccwid)
 		if cfg.tempChecker.wadd then
 			table.insert(temp_checker_online, {nick = cnick, id = tonumber(ccwid)})
@@ -2756,11 +2781,21 @@ end
 function sampev.onShowDialog(id, style, title, button1, button2, text)
     if id == 0 then
         if warnst then
-            wbfrak = text:match('.+Организация%:%s+(.+)%s+Ранг')
-            wbrang = text:match('.+Ранг%:%s+(.+)%s+Работа')
-            sampSendDialogResponse(id, 1, 1, nil)
-            checkstatdone = true
-            return false
+			if title == 'Статистика персонажа' then
+	            wbfrak = text:match('.+Организация%:%s+(.+)%s+Ранг')
+	            wbrang = text:match('.+Ранг%:%s+(.+)%s+Работа')
+				wbstyle = 1
+	            sampSendDialogResponse(id, 1, 1, nil)
+	            checkstatdone = true
+	            return false
+			elseif title == '{FFFFFF}Статистика | {ae433d}Администрирование' then
+				wbfrak = text:match('.+Организация\t(.+)\nДолжность')
+				wbrang = text:match('.+Должность\t.+%[(.+)%]\nРабота')
+				wbstyle = 2
+				sampSendDialogResponse(id, 1, 1, nil)
+				checkstatdone = true
+				return false
+			end
         end
     end
     if id == 1 and #tostring(cfg.other.password) >=6 then
@@ -2786,11 +2821,19 @@ function warn(pam)
                     while not checkstatdone do wait(0) end
                     wait(1200)
                     if sampGetPlayerNickname(id) == wnick then
-                        if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
-                            sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
-                        else
-                            sampSendChat(string.format('/warn %s %s %s', id, days, reason))
-                        end
+						if wbstyle == 1 then
+	                        if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
+	                            sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
+	                        else
+	                            sampSendChat(string.format('/warn %s %s %s', id, days, reason))
+	                        end
+						elseif wbstyle == 2 then
+							if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
+								sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), wbrang))
+	                        else
+	                            sampSendChat(string.format('/warn %s %s %s', id, days, reason))
+							end
+						end
                     else
                         atext('Игрок '..wnick..' вышел из игры')
                     end
@@ -2826,11 +2869,19 @@ function ban(pam)
                         wait(1200)
                         if sampGetPlayerNickname(id)~= nil then
 							if sampGetPlayerNickname(id) == wnick then
-	                            if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
-	                                sampSendChat(string.format('/ban %s %s [%s/%s]', id, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
-	                            else
-	                                sampSendChat(string.format('/ban %s %s', id, reason))
-	                            end
+								if wbstyle == 1 then
+			                        if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
+			                            sampSendChat(string.format('/ban %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
+			                        else
+			                            sampSendChat(string.format('/ban %s %s %s', id, days, reason))
+			                        end
+								elseif wbstyle == 2 then
+									if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
+										sampSendChat(string.format('/ban %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), wbrang))
+			                        else
+			                            sampSendChat(string.format('/ban %s %s %s', id, days, reason))
+									end
+								end
 							else
 								atext('Игрок '..wnick..' вышел из игры')
 							end
@@ -2930,6 +2981,12 @@ function reportk()
     end
 end
 function warningk()
+	if wid ~= nil then
+		sampSendChat('/re '..wid)
+	    traceid = wid
+	end
+end
+function cwarningk()
 	if cwid ~= nil then
 		sampSendChat('/re '..cwid)
 	    traceid = cwid
@@ -3035,10 +3092,18 @@ function cheat(pam)
 					while not checkstatdone do wait(0) end
 					wait(1200)
 					if sampGetPlayerNickname(id) == wnick then
-						if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
-							sampSendChat(string.format('/warn %s 21 cheat [%s/%s]', id, getFrak(wbfrak), getRank(wbfrak, wbrang)))
-						else
-							sampSendChat(string.format('/warn %s 21 cheat', id))
+						if wbstyle == 1 then
+	                        if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
+	                            sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
+	                        else
+	                            sampSendChat(string.format('/warn %s %s %s', id, days, reason))
+	                        end
+						elseif wbstyle == 2 then
+							if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
+								sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), wbrang))
+	                        else
+	                            sampSendChat(string.format('/warn %s %s %s', id, days, reason))
+							end
 						end
 					else
 						atext('Игрок '..wnick..' вышел из игры')
@@ -3138,11 +3203,11 @@ function cip(pam)
 					sampAddChatMessage((' Расстояние: {a1dd4e}%s {ffffff}км. | Ник: {a1dd4e}%s'):format(math.floor(distances), rnick), -1)
 				else
 					lua_thread.create(function()
-						sampAddChatMessage(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
+						sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
 						wait(1200)
-						sampAddChatMessage(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
+						sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
 						wait(1200)
-						sampAddChatMessage(('/a Расстояние: %s км. | Ник: %s'):format(math.floor(distances), rnick), -1)
+						sampSendChat(('/a Расстояние: %s км. | Ник: %s'):format(math.floor(distances), rnick), -1)
 					end)
 				end
 			end
@@ -3199,7 +3264,7 @@ function massarm(pam)
 		local arm = pam:match('(%d+)')
 		if arm then
 			for k, v in pairs(sampGetStreamedPlayers()) do
-				sampSendChat(("/setarm %s %s"):format(v, hp))
+				sampSendChat(("/setarm %s %s"):format(v, arm))
 				wait(1200)
 			end
 			atext('Выдача закончена')
@@ -3224,6 +3289,7 @@ function addtemp(pam)
         if sampGetPlayerIdByNickname(tostring(pam)) ~= nil then
             local bpId = sampGetPlayerIdByNickname(tostring(pam))
             table.insert(temp_checker, {nick = pam, id = bpId})
+			table.insert(temp_checker_online, {nick = nick, id = pId})
             atext('Игрок '..pam..' ['..bpId..'] добавлен в временный чекер')
         else
             atext('Игрок '..pam..' добавлен в временный чекер')
@@ -3265,6 +3331,7 @@ function deltemp(pam)
                         i = i + 1
                     end
                 end
+				atext('Игрок '..pId.. 'удален из временного чекера')
             end
         elseif pId == nil and #pam ~= 0 then
             if sampGetPlayerIdByNickname(tostring(pam)) ~= nil then
@@ -3285,6 +3352,7 @@ function deltemp(pam)
                         oi = oi + 1
                     end
                 end
+				atext('Игрок '..pam..' ['..bpId..'] удален из временного чекера')
             else
                 local i = 1
                 while i <= #temp_checker do
@@ -3294,6 +3362,7 @@ function deltemp(pam)
                         i = i + 1
                     end
                 end
+				atext('Игрок '..pam.. 'удален из временного чекера')
             end
         end
     end)
