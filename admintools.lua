@@ -1,6 +1,6 @@
 script_name('Admin Tools')
 script_version('1')
-script_author('Thomas_Lawson')
+script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
 require 'lib.sampfuncs'
@@ -38,6 +38,7 @@ reid = '-1'
 cwid = nil
 check = false
 admins = {}
+nametagCoords = {}
 tpcount = 0
 tprep = false
 nametag = true
@@ -524,7 +525,7 @@ function main()
     cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     lua_thread.create(wh)
 	lua_thread.create(renderHud)
-	registerFastAnswer()
+    registerFastAnswer()
 	sampRegisterChatCommand('aafk', function()
 		if aafk then
 			WorkInBackground(false)
@@ -771,8 +772,8 @@ function imgui.OnDrawFrame()
         local imkx, imky = convertGameScreenCoordsToWindowScreenCoords(530, 199)
 		--imgui.PushStyleColor(imgui.Col.WindowBg, imgui.ImVec4(1, 0, 0, 1))
         imgui.SetNextWindowPos(imgui.ImVec2(cfg.crecon.posx, cfg.crecon.posy), imgui.ImVec2(0.5, 0.5))
-        imgui.SetNextWindowSize(imgui.ImVec2(260, 310), imgui.Cond.FirstUseEver)
-        imgui.Begin(u8'Слежка за игроком', _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove)
+        imgui.SetNextWindowSize(imgui.ImVec2(260, 285), imgui.Cond.FirstUseEver)
+        imgui.Begin(u8'Слежка за игроком', _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoTitleBar)
         imgui.CentrText(imtextnick)
         imgui.CentrText(('ID: %s'):format(reid))
         if reafk then
@@ -1796,9 +1797,11 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 function onScriptTerminate(scr)
-	--nameTagOn()
-	showCursor(false)
-	removePointMarker()
+    if scr == script.this then
+        whoff()
+        showCursor(false)
+        removePointMarker()
+    end
 end
 function sampev.onServerMessage(color, text)
 	if doesFileExist('moonloader/Admin Tools/chatlog_all.txt') then
@@ -2628,6 +2631,7 @@ function wh()
     while true do wait(0)
         if not nameTag then
             if not isPauseMenuActive() then
+                nametagCoords = {}
                 for i = 0, sampGetMaxPlayerId(true) do
                     if sampIsPlayerConnected(i) then
                         local result, cped = sampGetCharHandleBySampPlayerId(i)
@@ -2643,8 +2647,20 @@ function wh()
                                 local cpedHealth = sampGetPlayerHealth(i)
                                 local cpedArmor = sampGetPlayerArmor(i)
                                 local cpedlvl = sampGetPlayerScore(i)
-                                local posy = headposy
-                                local posx = headposx - 50
+                                --------- test ----------
+                                local posy = headposy - 40
+                                local posx = headposx - 60
+                                local sdsd = posy
+                                for _, v in ipairs(nametagCoords) do
+                                    if v["pos_y"] > posy-22.5 and v["pos_y"] < posy+22.5 and v["pos_x"] > posx-50 and v["pos_x"] < posx+50 then
+                                        posy = v["pos_y"] + 22.5
+                                    end
+                                end
+                                nametagCoords[#nametagCoords+1] = {
+                                    pos_y = posy,
+                                    pos_x = posx
+                                }
+                                -------------------------
                                 renderFontDrawText(whfont, string.format('{%s}%s [%s] %s', color, nick, i, isAfk and '{cccccc}[AFK]' or ''), posx, posy, -1)
                                 local hp2 = cpedHealth
                                 if cpedHealth > 100 then cpedHealth = 100 end
@@ -2741,6 +2757,12 @@ function nameTagOff()
 	mem.setint8(pStSet + 56, NTshow)
 	nameTag = false
 end
+function whoff()
+	local pStSet = sampGetServerSettingsPtr()
+	mem.setfloat(pStSet + 39, NTdist)
+	mem.setint8(pStSet + 47, NTwalls)
+	mem.setint8(pStSet + 56, NTshow)
+end
 function getBodyPartCoordinates(id, handle)
     local pedptr = getCharPointer(handle)
     local vec = ffi.new("float[3]")
@@ -2820,20 +2842,28 @@ function warn(pam)
                     sampSendChat('/getstats '..id)
                     while not checkstatdone do wait(0) end
                     wait(1200)
-                    if sampGetPlayerNickname(id) == wnick then
-						if wbstyle == 1 then
-	                        if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
-	                            sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
-	                        else
-	                            sampSendChat(string.format('/warn %s %s %s', id, days, reason))
-	                        end
-						elseif wbstyle == 2 then
-							if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
-								sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), wbrang))
-	                        else
-	                            sampSendChat(string.format('/warn %s %s %s', id, days, reason))
-							end
-						end
+                    if sampIsPlayerConnected(id) then
+                        if sampGetPlayerNickname(id) ~= nil then
+                            if sampGetPlayerNickname(id) == wnick then
+                                if wbstyle == 1 then
+                                    if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
+                                        sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
+                                    else
+                                        sampSendChat(string.format('/warn %s %s %s', id, days, reason))
+                                    end
+                                elseif wbstyle == 2 then
+                                    if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
+                                        sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), wbrang))
+                                    else
+                                        sampSendChat(string.format('/warn %s %s %s', id, days, reason))
+                                    end
+                                end
+                            else
+                                atext('Игрок '..wnick..' вышел из игры')
+                            end
+                        else
+                            atext('Игрок '..wnick..' вышел из игры')
+                        end
                     else
                         atext('Игрок '..wnick..' вышел из игры')
                     end
@@ -2867,24 +2897,28 @@ function ban(pam)
                         sampSendChat('/getstats '..id)
                         while not checkstatdone do wait(0) end
                         wait(1200)
-                        if sampGetPlayerNickname(id)~= nil then
-							if sampGetPlayerNickname(id) == wnick then
-								if wbstyle == 1 then
-			                        if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
-			                            sampSendChat(string.format('/ban %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
-			                        else
-			                            sampSendChat(string.format('/ban %s %s %s', id, days, reason))
-			                        end
-								elseif wbstyle == 2 then
-									if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
-										sampSendChat(string.format('/ban %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), wbrang))
-			                        else
-			                            sampSendChat(string.format('/ban %s %s %s', id, days, reason))
-									end
-								end
-							else
-								atext('Игрок '..wnick..' вышел из игры')
-							end
+                        if sampIsPlayerConnected(id) then
+                            if sampGetPlayerNickname(id)~= nil then
+                                if sampGetPlayerNickname(id) == wnick then
+                                    if wbstyle == 1 then
+                                        if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
+                                            sampSendChat(string.format('/ban %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
+                                        else
+                                            sampSendChat(string.format('/ban %s %s %s', id, days, reason))
+                                        end
+                                    elseif wbstyle == 2 then
+                                        if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
+                                            sampSendChat(string.format('/ban %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), wbrang))
+                                        else
+                                            sampSendChat(string.format('/ban %s %s %s', id, days, reason))
+                                        end
+                                    end
+                                else
+                                    atext('Игрок '..wnick..' вышел из игры')
+                                end
+                            else
+                                atext('Игрок '..wnick..' вышел из игры')
+                            end
                         else
                             atext('Игрок '..wnick..' вышел из игры')
                         end
@@ -3090,24 +3124,32 @@ function cheat(pam)
 					local wnick = sampGetPlayerNickname(id)
 					sampSendChat('/getstats '..id)
 					while not checkstatdone do wait(0) end
-					wait(1200)
-					if sampGetPlayerNickname(id) == wnick then
-						if wbstyle == 1 then
-	                        if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
-	                            sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
-	                        else
-	                            sampSendChat(string.format('/warn %s %s %s', id, days, reason))
-	                        end
-						elseif wbstyle == 2 then
-							if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
-								sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), wbrang))
-	                        else
-	                            sampSendChat(string.format('/warn %s %s %s', id, days, reason))
-							end
-						end
-					else
-						atext('Игрок '..wnick..' вышел из игры')
-					end
+                    wait(1200)
+                    if sampIsPlayerConnected(id) then
+                        if sampGetPlayerNickname(id) ~= nil then
+                            if sampGetPlayerNickname(id) == wnick then
+                                if wbstyle == 1 then
+                                    if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
+                                        sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
+                                    else
+                                        sampSendChat(string.format('/warn %s %s %s', id, days, reason))
+                                    end
+                                elseif wbstyle == 2 then
+                                    if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
+                                        sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), wbrang))
+                                    else
+                                        sampSendChat(string.format('/warn %s %s %s', id, days, reason))
+                                    end
+                                end
+                            else
+                                atext('Игрок '..wnick..' вышел из игры')
+                            end
+                        else
+                            atext('Игрок '..wnick..' вышел из игры')
+                        end
+                    else
+                        atext('Игрок '..wnick..' вышел из игры')
+                    end
 					checkstatdone = false
 					warnst = false
 					wbfrak = nil
