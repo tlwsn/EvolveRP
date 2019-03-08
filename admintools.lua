@@ -2665,14 +2665,14 @@ function wh()
                                 local hp2 = cpedHealth
                                 if cpedHealth > 100 then cpedHealth = 100 end
                                 if cpedArmor > 100 then cpedArmor = 100 end
-                                renderDrawBoxWithBorder(posx+1, posy+15, math.floor(100 / 2) + 1, 7, 0x80000000, 1, 0xFF000000)
-                                renderDrawBox(posx, posy+15, math.floor(cpedHealth / 2) + 1, 7, 0xAACC0000)
+                                renderDrawBoxWithBorder(posx+1, posy+15, math.floor(100 / 2) + 1, 5, 0x80000000, 1, 0xFF000000)
+                                renderDrawBox(posx, posy+15, math.floor(cpedHealth / 2) + 1, 5, 0xAACC0000)
                                 --renderFontDrawText(font2, 'HP: ' .. tostring(hp2), 1, resY - 11, 0xFFFFFFFF)
                                 renderFontDrawText(whhpfont, cpedHealth, posx+60, posy+12.5, 0xFFFF0000)
                                 renderFontDrawText(whfont, 'LVL: '..cpedlvl, posx+85, posy+14.5, -1)
                                 if cpedArmor ~= 0 then
-                                    renderDrawBoxWithBorder(posx, posy+25, math.floor(100 / 2) + 1, 7, 0x80000000, 1, 0xFF000000)
-                                    renderDrawBox(posx, posy+25, math.floor(cpedArmor / 2) + 1, 7, 0xAAAAAAAA)
+                                    renderDrawBoxWithBorder(posx, posy+25, math.floor(100 / 2) + 1, 5, 0x80000000, 1, 0xFF000000)
+                                    renderDrawBox(posx, posy+25, math.floor(cpedArmor / 2) + 1, 5, 0xAAAAAAAA)
                                     --renderFontDrawText(font, 'Armor: '..cpedArmor, posx, posy+25, -1)
                                     renderFontDrawText(whhpfont, cpedArmor, posx+60, posy+22.5, -1)
                                 end
