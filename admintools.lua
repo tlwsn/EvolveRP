@@ -2198,7 +2198,7 @@ function sampev.onTextDrawHide(id)
     if cfg.crecon.enable then if id == 2164 then recon.v = false; reid = nil end end
 end
 function sampev.onPlayerQuit(id, reason)
-	if reason == 1 or reason == 2 then table.insert(wrecon, {nick = sampGetPlayerNickname(id), time = os.time()}) end
+	if reason == 2 or reason == 3 then table.insert(wrecon, {nick = sampGetPlayerNickname(id), time = os.time()}) end
 	for i, v in ipairs(admins_online) do
 		if v["id"] == id then
 			table.remove(admins_online, i)
