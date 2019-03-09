@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1')
+script_version('1.1')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -578,7 +578,7 @@ function main()
 	end
     DWMAPI.DwmEnableComposition(1)
     repeat wait(0) until isSampAvailable()
-    autoupdate("https://raw.githubusercontent.com/WhackerH/Mayor_ERP01/master/mayorhelp.json", '[Admin Tools]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439")
+    autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", '[Admin Tools]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439")
     cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     lua_thread.create(wh)
 	lua_thread.create(renderHud)
