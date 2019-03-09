@@ -508,7 +508,7 @@ function main()
 	mem.fill(samp + 0x9D329, nop, 12, true)
 	require('memory').fill(0x00531155, 0x90, 5, true)
 	local DWMAPI = ffi.load('dwmapi')
-	local directors = {'moonloader/Admin Tools', 'moonloader/config', 'moonloader/config/Admin Tools'}
+	local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools'}
 	for k, v in pairs(directors) do
 		if not doesDirectoryExist(v) then createDirectory(v) end
 	end
@@ -532,7 +532,9 @@ function main()
 		else
 			WorkInBackground(true)
 		end
-	end)
+    end)
+    sampRegisterChatCommand('masshb', masshb)
+    sampRegisterChatCommand('givehb', givehb)
 	sampRegisterChatCommand('addtemp', addtemp)
 	sampRegisterChatCommand('deltemp', deltemp)
 	sampRegisterChatCommand('massgun', massgun)
@@ -908,6 +910,14 @@ function imgui.OnDrawFrame()
 			if imgui.CollapsingHeader('/massgun', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Выдать оружие игрокам в зоне стрима')
                 imgui.TextWrapped(u8 'Использование: /massgun [id оружия] [кол-во патронов]')
+            end
+            if imgui.CollapsingHeader('/masshb', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Выдать комплект объектов игрокам в зоне стрима')
+                imgui.TextWrapped(u8 'Использование: /masshb [имя комплекта]')
+            end
+            if imgui.CollapsingHeader('/givehb', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Выдать комлпект объектов игроку')
+                imgui.TextWrapped(u8 'Использование: /givehb [id] [имя комплекта]')
             end
             imgui.End()
         end
@@ -2902,15 +2912,15 @@ function ban(pam)
                                 if sampGetPlayerNickname(id) == wnick then
                                     if wbstyle == 1 then
                                         if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
-                                            sampSendChat(string.format('/ban %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
+                                            sampSendChat(string.format('/ban %s %s [%s/%s]', id, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
                                         else
-                                            sampSendChat(string.format('/ban %s %s %s', id, days, reason))
+                                            sampSendChat(string.format('/ban %s %s', id, reason))
                                         end
                                     elseif wbstyle == 2 then
                                         if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
-                                            sampSendChat(string.format('/ban %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), wbrang))
+                                            sampSendChat(string.format('/ban %s %s [%s/%s]', id, reason, getFrak(wbfrak), wbrang))
                                         else
-                                            sampSendChat(string.format('/ban %s %s %s', id, days, reason))
+                                            sampSendChat(string.format('/ban %s %s', id, reason))
                                         end
                                     end
                                 else
@@ -3130,13 +3140,13 @@ function cheat(pam)
                             if sampGetPlayerNickname(id) == wnick then
                                 if wbstyle == 1 then
                                     if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
-                                        sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
+                                        sampSendChat(string.format('/warn %s %s cheat [%s/%s]', id, days, getFrak(wbfrak), getRank(wbfrak, wbrang)))
                                     else
                                         sampSendChat(string.format('/warn %s %s %s', id, days, reason))
                                     end
                                 elseif wbstyle == 2 then
                                     if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
-                                        sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), wbrang))
+                                        sampSendChat(string.format('/warn %s %s cheat [%s/%s]', id, days, getFrak(wbfrak), wbrang))
                                     else
                                         sampSendChat(string.format('/warn %s %s %s', id, days, reason))
                                     end
@@ -3406,6 +3416,55 @@ function deltemp(pam)
                 end
 				atext('Игрок '..pam.. 'удален из временного чекера')
             end
+        end
+    end)
+end
+function givehb(pam)
+    lua_thread.create(function()
+        local id, pack = pam:match('(%d+)%s+(.+)')
+        if id and pack then
+            if sampIsPlayerConnected(id) then
+                if doesFileExist('moonloader/Admin Tools/hblist/'..pack..'.txt') then
+                    atext('Начата выдача объектов игроку '..sampGetPlayerNickname(id)..' ['..id..']')
+                    for line in io.lines('moonloader/Admin Tools/hblist/'..pack..'.txt') do
+                        sampSendChat('/hbject '..id..' '..line)
+                        wait(1200)
+                    end
+                    atext('Выдача окончена')
+                else
+                    atext('Не обнаружено комплекта "'..pack..'"')
+                end
+            else
+                atext('Игрок оффлайн')
+            end
+        else
+            atext('Введите: /givehb [id] [имя комлекта]')
+        end
+    end)
+end
+function masshb(pam)
+    lua_thread.create(function()
+        local strp = sampGetStreamedPlayers()
+        if #pam ~= 0 then
+            if doesFileExist('moonloader/Admin Tools/hblist/'..pam..'.txt') then
+                atext('Массовая выдача объектов начата')
+                for k, v in pairs(strp) do
+                    if sampIsPlayerConnected(v) then
+                        atext('Начата выдача объектов игроку '..sampGetPlayerNickname(v)..' ['..v..']')
+                        for line in io.lines('moonloader/Admin Tools/hblist/'..pam..'.txt') do
+                            sampSendChat('/hbject '..v..' '..line)
+                            wait(1200)
+                        end
+                        atext('Выдача объектов игроку '..sampGetPlayerNickname(v)..' ['..v..'] окончена')
+                        wait(1200)
+                    end
+                end
+                atext('Массовая выдача объектов окончена')
+            else
+                atext('Не обнаружено комплекта "'..pam..'"')
+            end
+        else
+            atext('Введите: /masshb [имя комлекта]')
         end
     end)
 end
