@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.6')
+script_version('1.7')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -191,18 +191,18 @@ config = {
     admchecker = {
         enable = true,
         posx = screenx/2,
-        posy = screeny/2
+        posy = screeny/2,
     },
     playerChecker = {
         enable = true,
         posx = screenx/2,
-        posy = screeny/2
+        posy = screeny/2,
     },
 	tempChecker = {
 		enable = true,
 		posx = screenx/2,
         posy = screeny/2,
-		wadd = true
+        wadd = true,
 	},
     cheat = {
         airbrkspeed = 0.5,
@@ -223,7 +223,8 @@ config = {
 		apassb = false,
         password = " ",
         adminpass = " ",
-		reconw = true
+        reconw = true,
+        checksize = 9
     }
 }
 function asyncHttpRequest(method, url, args, resolve, reject)
@@ -1156,6 +1157,7 @@ function imgui.OnDrawFrame()
 					imgui.Text(u8'Пока без настроек =)')
                 end
             elseif data.imgui.menu == 3 then
+                local checksizeb = imgui.ImInt(cfg.other.checksize)
                 if data.imgui.checker == 1 then
                     local admCheckerB = imgui.ImBool(cfg.admchecker.enable)
                     imgui.CentrText(u8 'Чекер админов')
@@ -1188,7 +1190,8 @@ function imgui.OnDrawFrame()
                         if imgui.Button(u8 'Изменить##3') then data.imgui.tempcheckpos = true; mainwindow.v = false end
 						if imgui.ToggleButton(u8 'Добавлять в черер игроков по варнингу', tempWarningB) then cfg.tempChecker.wadd = tempWarningB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Добавлять в черер игроков по варнингу')
                     end
-				end
+                end
+                if imgui.InputInt(u8 'Размер шрифта', checksizeb, 0) then cfg.other.checksize = checksizeb; checkfont = renderCreateFont("Arial", cfg.other.checksize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
             elseif data.imgui.menu == 4 then
 				local sbivb = imgui.ImInt(cfg.timers.sbivtimer)
 				local csbivb = imgui.ImInt(cfg.timers.csbivtimer)
@@ -1572,7 +1575,7 @@ function initializeRender()
     gunfont = renderCreateFont(getGameDirectory()..'\\gtaweap3.ttf', 10, 0)
     whfont = renderCreateFont("Verdana", 8, 4)
     whhpfont = renderCreateFont("Verdana", 8, 4)
-	checkfont = renderCreateFont("Arial", 9, 4)
+	checkfont = renderCreateFont("Arial", cfg.other.checksize, 4)
 	hudfont = renderCreateFont("Times New Roman", 10, 4)
 end
 function rotateCarAroundUpAxis(car, vec)
