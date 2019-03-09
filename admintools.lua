@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.4')
+script_version('1.5')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -590,6 +590,7 @@ function main()
 			WorkInBackground(true)
 		end
     end)
+    sampRegisterChatCommand('tg', function() sampSendChat('/togphone') end)
     sampRegisterChatCommand('blog', blog)
     sampRegisterChatCommand('masstp', masstp)
     sampRegisterChatCommand('masshb', masshb)
@@ -886,6 +887,10 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Описание: Сокращение команды /alogin')
                 imgui.TextWrapped(u8 'Использование: /al')
             end
+            if imgui.CollapsingHeader('/tg', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Сокращение команды /togphone')
+                imgui.TextWrapped(u8 'Использование: /tg')
+            end
             if imgui.CollapsingHeader('/spiar', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Написать пиар /ask в /o чат')
                 imgui.TextWrapped(u8 'Использование: /spiar')
@@ -929,6 +934,10 @@ function imgui.OnDrawFrame()
             if imgui.CollapsingHeader('/wl', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Сокращение команды /warnlog')
                 imgui.TextWrapped(u8 'Использование: /wl [id/nick]')
+            end
+            if imgui.CollapsingHeader('/blog', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Сокращение команды /banlog')
+                imgui.TextWrapped(u8 'Использование: /blog [id/nick]')
             end
             if imgui.CollapsingHeader('/tr', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Переключить трейсера на определенного игрока')
