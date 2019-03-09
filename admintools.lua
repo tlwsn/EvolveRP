@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.9')
+script_version('1.91')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -522,7 +522,8 @@ function main()
     sampRegisterChatCommand('masshb', masshb)
     sampRegisterChatCommand('givehb', givehb)
 	sampRegisterChatCommand('addtemp', addtemp)
-	sampRegisterChatCommand('deltemp', deltemp)
+    sampRegisterChatCommand('deltemp', deltemp)
+    sampRegisterChatCommand('deltempall', function() temp_checker = {} temp_checker_online = {} end)
 	sampRegisterChatCommand('massgun', massgun)
 	sampRegisterChatCommand('masshp', masshp)
 	sampRegisterChatCommand('massarm', massarm)
@@ -889,6 +890,10 @@ function imgui.OnDrawFrame()
 			if imgui.CollapsingHeader('/deltemp', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Удалить игрока из временного чекера')
                 imgui.TextWrapped(u8 'Использование: /deltemp [id/nick]')
+            end
+            if imgui.CollapsingHeader('/deltempall', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Удалить всех игроков из временного чекера')
+                imgui.TextWrapped(u8 'Использование: /deltempall')
             end
             if imgui.CollapsingHeader('/masstp', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Начать / окончить телепортацию по СМС')
