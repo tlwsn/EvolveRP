@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.92')
+script_version('1.93')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -41,6 +41,7 @@ admins = {}
 nametagCoords = {}
 tpcount = 0
 tprep = false
+swork = true
 nametag = true
 checkf = {}
 ips = {}
@@ -58,6 +59,15 @@ config_keys = {
 	tpmetka = {v = {key.VK_K}},
     cwarningkey = {v = {226}},
     airbrkkey = {v = key.VK_RSHIFT}
+}
+config_colors = {
+    admchat = {r = 255, g = 255, b = 0, color = "FFFF00"},
+    supchat = {r = 0, g = 255, b = 153, color = '00FF99'},
+    smschat = {r = 255, g = 255, b = 0, color = "FFFF00"},
+    repchat = {r = 217, g = 119, b = 0, color = "D97700"},
+    anschat = {r = 140, g = 255, b = 155, color = "8CFF9B"},
+    askchat = {r = 233, g = 165, b = 40, color = "E9A528"},
+    jbchat = {r = 217, g = 119, b = 0, color = "D97700"}
 }
 local tEditData = {
 	id = -1,
@@ -155,9 +165,9 @@ players_online = {}
 local funcsStatus = {ClickWarp = false, Inv = false, AirBrk = false}
 tLastKeys = {}
 aafk = false
-function WorkInBackground(work)
+function WorkInBackground(wstate)
     local memory = require 'memory'
-    if work then -- on
+    if wstate then -- on
         memory.setuint8(7634870, 1)
         memory.setuint8(7635034, 1)
         memory.fill(7623723, 144, 8)
@@ -179,6 +189,28 @@ function saveData(table, path)
         sfa:close()
     end
 end
+function argb_to_rgba(argb)
+    local a, r, g, b = explode_argb(argb)
+    return join_argb(r, g, b, a)
+  end
+  
+  function explode_argb(argb)
+    local a = bit.band(bit.rshift(argb, 24), 0xFF)
+    local r = bit.band(bit.rshift(argb, 16), 0xFF)
+    local g = bit.band(bit.rshift(argb, 8), 0xFF)
+    local b = bit.band(argb, 0xFF)
+    return a, r, g, b
+  end
+  
+  function join_argb(a, r, g, b)
+     local argb = b
+     argb = bit.bor(argb, bit.lshift(g, 8))
+     argb = bit.bor(argb, bit.lshift(r, 16))
+     argb = bit.bor(argb, bit.lshift(a, 24))
+     return argb
+  end
+  
+  function ARGBtoRGB(color) return bit32 or require'bit'.band(color, 0xFFFFFF) end
 data = {
     imgui = {
         menu = 1,
@@ -517,6 +549,7 @@ function main()
 			WorkInBackground(true)
 		end
     end)
+    sampRegisterChatCommand('guns', function() sampShowDialog(3435, '{ffffff}Оружия', '{ffffff}ID\t{ffffff}Название\n1\tКастет\n2\tКлюшка для гольфа\n3\tПолицейская дубинка\n4\tНож\n5\tБита\n6\tЛопата\n7\tКий\n8\tКатана\n9\tБензопила\n10\tДилдо\n11\tДилдо\n12\tВибратор\n13\tВибратор\n14\tЦветы\n15\tТрость\n16\tГраната\n17\tДымовая граната\n18\tКоктейль Молотова\n22\t9mm пистолет\n23\tSDPistol\n24\tDesert Eagle\n25\tShotgun\n26\tОбрез\n27\tCombat Shotgun\n28\tUZI\n29\tMP5\n30\tAK-47\n31\tM4\n32\tTec-9\n33\tCountry Rifle\n34\tSniper Rifle\n35\tRPG\n36\tHS Rocket\n37\tОгнемёт\n38\tМиниган\n39\tSatchel Charge\n40\tДетонатор\n41\tSpraycan\n42\tОгнетушитель\n43\tФотоаппарат\n44\tNight Vis Goggles\n45\tThermal Goggles\n46\tParachute', 'x', _, 5) end)
     sampRegisterChatCommand('tg', function() sampSendChat('/togphone') end)
     sampRegisterChatCommand('blog', blog)
     sampRegisterChatCommand('masstp', masstp)
@@ -616,6 +649,27 @@ function main()
             frakrang = decodeJson(fr:read('*a'))
         end
     end
+    if not doesFileExist("moonloader/config/Admin Tools/colors.json") then
+        local fc = io.open("moonloader/config/Admin Tools/colors.json", 'w')
+        fc:close()
+    else
+        local fc = io.open("moonloader/config/Admin Tools/colors.json", "r")
+        if fc then
+            config_colors = decodeJson(fc:read('*a'))
+            if config_colors == nil then
+                config_colors = {
+                    admchat = {r = 255, g = 255, b = 0, color = "FFFF00"},
+                    supchat = {r = 0, g = 255, b = 153, color = '00FF99'},
+                    smschat = {r = 255, g = 255, b = 0, color = "FFFF00"},
+                    repchat = {r = 217, g = 119, b = 0, color = "D97700"},
+                    anschat = {r = 140, g = 255, b = 155, color = "8CFF9B"},
+                    askchat = {r = 233, g = 165, b = 40, color = "E9A528"},
+                    jbchat = {r = 217, g = 119, b = 0, color = "D97700"}
+                }
+            end
+        end
+    end
+    saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
 	for k, v in pairs(tBindList) do
         rkeys.registerHotKey(v.v, true, onHotKey)
         if v.time == nil then v.time = 0 end
@@ -661,6 +715,7 @@ function main()
     lua_thread.create(main_funcs)
     lua_thread.create(check_keys_fast)
     while true do wait(0)
+        if wasKeyPressed(key.VK_F12) and not sampIsChatInputActive() and not isSampfuncsConsoleActive() and not sampIsDialogActive() then swork = not swork end
         if #tkills > 50 then
             table.remove(tkills, 1)
         end
@@ -744,6 +799,20 @@ function rkeys.onHotKey(id, keys)
         return false
     end
 end
+local ar, ag, ab = imgui.ImColor(config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b):GetFloat4()
+local acolor = imgui.ImFloat3(ar, ag, ab)
+local sr, sg, sb = imgui.ImColor(config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b):GetFloat4()
+local scolor = imgui.ImFloat3(sr, sg, sb)
+local smsr, smsg, smsb = imgui.ImColor(config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b):GetFloat4()
+local smscolor = imgui.ImFloat3(smsr, smsg, smsb)
+local jbr, jbg, jbb = imgui.ImColor(config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b):GetFloat4()
+local jbcolor = imgui.ImFloat3(jbr, jbg, jbb)
+local askr, askg, askb = imgui.ImColor(config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b):GetFloat4()
+local askcolor = imgui.ImFloat3(askr, askg, askb)
+local repr, repg, repb = imgui.ImColor(config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b):GetFloat4()
+local repcolor = imgui.ImFloat3(repr, repg, repb)
+local ansr, ansg, ansb = imgui.ImColor(config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b):GetFloat4()
+local anscolor = imgui.ImFloat3(ansr, ansg, ansb)
 function imgui.OnDrawFrame()
 	local ir, ig, ib, ia = rainbow(1, 1)
 	imgui.PushStyleColor(imgui.Col.Border, imgui.ImVec4(ir, ig, ib, ia))
@@ -856,6 +925,10 @@ function imgui.OnDrawFrame()
             if imgui.CollapsingHeader('/kills', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Узнать 50 последний убийств из килл-листа')
                 imgui.TextWrapped(u8 'Использование: /kills')
+            end
+            if imgui.CollapsingHeader('/guns', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Открыть диалог с ID оружий')
+                imgui.TextWrapped(u8 'Использование: /guns')
             end
             if imgui.CollapsingHeader('/wl', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Сокращение команды /warnlog')
@@ -1111,7 +1184,8 @@ function imgui.OnDrawFrame()
                 if imgui.MenuItem(u8 '  Чекер игроков') then data.imgui.checker = 2 end
 				if imgui.MenuItem(u8 '  Временный чекер') then data.imgui.checker = 3 end
             end
-			if imgui.Selectable(u8 'Настройка таймеров') then data.imgui.menu = 4 end
+            if imgui.Selectable(u8 'Настройка таймеров') then data.imgui.menu = 4 end
+            if imgui.Selectable(u8 'Насройка цветов') then data.imgui.menu = 6 end
 			if imgui.Selectable(u8 'Остальные настройки') then data.imgui.menu = 5 end
             imgui.EndChild()
             imgui.SameLine()
@@ -1233,7 +1307,57 @@ function imgui.OnDrawFrame()
 					if imgui.InputText(u8 'Введите ваш админский пароль', iapass, imgui.InputTextFlags.Password) then cfg.other.adminpass = u8:decode(iapass.v) inicfg.save(config, 'Admin Tools\\config.ini') end
 					if imgui.Button(u8 'Узнать пароль##2') then atext('Ваш админский пароль: {a1dd4e}'..cfg.other.adminpass) end
 				end
-			end
+            elseif data.imgui.menu == 6 then
+                imgui.CentrText(u8 'Настройка цветов')
+                imgui.Separator()
+                if imgui.ColorEdit3(u8 'Админ чат', acolor) then
+                    config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b = acolor.v[1] * 255, acolor.v[2] * 255, acolor.v[3] * 255
+                    config_colors.admchat.color = string.format("%06X", ARGBtoRGB(join_argb(255, acolor.v[1] * 255, acolor.v[2] * 255, acolor.v[3] * 255)))
+                    saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
+                end
+                if imgui.ColorEdit3(u8 'Саппорт чат', scolor) then
+                    config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b = scolor.v[1] * 255, scolor.v[2] * 255, scolor.v[3] * 255
+                    config_colors.supchat.color = string.format("%06X", ARGBtoRGB(join_argb(255, scolor.v[1] * 255, scolor.v[2] * 255, scolor.v[3] * 255)))
+                    saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
+                end
+                if imgui.ColorEdit3(u8 'SMS', smscolor) then
+                    config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b = smscolor.v[1] * 255, smscolor.v[2] * 255, smscolor.v[3] * 255
+                    config_colors.smschat.color = string.format("%06X", ARGBtoRGB(join_argb(255, smscolor.v[1] * 255, smscolor.v[2] * 255, smscolor.v[3] * 255)))
+                    saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
+                end
+                if imgui.ColorEdit3(u8 'Жалоба', jbcolor) then
+                    config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b = jbcolor.v[1] * 255, jbcolor.v[2] * 255, jbcolor.v[3] * 255
+                    config_colors.jbchat.color = string.format("%06X", ARGBtoRGB(join_argb(255, jbcolor.v[1] * 255, jbcolor.v[2] * 255, jbcolor.v[3] * 255)))
+                    saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
+                end
+                if imgui.ColorEdit3(u8 'Репорт', repcolor) then
+                    config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b = repcolor.v[1] * 255, repcolor.v[2] * 255, repcolor.v[3] * 255
+                    config_colors.repchat.color = string.format("%06X", ARGBtoRGB(join_argb(255, repcolor.v[1] * 255, repcolor.v[2] * 255, repcolor.v[3] * 255)))
+                    saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
+                end
+                if imgui.ColorEdit3(u8 'Вопрос', askcolor) then
+                    config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b = askcolor.v[1] * 255, askcolor.v[2] * 255, askcolor.v[3] * 255
+                    config_colors.askchat.color = string.format("%06X", ARGBtoRGB(join_argb(255, askcolor.v[1] * 255, askcolor.v[2] * 255, askcolor.v[3] * 255)))
+                    saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
+                end
+                if imgui.ColorEdit3(u8 'Ответ', anscolor) then
+                    config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b = anscolor.v[1] * 255, anscolor.v[2] * 255, anscolor.v[3] * 255
+                    config_colors.anschat.color = string.format("%06X", ARGBtoRGB(join_argb(255, anscolor.v[1] * 255, anscolor.v[2] * 255, anscolor.v[3] * 255)))
+                    saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
+                end
+                if imgui.Button(u8 'Сбросить цвета') then
+                    config_colors = {
+                        admchat = {r = 255, g = 255, b = 0, color = "FFFF00"},
+                        supchat = {r = 0, g = 255, b = 153, color = '00FF99'},
+                        smschat = {r = 255, g = 255, b = 0, color = "FFFF00"},
+                        repchat = {r = 217, g = 119, b = 0, color = "D97700"},
+                        anschat = {r = 140, g = 255, b = 155, color = "8CFF9B"},
+                        askchat = {r = 233, g = 165, b = 40, color = "E9A528"},
+                        jbchat = {r = 217, g = 119, b = 0, color = "D97700"}
+                    }
+                    saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
+                end
+            end
             imgui.EndChild()
             imgui.End()
         end
@@ -1835,12 +1959,84 @@ frakcolor = {
     ['Rifa'] = '{2A9170}Rifa{ffffff}'
 }
 function sampev.onServerMessage(color, text)
+    --atext(("%06X"):format(bit.rshift(color, 8)))
 	if doesFileExist('moonloader/Admin Tools/chatlog_all.txt') then
 		local file = io.open('moonloader/Admin Tools/chatlog_all.txt', 'a')
 		file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
 		file:close()
 		file = nil
     end
+    if text:match('^ Ответ от .+') then
+        local color = '0x'..config_colors.anschat.color..'FF'
+        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
+        for i = 0, 1000 do
+            if sampIsPlayerConnected(i) or i == myid then
+                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
+                local a = text:gsub('{.+}', '')
+                if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
+                    text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+                end
+            end
+        end
+        return {color, text} 
+    end
+    if text:match('^ <ADM%-CHAT> .+: .+') then
+        local color = '0x'..config_colors.admchat.color..'FF'
+        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
+        for i = 0, 1000 do
+            if sampIsPlayerConnected(i) or i == myid then
+                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
+                local a = text:gsub('{.+}', '')
+                if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
+                    text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+                end
+            end
+        end
+        return {color, text} 
+    end
+    if text:match('^ <SUPPORT%-CHAT> .+: .+') then
+        local color = '0x'..config_colors.supchat.color..'FF'
+        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
+        for i = 0, 1000 do
+            if sampIsPlayerConnected(i) or i == myid then
+                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
+                local a = text:gsub('{.+}', '')
+                if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
+                    text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+                end
+            end
+        end
+        return {color, text} 
+    end
+    if text:match('^ SMS:') then
+        local color = '0x'..config_colors.smschat.color..'FF'
+        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
+        for i = 0, 1000 do
+            if sampIsPlayerConnected(i) or i == myid then
+                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
+                local a = text:gsub('{.+}', '')
+                if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
+                    text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+                end
+            end
+        end
+        return {color, text} 
+    end
+    if text:match('^ %->Вопрос .+') then
+        local color = '0x'..config_colors.askchat.color..'FF'
+        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
+        for i = 0, 1000 do
+            if sampIsPlayerConnected(i) or i == myid then
+                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
+                local a = text:gsub('{.+}', '')
+                if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
+                    text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+                end
+            end
+        end
+        return {color, text} 
+    end
+
     if masstpon and text:match('^ SMS: .+. Отправитель: .+%[%d+%]$') then
         local smsid = text:match('^ SMS: .+. Отправитель: .+%[(%d+)%]$')
         if not checkIntable(smsids, smsid) then
@@ -2060,8 +2256,20 @@ function sampev.onServerMessage(color, text)
         if text:find('Члены организации Он%-лайн%:') then return false end
         if text == ' ' and color == -1 then return false end
     end
-    if text:match("Жалоба от .+%[%d+%] на .+%[%d+%]%: .+") and color == -646512470 then
+    if text:match("^ Жалоба от .+%[%d+%] на .+%[%d+%]%: .+") then
         reportid = text:match("Жалоба от .+%[%d+%] на .+%[(%d+)%]%: .+")
+        local color = '0x'..config_colors.jbchat.color..'FF'
+        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
+        for i = 0, 1000 do
+            if sampIsPlayerConnected(i) or i == myid then
+                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
+                local a = text:gsub('{.+}', '')
+                if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
+                    text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+                end
+            end
+        end
+        return {color, text}
     end
     if text:match("Nik %[.+%]  R%-IP %[.+%]  L%-IP %[.+%]  IP %[(.+)%]") and color == -10270806 then
         local nick, rip, ip = text:match("Nik %[(.+)%]  R%-IP %[(.+)%]  L%-IP %[.+%]  IP %[(.+)%]")
@@ -2084,11 +2292,35 @@ function sampev.onServerMessage(color, text)
             end
 		end
     end
-    if text:match('Репорт от .+%[%d+%]%:') and color == -646512470 then
+    if text:match('^ Репорт от .+%[%d+%]%:') then
         reportid = text:match('Репорт от .+%[(%d+)%]%:')
+        local color = '0x'..config_colors.repchat.color..'FF'
+        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
+        for i = 0, 1000 do
+            if sampIsPlayerConnected(i) or i == myid then
+                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
+                local a = text:gsub('{.+}', '')
+                if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
+                    text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+                end
+            end
+        end
+        return {color, text}
     end
-    if text:match('Жалоба от%: .+%[%d+%]%:') and color == -646512470 then
+    if text:match('^ Жалоба от%: .+%[%d+%]%:') then
         reportid = text:match('Жалоба от%: .+%[(%d+)%]%:')
+        local color = '0x'..config_colors.jbchat.color..'FF'
+        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
+        for i = 0, 1000 do
+            if sampIsPlayerConnected(i) or i == myid then
+                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
+                local a = text:gsub('{.+}', '')
+                if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
+                    text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+                end
+            end
+        end
+        return {color, text}
     end
 	local _, myid = sampGetPlayerIdByCharHandle(playerPed)
     for i = 0, 1000 do
@@ -2217,28 +2449,30 @@ function sampev.onPlayerJoin(id, clist, isNPC, nick)
 end
 function renderChecker()
     while true do wait(0)
-        local admrenderPosY = cfg.admchecker.posy
-        local playerRenderPosY = cfg.playerChecker.posy
-		local tempRenderPosY = cfg.tempChecker.posy
-        if cfg.admchecker.enable then
-            renderFontDrawText(checkfont, "{00ff00}Админы онлайн ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY, -1)
-            for _, v in ipairs(admins_online) do
-                renderFontDrawText(checkfont,string.format('%s [%s] %s{ffffff}', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.admchecker.posx, admrenderPosY + 20, -1)
-                admrenderPosY = admrenderPosY + 15
+        if swork then
+            local admrenderPosY = cfg.admchecker.posy
+            local playerRenderPosY = cfg.playerChecker.posy
+            local tempRenderPosY = cfg.tempChecker.posy
+            if cfg.admchecker.enable then
+                renderFontDrawText(checkfont, "{00ff00}Админы онлайн ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY, -1)
+                for _, v in ipairs(admins_online) do
+                    renderFontDrawText(checkfont,string.format('%s [%s] %s{ffffff}', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.admchecker.posx, admrenderPosY + 20, -1)
+                    admrenderPosY = admrenderPosY + 15
+                end
             end
-        end
-        if cfg.playerChecker.enable then
-            renderFontDrawText(checkfont, "{FFFF00}Игроки онлайн ["..#players_online.."]:", cfg.playerChecker.posx, playerRenderPosY, -1)
-            for _, v in ipairs(players_online) do
-                renderFontDrawText(checkfont,string.format('%s [%s] %s', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.playerChecker.posx, playerRenderPosY + 20, -1)
-                playerRenderPosY = playerRenderPosY + 15
+            if cfg.playerChecker.enable then
+                renderFontDrawText(checkfont, "{FFFF00}Игроки онлайн ["..#players_online.."]:", cfg.playerChecker.posx, playerRenderPosY, -1)
+                for _, v in ipairs(players_online) do
+                    renderFontDrawText(checkfont,string.format('%s [%s] %s', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.playerChecker.posx, playerRenderPosY + 20, -1)
+                    playerRenderPosY = playerRenderPosY + 15
+                end
             end
-        end
-		if cfg.tempChecker.enable then
-            renderFontDrawText(checkfont, "{ff0000}Temp Checker ["..#temp_checker_online.."]:", cfg.tempChecker.posx, tempRenderPosY, -1)
-            for _, v in ipairs(temp_checker_online) do
-                renderFontDrawText(checkfont,string.format('%s [%s] %s', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.tempChecker.posx, tempRenderPosY + 20, -1)
-                tempRenderPosY = tempRenderPosY + 15
+            if cfg.tempChecker.enable then
+                renderFontDrawText(checkfont, "{ff0000}Temp Checker ["..#temp_checker_online.."]:", cfg.tempChecker.posx, tempRenderPosY, -1)
+                for _, v in ipairs(temp_checker_online) do
+                    renderFontDrawText(checkfont,string.format('%s [%s] %s', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.tempChecker.posx, tempRenderPosY + 20, -1)
+                    tempRenderPosY = tempRenderPosY + 15
+                end
             end
         end
     end
@@ -2516,19 +2750,21 @@ function deladm(pam)
 end
 function check_keystrokes() -- inv
     while true do wait(0)
-        if not isSampfuncsConsoleActive() and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() then
-            if isKeyJustPressed(key.VK_F3) then
-                setCharHealth(PLAYER_PED, 0)
-            end
-            if isKeyJustPressed(key.VK_INSERT) then
-                funcsStatus.Inv = not funcsStatus.Inv
-            end
-            if isKeyJustPressed(config_keys.airbrkkey.v) then -- airbrake
-                airspeed = cfg.cheat.airbrkspeed
-                funcsStatus.AirBrk = not funcsStatus.AirBrk
-                if funcsStatus.AirBrk then
-                    local posX, posY, posZ = getCharCoordinates(playerPed)
-                    airBrkCoords = {posX, posY, posZ, 0.0, 0.0, getCharHeading(playerPed)}
+        if swork then
+            if not isSampfuncsConsoleActive() and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() then
+                if isKeyJustPressed(key.VK_F3) then
+                    setCharHealth(PLAYER_PED, 0)
+                end
+                if isKeyJustPressed(key.VK_INSERT) then
+                    funcsStatus.Inv = not funcsStatus.Inv
+                end
+                if isKeyJustPressed(config_keys.airbrkkey.v) then -- airbrake
+                    airspeed = cfg.cheat.airbrkspeed
+                    funcsStatus.AirBrk = not funcsStatus.AirBrk
+                    if funcsStatus.AirBrk then
+                        local posX, posY, posZ = getCharCoordinates(playerPed)
+                        airBrkCoords = {posX, posY, posZ, 0.0, 0.0, getCharHeading(playerPed)}
+                    end
                 end
             end
         end
@@ -2536,126 +2772,130 @@ function check_keystrokes() -- inv
 end
 function main_funcs()
     while true do wait(0)
-        if funcsStatus.Inv then -- inv
-            if isCharInAnyCar(playerPed) then
-                setCarProofs(storeCarCharIsInNoSave(playerPed), true, true, true, true, true)
-                setCharCanBeKnockedOffBike(playerPed, true)
-                setCanBurstCarTires(storeCarCharIsInNoSave(playerPed), false)
+        if swork then
+            if funcsStatus.Inv then -- inv
+                if isCharInAnyCar(playerPed) then
+                    setCarProofs(storeCarCharIsInNoSave(playerPed), true, true, true, true, true)
+                    setCharCanBeKnockedOffBike(playerPed, true)
+                    setCanBurstCarTires(storeCarCharIsInNoSave(playerPed), false)
+                end
+                setCharProofs(playerPed, true, true, true, true, true)
+            else
+                if isCharInAnyCar(playerPed) then
+                    setCarProofs(storeCarCharIsInNoSave(playerPed), false, false, false, false, false)
+                    setCharCanBeKnockedOffBike(playerPed, false)
+                end
+                setCharProofs(playerPed, false, false, false, false, false)
             end
-            setCharProofs(playerPed, true, true, true, true, true)
-        else
-            if isCharInAnyCar(playerPed) then
-                setCarProofs(storeCarCharIsInNoSave(playerPed), false, false, false, false, false)
-                setCharCanBeKnockedOffBike(playerPed, false)
-            end
-            setCharProofs(playerPed, false, false, false, false, false)
-        end
 
-        local time = os.clock() * 1000
-        if funcsStatus.AirBrk then -- airbrake
-            if isCharInAnyCar(playerPed) then heading = getCarHeading(storeCarCharIsInNoSave(playerPed))
-            else heading = getCharHeading(playerPed) end
-            local camCoordX, camCoordY, camCoordZ = getActiveCameraCoordinates()
-            local targetCamX, targetCamY, targetCamZ = getActiveCameraPointAt()
-            local angle = getHeadingFromVector2d(targetCamX - camCoordX, targetCamY - camCoordY)
-            if isCharInAnyCar(playerPed) then difference = 0.79 else difference = 1.0 end
-            setCharCoordinates(playerPed, airBrkCoords[1], airBrkCoords[2], airBrkCoords[3] - difference)
-            if not isSampfuncsConsoleActive() and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() then
-                if isKeyDown(key.VK_W) then
-                    airBrkCoords[1] = airBrkCoords[1] + airspeed * math.sin(-math.rad(angle))
-                    airBrkCoords[2] = airBrkCoords[2] + airspeed * math.cos(-math.rad(angle))
-                    if not isCharInAnyCar(playerPed) then setCharHeading(playerPed, angle)
-                    else setCarHeading(storeCarCharIsInNoSave(playerPed), angle) end
-                elseif isKeyDown(key.VK_S) then
-                    airBrkCoords[1] = airBrkCoords[1] - airspeed * math.sin(-math.rad(heading))
-                    airBrkCoords[2] = airBrkCoords[2] - airspeed * math.cos(-math.rad(heading))
+            local time = os.clock() * 1000
+            if funcsStatus.AirBrk then -- airbrake
+                if isCharInAnyCar(playerPed) then heading = getCarHeading(storeCarCharIsInNoSave(playerPed))
+                else heading = getCharHeading(playerPed) end
+                local camCoordX, camCoordY, camCoordZ = getActiveCameraCoordinates()
+                local targetCamX, targetCamY, targetCamZ = getActiveCameraPointAt()
+                local angle = getHeadingFromVector2d(targetCamX - camCoordX, targetCamY - camCoordY)
+                if isCharInAnyCar(playerPed) then difference = 0.79 else difference = 1.0 end
+                setCharCoordinates(playerPed, airBrkCoords[1], airBrkCoords[2], airBrkCoords[3] - difference)
+                if not isSampfuncsConsoleActive() and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() then
+                    if isKeyDown(key.VK_W) then
+                        airBrkCoords[1] = airBrkCoords[1] + airspeed * math.sin(-math.rad(angle))
+                        airBrkCoords[2] = airBrkCoords[2] + airspeed * math.cos(-math.rad(angle))
+                        if not isCharInAnyCar(playerPed) then setCharHeading(playerPed, angle)
+                        else setCarHeading(storeCarCharIsInNoSave(playerPed), angle) end
+                    elseif isKeyDown(key.VK_S) then
+                        airBrkCoords[1] = airBrkCoords[1] - airspeed * math.sin(-math.rad(heading))
+                        airBrkCoords[2] = airBrkCoords[2] - airspeed * math.cos(-math.rad(heading))
+                    end
+                    if isKeyDown(key.VK_A) then
+                        airBrkCoords[1] = airBrkCoords[1] - airspeed * math.sin(-math.rad(heading - 90))
+                        airBrkCoords[2] = airBrkCoords[2] - airspeed * math.cos(-math.rad(heading - 90))
+                    elseif isKeyDown(key.VK_D) then
+                        airBrkCoords[1] = airBrkCoords[1] - airspeed * math.sin(-math.rad(heading + 90))
+                        airBrkCoords[2] = airBrkCoords[2] - airspeed * math.cos(-math.rad(heading + 90))
+                    end
+                    if isKeyDown(key.VK_UP) then airBrkCoords[3] = airBrkCoords[3] + airspeed / 2.0 end
+                    if isKeyDown(key.VK_DOWN) and airBrkCoords[3] > -95.0 then airBrkCoords[3] = airBrkCoords[3] - airspeed / 2.0 end
+                    if isKeyDown(key.VK_LSHIFT) and not isKeyDown(key.VK_RSHIFT) and airspeed > 0.06 then airspeed = airspeed - 0.050; printStringNow('Speed: '..airspeed, 1000) end
+                    if isKeyDown(key.VK_SPACE) then airspeed = airspeed + 0.050; printStringNow('Speed: '..airspeed, 1000) end
                 end
-                if isKeyDown(key.VK_A) then
-                    airBrkCoords[1] = airBrkCoords[1] - airspeed * math.sin(-math.rad(heading - 90))
-                    airBrkCoords[2] = airBrkCoords[2] - airspeed * math.cos(-math.rad(heading - 90))
-                elseif isKeyDown(key.VK_D) then
-                    airBrkCoords[1] = airBrkCoords[1] - airspeed * math.sin(-math.rad(heading + 90))
-                    airBrkCoords[2] = airBrkCoords[2] - airspeed * math.cos(-math.rad(heading + 90))
-                end
-                if isKeyDown(key.VK_UP) then airBrkCoords[3] = airBrkCoords[3] + airspeed / 2.0 end
-                if isKeyDown(key.VK_DOWN) and airBrkCoords[3] > -95.0 then airBrkCoords[3] = airBrkCoords[3] - airspeed / 2.0 end
-                if isKeyDown(key.VK_LSHIFT) and not isKeyDown(key.VK_RSHIFT) and airspeed > 0.06 then airspeed = airspeed - 0.050; printStringNow('Speed: '..airspeed, 1000) end
-                if isKeyDown(key.VK_SPACE) then airspeed = airspeed + 0.050; printStringNow('Speed: '..airspeed, 1000) end
             end
         end
     end
 end
 function check_keys_fast()
     while true do wait(0)
-        local isInVeh = isCharInAnyCar(playerPed)
-        local veh = nil
-        if isInVeh then veh = storeCarCharIsInNoSave(playerPed) end
-        if not isSampfuncsConsoleActive() and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() then
-            if isKeyJustPressed(key.VK_B) then -- hop
-                if isCharInAnyCar(playerPed) then
+        if swork then
+            local isInVeh = isCharInAnyCar(playerPed)
+            local veh = nil
+            if isInVeh then veh = storeCarCharIsInNoSave(playerPed) end
+            if not isSampfuncsConsoleActive() and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() then
+                if isKeyJustPressed(key.VK_B) then -- hop
+                    if isCharInAnyCar(playerPed) then
+                        local cVecX, cVecY, cVecZ = getCarSpeedVector(storeCarCharIsInNoSave(playerPed))
+                        if cVecZ < 7.0 then applyForceToCar(storeCarCharIsInNoSave(playerPed), 0.0, 0.0, 0.3, 0.0, 0.0, 0.0) end
+                    else
+                        local pVecX, pVecY, pVecZ = getCharVelocity(playerPed)
+                        if pVecZ < 7.0 then setCharVelocity(playerPed, 0.0, 0.0, 10.0) end
+                    end
+                end
+                if isKeyJustPressed(key.VK_BACK) and isCharInAnyCar(playerPed) then -- turn back
                     local cVecX, cVecY, cVecZ = getCarSpeedVector(storeCarCharIsInNoSave(playerPed))
-                    if cVecZ < 7.0 then applyForceToCar(storeCarCharIsInNoSave(playerPed), 0.0, 0.0, 0.3, 0.0, 0.0, 0.0) end
-                else
-                    local pVecX, pVecY, pVecZ = getCharVelocity(playerPed)
-                    if pVecZ < 7.0 then setCharVelocity(playerPed, 0.0, 0.0, 10.0) end
+                    applyForceToCar(storeCarCharIsInNoSave(playerPed), -cVecX / 25, -cVecY / 25, -cVecZ / 25, 0.0, 0.0, 0.0)
+                    local x, y, z, w = getVehicleQuaternion(storeCarCharIsInNoSave(playerPed))
+                    local matrix = {convertQuaternionToMatrix(w, x, y, z)}
+                    matrix[1] = -matrix[1]
+                    matrix[2] = -matrix[2]
+                    matrix[4] = -matrix[4]
+                    matrix[5] = -matrix[5]
+                    matrix[7] = -matrix[7]
+                    matrix[8] = -matrix[8]
+                    local w, x, y, z = convertMatrixToQuaternion(matrix[1], matrix[2], matrix[3], matrix[4], matrix[5], matrix[6], matrix[7], matrix[8], matrix[9])
+                    setVehicleQuaternion(storeCarCharIsInNoSave(playerPed), x, y, z, w)
                 end
-            end
-            if isKeyJustPressed(key.VK_BACK) and isCharInAnyCar(playerPed) then -- turn back
-                local cVecX, cVecY, cVecZ = getCarSpeedVector(storeCarCharIsInNoSave(playerPed))
-                applyForceToCar(storeCarCharIsInNoSave(playerPed), -cVecX / 25, -cVecY / 25, -cVecZ / 25, 0.0, 0.0, 0.0)
-                local x, y, z, w = getVehicleQuaternion(storeCarCharIsInNoSave(playerPed))
-                local matrix = {convertQuaternionToMatrix(w, x, y, z)}
-                matrix[1] = -matrix[1]
-                matrix[2] = -matrix[2]
-                matrix[4] = -matrix[4]
-                matrix[5] = -matrix[5]
-                matrix[7] = -matrix[7]
-                matrix[8] = -matrix[8]
-                local w, x, y, z = convertMatrixToQuaternion(matrix[1], matrix[2], matrix[3], matrix[4], matrix[5], matrix[6], matrix[7], matrix[8], matrix[9])
-                setVehicleQuaternion(storeCarCharIsInNoSave(playerPed), x, y, z, w)
-            end
-            if isKeyJustPressed(key.VK_N) and isCharInAnyCar(playerPed) then -- fast exit
-                local posX, posY, posZ = getCarCoordinates(storeCarCharIsInNoSave(playerPed))
-                warpCharFromCarToCoord(playerPed, posX, posY, posZ)
-            end
-            if isKeyJustPressed(key.VK_F3) then -- suicide
-                if not isCharInAnyCar(playerPed) then
-                    setCharHealth(playerPed, 0.0)
-                else
-                    setCarHealth(storeCarCharIsInNoSave(playerPed), 0.0)
+                if isKeyJustPressed(key.VK_N) and isCharInAnyCar(playerPed) then -- fast exit
+                    local posX, posY, posZ = getCarCoordinates(storeCarCharIsInNoSave(playerPed))
+                    warpCharFromCarToCoord(playerPed, posX, posY, posZ)
                 end
-            end
-            if isKeyDown(key.VK_DELETE) then -- flip
-                if veh ~= nil then
-                    local heading = getCarHeading(veh)
-                    heading = heading + 2 * fps_correction()
-                    if heading > 360 then heading = heading - 360 end
-                    setCarHeading(veh, heading)
+                if isKeyJustPressed(key.VK_F3) then -- suicide
+                    if not isCharInAnyCar(playerPed) then
+                        setCharHealth(playerPed, 0.0)
+                    else
+                        setCarHealth(storeCarCharIsInNoSave(playerPed), 0.0)
+                    end
                 end
-            end
-            if isKeyDown(key.VK_LMENU) and isCharInAnyCar(playerPed) then -- speedhack
-                if getCarSpeed(storeCarCharIsInNoSave(playerPed)) * 2.01 <= 200 then
-                    local cVecX, cVecY, cVecZ = getCarSpeedVector(storeCarCharIsInNoSave(playerPed))
-                    local heading = getCarHeading(storeCarCharIsInNoSave(playerPed))
-                    local turbo = fps_correction() / 85
-                    local xforce, yforce, zforce = turbo, turbo, turbo
-                    local Sin, Cos = math.sin(-math.rad(heading)), math.cos(-math.rad(heading))
-                    if cVecX > -0.01 and cVecX < 0.01 then xforce = 0.0 end
-                    if cVecY > -0.01 and cVecY < 0.01 then yforce = 0.0 end
-                    if cVecZ < 0 then zforce = -zforce end
-                    if cVecZ > -2 and cVecZ < 15 then zforce = 0.0 end
-                    if Sin > 0 and cVecX < 0 then xforce = -xforce end
-                    if Sin < 0 and cVecX > 0 then xforce = -xforce end
-                    if Cos > 0 and cVecY < 0 then yforce = -yforce end
-                    if Cos < 0 and cVecY > 0 then yforce = -yforce end
-                    applyForceToCar(storeCarCharIsInNoSave(playerPed), xforce * Sin, yforce * Cos, zforce / 2, 0.0, 0.0, 0.0)
+                if isKeyDown(key.VK_DELETE) then -- flip
+                    if veh ~= nil then
+                        local heading = getCarHeading(veh)
+                        heading = heading + 2 * fps_correction()
+                        if heading > 360 then heading = heading - 360 end
+                        setCarHeading(veh, heading)
+                    end
+                end
+                if isKeyDown(key.VK_LMENU) and isCharInAnyCar(playerPed) then -- speedhack
+                    if getCarSpeed(storeCarCharIsInNoSave(playerPed)) * 2.01 <= 200 then
+                        local cVecX, cVecY, cVecZ = getCarSpeedVector(storeCarCharIsInNoSave(playerPed))
+                        local heading = getCarHeading(storeCarCharIsInNoSave(playerPed))
+                        local turbo = fps_correction() / 85
+                        local xforce, yforce, zforce = turbo, turbo, turbo
+                        local Sin, Cos = math.sin(-math.rad(heading)), math.cos(-math.rad(heading))
+                        if cVecX > -0.01 and cVecX < 0.01 then xforce = 0.0 end
+                        if cVecY > -0.01 and cVecY < 0.01 then yforce = 0.0 end
+                        if cVecZ < 0 then zforce = -zforce end
+                        if cVecZ > -2 and cVecZ < 15 then zforce = 0.0 end
+                        if Sin > 0 and cVecX < 0 then xforce = -xforce end
+                        if Sin < 0 and cVecX > 0 then xforce = -xforce end
+                        if Cos > 0 and cVecY < 0 then yforce = -yforce end
+                        if Cos < 0 and cVecY > 0 then yforce = -yforce end
+                        applyForceToCar(storeCarCharIsInNoSave(playerPed), xforce * Sin, yforce * Cos, zforce / 2, 0.0, 0.0, 0.0)
+                    end
                 end
             end
         end
     end
 end
 function onReceiveRpc(id, bs) --перехватываем все входящие рпс
-    if id == 91 then --делаем проверку на нужный нам, в данном случае это RPC_SetVehicleVelocity
+    if id == 91 and swork then --делаем проверку на нужный нам, в данном случае это RPC_SetVehicleVelocity
         return false -- блокируем рпс
     end
 end
@@ -2672,52 +2912,54 @@ function wh()
     while not sampIsLocalPlayerSpawned() do wait(0) end
     nameTagOff()
     while true do wait(0)
-        if not nameTag then
-            if not isPauseMenuActive() then
-                nametagCoords = {}
-                for i = 0, sampGetMaxPlayerId(true) do
-                    if sampIsPlayerConnected(i) then
-                        local result, cped = sampGetCharHandleBySampPlayerId(i)
-                        if result then
-                            if doesCharExist(cped) and isCharOnScreen(cped) then
-                                local color = ("%06X"):format(bit.band(sampGetPlayerColor(i), 0xFFFFFF))
-                                cpos1X, cpos1Y, cpos1Z = getBodyPartCoordinates(6, cped)
-                                local cpedx, cpedy, cpedz = getCharCoordinates(cped)
-                                local nick = sampGetPlayerNickname(i)
-                                local screencoordx, screencoordy = convert3DCoordsToScreen(cpedx, cpedy, cpedz)
-                                local headposx, headposy = convert3DCoordsToScreen(cpos1X, cpos1Y, cpos1Z)
-                                local isAfk = sampIsPlayerPaused(i)
-                                local cpedHealth = sampGetPlayerHealth(i)
-                                local cpedArmor = sampGetPlayerArmor(i)
-                                local cpedlvl = sampGetPlayerScore(i)
-                                --------- test ----------
-                                local posy = headposy - 40
-                                local posx = headposx - 60
-                                local sdsd = posy
-                                for _, v in ipairs(nametagCoords) do
-                                    if v["pos_y"] > posy-22.5 and v["pos_y"] < posy+22.5 and v["pos_x"] > posx-50 and v["pos_x"] < posx+50 then
-                                        posy = v["pos_y"] + 22.5
+        if swork then
+            if not nameTag then
+                if not isPauseMenuActive() then
+                    nametagCoords = {}
+                    for i = 0, sampGetMaxPlayerId(true) do
+                        if sampIsPlayerConnected(i) then
+                            local result, cped = sampGetCharHandleBySampPlayerId(i)
+                            if result then
+                                if doesCharExist(cped) and isCharOnScreen(cped) then
+                                    local color = ("%06X"):format(bit.band(sampGetPlayerColor(i), 0xFFFFFF))
+                                    cpos1X, cpos1Y, cpos1Z = getBodyPartCoordinates(6, cped)
+                                    local cpedx, cpedy, cpedz = getCharCoordinates(cped)
+                                    local nick = sampGetPlayerNickname(i)
+                                    local screencoordx, screencoordy = convert3DCoordsToScreen(cpedx, cpedy, cpedz)
+                                    local headposx, headposy = convert3DCoordsToScreen(cpos1X, cpos1Y, cpos1Z)
+                                    local isAfk = sampIsPlayerPaused(i)
+                                    local cpedHealth = sampGetPlayerHealth(i)
+                                    local cpedArmor = sampGetPlayerArmor(i)
+                                    local cpedlvl = sampGetPlayerScore(i)
+                                    --------- test ----------
+                                    local posy = headposy - 40
+                                    local posx = headposx - 60
+                                    local sdsd = posy
+                                    for _, v in ipairs(nametagCoords) do
+                                        if v["pos_y"] > posy-22.5 and v["pos_y"] < posy+22.5 and v["pos_x"] > posx-50 and v["pos_x"] < posx+50 then
+                                            posy = v["pos_y"] + 22.5
+                                        end
                                     end
-                                end
-                                nametagCoords[#nametagCoords+1] = {
-                                    pos_y = posy,
-                                    pos_x = posx
-                                }
-                                -------------------------
-                                renderFontDrawText(whfont, string.format('{%s}%s [%s] %s', color, nick, i, isAfk and '{cccccc}[AFK]' or ''), posx, posy, -1)
-                                local hp2 = cpedHealth
-                                if cpedHealth > 100 then cpedHealth = 100 end
-                                if cpedArmor > 100 then cpedArmor = 100 end
-                                renderDrawBoxWithBorder(posx+1, posy+15, math.floor(100 / 2) + 1, 5, 0x80000000, 1, 0xFF000000)
-                                renderDrawBox(posx, posy+15, math.floor(cpedHealth / 2) + 1, 5, 0xAACC0000)
-                                --renderFontDrawText(font2, 'HP: ' .. tostring(hp2), 1, resY - 11, 0xFFFFFFFF)
-                                renderFontDrawText(whhpfont, cpedHealth, posx+60, posy+12.5, 0xFFFF0000)
-                                renderFontDrawText(whfont, 'LVL: '..cpedlvl, posx+85, posy+14.5, -1)
-                                if cpedArmor ~= 0 then
-                                    renderDrawBoxWithBorder(posx, posy+25, math.floor(100 / 2) + 1, 5, 0x80000000, 1, 0xFF000000)
-                                    renderDrawBox(posx, posy+25, math.floor(cpedArmor / 2) + 1, 5, 0xAAAAAAAA)
-                                    --renderFontDrawText(font, 'Armor: '..cpedArmor, posx, posy+25, -1)
-                                    renderFontDrawText(whhpfont, cpedArmor, posx+60, posy+22.5, -1)
+                                    nametagCoords[#nametagCoords+1] = {
+                                        pos_y = posy,
+                                        pos_x = posx
+                                    }
+                                    -------------------------
+                                    renderFontDrawText(whfont, string.format('{%s}%s [%s] %s', color, nick, i, isAfk and '{cccccc}[AFK]' or ''), posx, posy, -1)
+                                    local hp2 = cpedHealth
+                                    if cpedHealth > 100 then cpedHealth = 100 end
+                                    if cpedArmor > 100 then cpedArmor = 100 end
+                                    renderDrawBoxWithBorder(posx+1, posy+15, math.floor(100 / 2) + 1, 5, 0x80000000, 1, 0xFF000000)
+                                    renderDrawBox(posx, posy+15, math.floor(cpedHealth / 2) + 1, 5, 0xAACC0000)
+                                    --renderFontDrawText(font2, 'HP: ' .. tostring(hp2), 1, resY - 11, 0xFFFFFFFF)
+                                    renderFontDrawText(whhpfont, cpedHealth, posx+60, posy+12.5, 0xFFFF0000)
+                                    renderFontDrawText(whfont, 'LVL: '..cpedlvl, posx+85, posy+14.5, -1)
+                                    if cpedArmor ~= 0 then
+                                        renderDrawBoxWithBorder(posx, posy+25, math.floor(100 / 2) + 1, 5, 0x80000000, 1, 0xFF000000)
+                                        renderDrawBox(posx, posy+25, math.floor(cpedArmor / 2) + 1, 5, 0xAAAAAAAA)
+                                        --renderFontDrawText(font, 'Armor: '..cpedArmor, posx, posy+25, -1)
+                                        renderFontDrawText(whhpfont, cpedArmor, posx+60, posy+22.5, -1)
+                                    end
                                 end
                             end
                         end
@@ -3312,15 +3554,17 @@ function cip(pam)
 	end
 end
 function renderHud()
-	while true do wait(0)
-		local memory = require 'memory'
-		local posx, posy, posz = getCharCoordinates(PLAYER_PED)
-		local posint = getActiveInterior()
-		local hpos = ("%0.2f %0.2f %0.2f"):format(posx, posy, posz)
-		local fps = memory.getfloat(0xB7CB50, 4, false)
-		local sx, sy = getScreenResolution()
-		renderFontDrawText(hudfont, ('%s %s %s [%s %s] [FPS: %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, posint, math.floor(fps)), 5, sy-20, -1)
-	end
+    while true do wait(0)
+        if swork then
+            local memory = require 'memory'
+            local posx, posy, posz = getCharCoordinates(PLAYER_PED)
+            local posint = getActiveInterior()
+            local hpos = ("%0.2f %0.2f %0.2f"):format(posx, posy, posz)
+            local fps = memory.getfloat(0xB7CB50, 4, false)
+            local sx, sy = getScreenResolution()
+            renderFontDrawText(hudfont, ('%s %s %s [%s %s] [FPS: %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, posint, math.floor(fps)), 5, sy-20, -1)
+        end
+    end
 end
 function massgun(pam)
 	lua_thread.create(function()
