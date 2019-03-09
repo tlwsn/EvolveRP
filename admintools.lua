@@ -521,7 +521,7 @@ function main()
 		file:close()
 	end
     DWMAPI.DwmEnableComposition(1)
-    while not isSampAvailable() do wait(0) end
+    repeat wait(0) until isSampAvailable()
     cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     lua_thread.create(wh)
 	lua_thread.create(renderHud)
@@ -1813,13 +1813,33 @@ function onScriptTerminate(scr)
         removePointMarker()
     end
 end
+frakcolor = {
+    ['Зоны 51:'] = '{33AA33}Зоны 51{ffffff}:',
+    ['армии Авианосца:'] = '{33AA33}армии Авианосца{ffffff}:',
+    ['FBI'] = '{313131}FBI{ffffff}',
+    ['LSPD'] = '{110CE7}LSPD{ffffff}',
+    ['SFPD'] = '{110CE7}SFPD{ffffff}',
+    ['LVPD'] = '{110CE7}LVPD{ffffff}',
+    ['мафии Якудза'] = '{ff0000}мафии Якудза{ffffff}',
+    ['мафии LCN'] = '{DDA701}мафии LCN{ffffff}',
+    ['Русской Мафии'] = '{B4B5B7}Русской Мафии{ffffff}',
+    ['Ballas'] = '{B313E7}Ballas{ffffff}',
+    ['Vagos'] = '{DBD604}Vagos{ffffff}',
+    ['Groove'] = '{009F00}Grove{ffffff}',
+    ['Aztecas'] = '{01FCFF}Aztecas{ffffff}',
+    ['Rifa'] = '{2A9170}Rifa{ffffff}'
+}
 function sampev.onServerMessage(color, text)
 	if doesFileExist('moonloader/Admin Tools/chatlog_all.txt') then
 		local file = io.open('moonloader/Admin Tools/chatlog_all.txt', 'a')
 		file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
 		file:close()
 		file = nil
-	end
+    end
+    if text:match('^ На складе .+ %d+/%d+ материалов') and color == -1 then
+        local mfrak, mati, ogran = text:match('^ На складе (.+) (%d+)/(%d+) материалов')
+        return {color, (' На складе %s %s/%s материалов'):format(frakcolor[mfrak], mati, ogran)}
+    end
     if checkfraks then
         if text:match('^ ID: %d+ |.+') then
             local cid, cnick, crang = text:match('^ ID%: (%d+) | %d+%:%d+ %d+%.%d+%.%d+ | (.+)%: .+%[(%d+)%]')
