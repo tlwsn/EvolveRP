@@ -47,6 +47,7 @@ ips = {}
 temp_checker = {}
 temp_checker_online = {}
 rnick = nil
+smsids = {}
 PlayersNickname = {}
 config_keys = {
     banipkey = {v = {190}},
@@ -502,6 +503,61 @@ function registerFastAnswer()
         end
     end
 end
+function autoupdate(json_url, prefix, url)
+    local dlstatus = require('moonloader').download_status
+    local json = getWorkingDirectory() .. '\\'..thisScript().name..'-version.json'
+    if doesFileExist(json) then os.remove(json) end
+    downloadUrlToFile(json_url, json,
+      function(id, status, p1, p2)
+        if status == dlstatus.STATUSEX_ENDDOWNLOAD then
+          if doesFileExist(json) then
+            local f = io.open(json, 'r')
+            if f then
+              local info = decodeJson(f:read('*a'))
+              updatelink = info.updateurl
+              updateversion = info.latest
+              f:close()
+              os.remove(json)
+              if updateversion > thisScript().version then
+                lua_thread.create(function()
+                  local dlstatus = require('moonloader').download_status
+                  local color = -1
+                  atext('Обнаружено обновление. Пытаюсь обновиться c '..thisScript().version..' на '..updateversion)
+                  wait(250)
+                  downloadUrlToFile(updatelink, thisScript().path,
+                    function(id3, status1, p13, p23)
+                      if status1 == dlstatus.STATUS_DOWNLOADINGDATA then
+                        print(string.format('Загружено %d из %d.', p13, p23))
+                      elseif status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
+                        print('Загрузка обновления завершена.')
+                        atext('Обновление завершено!')
+                        goupdatestatus = true
+                        lua_thread.create(function() wait(500) thisScript():reload() end)
+                      end
+                      if status1 == dlstatus.STATUSEX_ENDDOWNLOAD then
+                        if goupdatestatus == nil then
+                            atext('Обновление прошло неудачно. Запускаю устаревшую версию..')
+                          update = false
+                        end
+                      end
+                    end
+                  )
+                  end, prefix
+                )
+              else
+                update = false
+                print('v'..thisScript().version..': Обновление не требуется.')
+              end
+            end
+          else
+            print('v'..thisScript().version..': Не могу проверить обновление. Смиритесь или проверьте самостоятельно на '..url)
+            update = false
+          end
+        end
+      end
+    )
+    while update ~= false do wait(100) end
+end
 function main()
     local samp = getModuleHandle('samp.dll')
 	mem.fill(samp + 0x9D31A, nop, 12, true)
@@ -522,6 +578,7 @@ function main()
 	end
     DWMAPI.DwmEnableComposition(1)
     repeat wait(0) until isSampAvailable()
+    autoupdate("https://raw.githubusercontent.com/WhackerH/Mayor_ERP01/master/mayorhelp.json", '[Admin Tools]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439")
     cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     lua_thread.create(wh)
 	lua_thread.create(renderHud)
@@ -533,6 +590,8 @@ function main()
 			WorkInBackground(true)
 		end
     end)
+    sampRegisterChatCommand('cp', function() local cx, cy = getCursorPos() atext(cx..' | '..cy) end)
+    sampRegisterChatCommand('masstp', masstp)
     sampRegisterChatCommand('masshb', masshb)
     sampRegisterChatCommand('givehb', givehb)
 	sampRegisterChatCommand('addtemp', addtemp)
@@ -898,6 +957,10 @@ function imgui.OnDrawFrame()
 			if imgui.CollapsingHeader('/deltemp', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Удалить игрока из временного чекера')
                 imgui.TextWrapped(u8 'Использование: /deltemp [id/nick]')
+            end
+            if imgui.CollapsingHeader('/masstp', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Начать / окончить телепортацию по СМС')
+                imgui.TextWrapped(u8 'Использование: /masstp')
             end
 			if imgui.CollapsingHeader('/masshp', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Выдать ХП игрока в зоне стрима')
@@ -1835,6 +1898,13 @@ function sampev.onServerMessage(color, text)
 		file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
 		file:close()
 		file = nil
+    end
+    if masstpon and text:match('^ SMS: .+. Отправитель: .+%[%d+%]$') then
+        local smsid = text:match('^ SMS: .+. Отправитель: .+%[(%d+)%]$')
+        if not checkIntable(smsids, smsid) then
+            table.insert(smsids, smsid)
+        end
+        return false
     end
     if text:match('^ На складе .+ %d+/%d+ материалов') and color == -1 then
         local mfrak, mati, ogran = text:match('^ На складе (.+) (%d+)/(%d+) материалов')
@@ -3160,15 +3230,15 @@ function cheat(pam)
                             if sampGetPlayerNickname(id) == wnick then
                                 if wbstyle == 1 then
                                     if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
-                                        sampSendChat(string.format('/warn %s %s cheat [%s/%s]', id, days, getFrak(wbfrak), getRank(wbfrak, wbrang)))
+                                        sampSendChat(string.format('/warn %s 21 cheat [%s/%s]', id, getFrak(wbfrak), getRank(wbfrak, wbrang)))
                                     else
-                                        sampSendChat(string.format('/warn %s %s %s', id, days, reason))
+                                        sampSendChat(string.format('/warn %s 21 cheat', id))
                                     end
                                 elseif wbstyle == 2 then
                                     if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
-                                        sampSendChat(string.format('/warn %s %s cheat [%s/%s]', id, days, getFrak(wbfrak), wbrang))
+                                        sampSendChat(string.format('/warn %s 21 cheat [%s/%s]', id, getFrak(wbfrak), wbrang))
                                     else
-                                        sampSendChat(string.format('/warn %s %s %s', id, days, reason))
+                                        sampSendChat(string.format('/warn %s 21 cheat', id))
                                     end
                                 end
                             else
@@ -3485,6 +3555,33 @@ function masshb(pam)
             end
         else
             atext('Введите: /masshb [имя комлекта]')
+        end
+    end)
+end
+function checkIntable(t, key)
+    for k, v in pairs(t) do
+        if v == key then return true end
+    end
+    return false
+end
+function masstp()
+    lua_thread.create(function()
+        masstpon = not masstpon
+        if not masstpon then wait(1200) sampSendChat('/togphone') end
+        smsids = {}
+        atext(masstpon and 'Телепортация начата' or 'Телепортация окончена')
+        while true do wait(0)
+            if masstpon then
+                local smsx, smsy = convertGameScreenCoordsToWindowScreenCoords(242, 366)
+                renderFontDrawText(hudfont, 'Телепортация игроков. Осталось: {a1dd4e}'..#smsids, smsx, smsy, -1)
+                lua_thread.create(function()
+                    for k, v in pairs(smsids) do
+                        sampSendChat('/gethere '..v)
+                        table.remove(smsids, k)
+                        wait(1200)
+                    end
+                end)
+            end
         end
     end)
 end
