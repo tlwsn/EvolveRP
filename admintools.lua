@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.8')
+script_version('1.9')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -1191,6 +1191,7 @@ function imgui.OnDrawFrame()
 						if imgui.ToggleButton(u8 'Добавлять в черер игроков по варнингу', tempWarningB) then cfg.tempChecker.wadd = tempWarningB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Добавлять в черер игроков по варнингу')
                     end
                 end
+                imgui.Separator()
                 if imgui.InputInt(u8 'Размер шрифта', checksizeb, 0) then cfg.other.checksize = checksizeb.v; checkfont = renderCreateFont("Arial", cfg.other.checksize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
             elseif data.imgui.menu == 4 then
 				local sbivb = imgui.ImInt(cfg.timers.sbivtimer)
@@ -2067,12 +2068,13 @@ function sampev.onServerMessage(color, text)
 		rnick = nick
 	end
     if text:match('<Warning> .+%[%d+%]%: .+') and color == -16763905 then
-        local ccwid = text:match('<Warning> .+%[(%d+)%]%: .+')
+        local cnick, ccwid = text:match('<Warning> (.+)%[(%d+)%]%: .+')
 		wid = ccwid
-		local cnick = sampGetPlayerNickname(ccwid)
-		if cfg.tempChecker.wadd then
-			table.insert(temp_checker_online, {nick = cnick, id = tonumber(ccwid)})
-			table.insert(temp_checker, cnick)
+        if cfg.tempChecker.wadd then
+            if not checkIntable(temp_checker, cnick) then
+                table.insert(temp_checker_online, {nick = cnick, id = tonumber(ccwid)})
+                table.insert(temp_checker, cnick)
+            end
 		end
     end
     if text:match('Репорт от .+%[%d+%]%:') and color == -646512470 then
