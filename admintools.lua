@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.91')
+script_version('1.92')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -56,7 +56,8 @@ config_keys = {
     saveposkey = {v = {key.VK_M}},
     goposkey = {v = {key.VK_J}},
 	tpmetka = {v = {key.VK_K}},
-	cwarningkey = {v = {226}}
+    cwarningkey = {v = {226}},
+    airbrkkey = {v = key.VK_RSHIFT}
 }
 local tEditData = {
 	id = -1,
@@ -568,14 +569,15 @@ function main()
 				    saveposkey = {v = {key.VK_M}},
 				    goposkey = {v = {key.VK_J}},
 					tpmetka = {v = {key.VK_K}},
-					cwarningkey = {v = {226}}
+                    cwarningkey = {v = {226}},
+                    airbrkkey = {v = key.VK_RSHIFT}
 				}
 			end
-			if config_keys.cwarningkey == nil then
-				config_keys.cwarningkey = {v = {226}}
-			end
+			if config_keys.cwarningkey == nil then config_keys.cwarningkey = {v = {226}} end
+            if config_keys.airbrkkey == nil then config_keys.airbrkkey = {v = key.VK_RSHIFT} end
         end
     end
+    saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
 	if not doesFileExist("moonloader/config/Admin Tools/binder.json") then
 		local fb = io.open("moonloader/config/Admin Tools/binder.json", "w")
 		fb:close()
@@ -2521,7 +2523,7 @@ function check_keystrokes() -- inv
             if isKeyJustPressed(key.VK_INSERT) then
                 funcsStatus.Inv = not funcsStatus.Inv
             end
-            if isKeyJustPressed(key.VK_RSHIFT) then -- airbrake
+            if isKeyJustPressed(config_keys.airbrkkey.v) then -- airbrake
                 airspeed = cfg.cheat.airbrkspeed
                 funcsStatus.AirBrk = not funcsStatus.AirBrk
                 if funcsStatus.AirBrk then
