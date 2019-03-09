@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.3')
+script_version('1.4')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -590,7 +590,7 @@ function main()
 			WorkInBackground(true)
 		end
     end)
-    sampRegisterChatCommand('cp', function() local cx, cy = getCursorPos() atext(cx..' | '..cy) end)
+    sampRegisterChatCommand('blog', blog)
     sampRegisterChatCommand('masstp', masstp)
     sampRegisterChatCommand('masshb', masshb)
     sampRegisterChatCommand('givehb', givehb)
@@ -3590,4 +3590,20 @@ function masstp()
             end
         end
     end)
+end
+function blog(pam)
+    local id = tonumber(pam)
+    if #pam ~= 0 then
+        if id ~= nil then
+            if sampIsPlayerConnected(id) then
+                sampSendChat('/banlog '..sampGetPlayerNickname(id))
+            else
+                sampSendChat('/banlog ' ..id)
+            end
+        else
+            sampSendChat('/banlog '..pam)
+        end
+    else
+        atext('¬ведите /blog [id/nick]')
+    end
 end
