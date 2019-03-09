@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.7')
+script_version('1.8')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -1191,7 +1191,7 @@ function imgui.OnDrawFrame()
 						if imgui.ToggleButton(u8 'Добавлять в черер игроков по варнингу', tempWarningB) then cfg.tempChecker.wadd = tempWarningB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Добавлять в черер игроков по варнингу')
                     end
                 end
-                if imgui.InputInt(u8 'Размер шрифта', checksizeb, 0) then cfg.other.checksize = checksizeb; checkfont = renderCreateFont("Arial", cfg.other.checksize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
+                if imgui.InputInt(u8 'Размер шрифта', checksizeb, 0) then cfg.other.checksize = checksizeb.v; checkfont = renderCreateFont("Arial", cfg.other.checksize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
             elseif data.imgui.menu == 4 then
 				local sbivb = imgui.ImInt(cfg.timers.sbivtimer)
 				local csbivb = imgui.ImInt(cfg.timers.csbivtimer)
