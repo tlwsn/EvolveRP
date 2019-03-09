@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.1')
+script_version('1.2')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -2940,7 +2940,8 @@ function warn(pam)
                     warnst = true
                     local wnick = sampGetPlayerNickname(id)
                     sampSendChat('/getstats '..id)
-                    while not checkstatdone do wait(0) end
+                    local wtime = os.clock() + 10
+                    while not checkstatdone or wtime < os.clock() do wait(0) end
                     wait(1200)
                     if sampIsPlayerConnected(id) then
                         if sampGetPlayerNickname(id) ~= nil then
@@ -2995,7 +2996,8 @@ function ban(pam)
                         local wnick = sampGetPlayerNickname(id)
                         warnst = true
                         sampSendChat('/getstats '..id)
-                        while not checkstatdone do wait(0) end
+                        local wtime = os.clock() + 10
+                        while not checkstatdone or wtime < os.clock() do wait(0) end
                         wait(1200)
                         if sampIsPlayerConnected(id) then
                             if sampGetPlayerNickname(id)~= nil then
@@ -3223,7 +3225,8 @@ function cheat(pam)
 					warnst = true
 					local wnick = sampGetPlayerNickname(id)
 					sampSendChat('/getstats '..id)
-					while not checkstatdone do wait(0) end
+					local wtime = os.clock() + 10
+                    while not checkstatdone or wtime < os.clock() do wait(0) end
                     wait(1200)
                     if sampIsPlayerConnected(id) then
                         if sampGetPlayerNickname(id) ~= nil then
