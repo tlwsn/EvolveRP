@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.2')
+script_version('1.3')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -2973,6 +2973,7 @@ function warn(pam)
                     wbfrak = nil
                     wbrang = nil
                     wnick = nil
+                    wtime = nil
                 end
             else
                 atext("ָדנמך מפפכאים")
@@ -3029,6 +3030,7 @@ function ban(pam)
                         wbfrak = nil
                         wbrang = nil
                         warnst = false
+                        wtime = nil
                     --end
                 end
             else
@@ -3257,7 +3259,8 @@ function cheat(pam)
 					warnst = false
 					wbfrak = nil
 					wbrang = nil
-					wnick = nil
+                    wnick = nil
+                    wtime = nil
 				end
 			else
 				atext('ָדנמך מפפכאים')
