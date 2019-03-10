@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.97')
+script_version('1.98')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -881,7 +881,6 @@ function imgui.OnDrawFrame()
         imgui.PopStyleColor()
     end
     if mainwindow.v then
-        imgui.LockPlayer = true
         imgui.ShowCursor = true
         local btn_size = imgui.ImVec2(-0.1, 0)
         imgui.SetNextWindowSize(imgui.ImVec2(300, 300), imgui.Cond.FirstUseEver)
@@ -1194,6 +1193,7 @@ function imgui.OnDrawFrame()
             imgui.End()
         end
         if settingwindows.v then
+            imgui.LockPlayer = true
             imgui.SetNextWindowPos(imgui.ImVec2(screenx / 2, screeny / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(15,6))
             imgui.Begin(u8 'Настройки', settingwindows, imgui.WindowFlags.NoResize)
             imgui.BeginChild('##set', imgui.ImVec2(200, 400), true)
@@ -2046,6 +2046,13 @@ function sampev.onServerMessage(color, text)
         end
         return {color, text} 
     end
+    if masstpon and text:match('^ SMS: .+. Отправитель: .+%[%d+%]$') then
+        local smsid = text:match('^ SMS: .+. Отправитель: .+%[(%d+)%]$')
+        if not checkIntable(smsids, smsid) then
+            table.insert(smsids, smsid)
+        end
+        return false
+    end
     if text:match('^ SMS:') then
         local color = '0x'..config_colors.smschat.color..'FF'
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
@@ -2073,14 +2080,6 @@ function sampev.onServerMessage(color, text)
             end
         end
         return {color, text} 
-    end
-
-    if masstpon and text:match('^ SMS: .+. Отправитель: .+%[%d+%]$') then
-        local smsid = text:match('^ SMS: .+. Отправитель: .+%[(%d+)%]$')
-        if not checkIntable(smsids, smsid) then
-            table.insert(smsids, smsid)
-        end
-        return false
     end
     if text:match('^ На складе .+ %d+/%d+ материалов') and color == -1 then
         local mfrak, mati, ogran = text:match('^ На складе (.+) (%d+)/(%d+) материалов')
