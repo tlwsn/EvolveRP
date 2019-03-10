@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.94')
+script_version('1.95')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -31,6 +31,7 @@ bMainWindow = imgui.ImBool(false)
 sInputEdit = imgui.ImBuffer(256)
 bIsEnterEdit = imgui.ImBool(false)
 wrecon = {}
+punishignor = {}
 local nop = 0x90
 u8 = encoding.UTF8
 airspeed = nil
@@ -262,7 +263,8 @@ config = {
         whfont = "Verdana",
         whsize = 8,
         hudfont = "Times New Roman",
-        hudsize = 10
+        hudsize = 10,
+        fracstat = true
     }
 }
 function asyncHttpRequest(method, url, args, resolve, reject)
@@ -528,18 +530,23 @@ function main()
 	mem.fill(samp + 0x9D329, nop, 12, true)
 	require('memory').fill(0x00531155, 0x90, 5, true)
 	local DWMAPI = ffi.load('dwmapi')
-	local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools'}
+    local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools'}
+    local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt'}
 	for k, v in pairs(directors) do
 		if not doesDirectoryExist(v) then createDirectory(v) end
 	end
-	if not doesFileExist('moonloader/Admin Tools/chatlog_all.txt') then
-		local file = io.open('moonloader/Admin Tools/chatlog_all.txt', 'w')
-		file:close()
-	end
-	if not doesFileExist('moonloader/config/Admin Tools/fa.txt') then
-		local file = io.open('moonloader/config/Admin Tools/fa.txt', 'w')
-		file:close()
-	end
+    for k, v in pairs(files) do
+        if not doesFileExist(v) then 
+            local file = io.open(v, 'w')
+            file:close()
+        end
+    end
+    if not doesFileExist('moonloader/config/Admin Tools/punishignor.txt') then
+        local file = io.open('moonloader/config/Admin Tools/punishignor.txt', 'w')
+        file:write('1\n!\ndmg')
+        file:close()
+    end
+    for line in io.lines('moonloader/config/Admin Tools/punishignor.txt') do table.insert(punishignor, line) end
     DWMAPI.DwmEnableComposition(1)
     repeat wait(0) until isSampAvailable()
     autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", '[Admin Tools]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439")
@@ -1189,7 +1196,7 @@ function imgui.OnDrawFrame()
                 if imgui.MenuItem(u8 '  Чекер игроков') then data.imgui.checker = 2 end
 				if imgui.MenuItem(u8 '  Временный чекер') then data.imgui.checker = 3 end
             end
-            if imgui.Selectable(u8 'Настройка таймеров') then data.imgui.menu = 4 end
+            if imgui.Selectable(u8 'Настройка выдачи наказаний') then data.imgui.menu = 4 end
             if imgui.Selectable(u8 'Насройка цветов') then data.imgui.menu = 6 end
 			if imgui.Selectable(u8 'Остальные настройки') then data.imgui.menu = 5 end
             imgui.EndChild()
@@ -1287,12 +1294,16 @@ function imgui.OnDrawFrame()
             elseif data.imgui.menu == 4 then
 				local sbivb = imgui.ImInt(cfg.timers.sbivtimer)
 				local csbivb = imgui.ImInt(cfg.timers.csbivtimer)
-				local cbugb = imgui.ImInt(cfg.timers.cbugtimer)
-				imgui.CentrText(u8 'Настройка таймеров')
+                local cbugb = imgui.ImInt(cfg.timers.cbugtimer)
+                local fracstatb = imgui.ImBool(cfg.other.fracstat)
+				imgui.CentrText(u8 'Настройка выдачи наказаний')
 				imgui.Separator()
-				if imgui.InputInt(u8 'Таймер сбива', sbivb, 0) then cfg.timers.sbivtimer = sbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
-				if imgui.InputInt(u8 'Таймер клео сбива', csbivb, 0) then cfg.timers.csbivtimer = csbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
-				if imgui.InputInt(u8 'Таймер +с вне гетто', cbugb, 0) then cfg.timers.cbugtimer = cbugb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
+				if imgui.InputInt(u8 'Таймер сбива (/sbiv)', sbivb, 0) then cfg.timers.sbivtimer = sbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
+				if imgui.InputInt(u8 'Таймер клео сбива (/csbiv)', csbivb, 0) then cfg.timers.csbivtimer = csbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
+                if imgui.InputInt(u8 'Таймер +с вне гетто (/cbug)', cbugb, 0) then cfg.timers.cbugtimer = cbugb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
+                if imgui.Checkbox(u8 'Проверка статистики при warn / ban', fracstatb) then cfg.other.fracstat = fracstatb.v inicfg.save(config, 'Admin Tools\\config.ini') end
+                imgui.TextWrapped(u8 ('Игнор проверки статистики будет происходить, если причина бана равна: %s'):format(table.concat(punishignor, ', ')))
+                imgui.TextWrapped(u8 'Настроить список игнора можно по пути moonloader/config/Admin Tools/punishingor.txt')
 			elseif data.imgui.menu == 5 then
 				local creconB = imgui.ImBool(cfg.crecon.enable)
 				local ipassb = imgui.ImBool(cfg.other.passb)
@@ -1973,7 +1984,6 @@ frakcolor = {
     ['Rifa'] = '{2A9170}Rifa{ffffff}'
 }
 function sampev.onServerMessage(color, text)
-    --atext(("%06X"):format(bit.rshift(color, 8)))
 	if doesFileExist('moonloader/Admin Tools/chatlog_all.txt') then
 		local file = io.open('moonloader/Admin Tools/chatlog_all.txt', 'a')
 		file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
@@ -3136,27 +3146,31 @@ function warn(pam)
                 if sampGetPlayerScore(id) < 3 then
                     sampSendChat(string.format("/warn %s %s %s", id, days, reason))
                 else
-                    warnst = true
-                    local wnick = sampGetPlayerNickname(id)
-                    sampSendChat('/getstats '..id)
-                    local wtime = os.clock() + 10
-                    while not checkstatdone or wtime < os.clock() do wait(0) end
-                    wait(1200)
-                    if sampIsPlayerConnected(id) then
-                        if sampGetPlayerNickname(id) ~= nil then
-                            if sampGetPlayerNickname(id) == wnick then
-                                if wbstyle == 1 then
-                                    if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
-                                        sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
-                                    else
-                                        sampSendChat(string.format('/warn %s %s %s', id, days, reason))
+                    if cfg.other.fracstat then
+                        warnst = true
+                        local wnick = sampGetPlayerNickname(id)
+                        sampSendChat('/getstats '..id)
+                        local wtime = os.clock() + 10
+                        while not checkstatdone or wtime < os.clock() do wait(0) end
+                        wait(1200)
+                        if sampIsPlayerConnected(id) then
+                            if sampGetPlayerNickname(id) ~= nil then
+                                if sampGetPlayerNickname(id) == wnick then
+                                    if wbstyle == 1 then
+                                        if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
+                                            sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
+                                        else
+                                            sampSendChat(string.format('/warn %s %s %s', id, days, reason))
+                                        end
+                                    elseif wbstyle == 2 then
+                                        if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
+                                            sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), wbrang))
+                                        else
+                                            sampSendChat(string.format('/warn %s %s %s', id, days, reason))
+                                        end
                                     end
-                                elseif wbstyle == 2 then
-                                    if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
-                                        sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), wbrang))
-                                    else
-                                        sampSendChat(string.format('/warn %s %s %s', id, days, reason))
-                                    end
+                                else
+                                    atext('Игрок '..wnick..' вышел из игры')
                                 end
                             else
                                 atext('Игрок '..wnick..' вышел из игры')
@@ -3165,7 +3179,7 @@ function warn(pam)
                             atext('Игрок '..wnick..' вышел из игры')
                         end
                     else
-                        atext('Игрок '..wnick..' вышел из игры')
+                        sampSendChat(string.format('/warn %s %s %s', id, days, reason))
                     end
                     checkstatdone = false
                     warnst = false
@@ -3190,30 +3204,32 @@ function ban(pam)
                 if sampGetPlayerScore(id) < 3 then
                     sampSendChat(string.format('/ban %s %s', id, reason))
                 else
-                    --if reason == '1' or reason == 'dmg' then
-                        --sampSendChat(string.format('/ban %s %s', id, reason))
-                    --else
-                        local wnick = sampGetPlayerNickname(id)
-                        warnst = true
-                        sampSendChat('/getstats '..id)
-                        local wtime = os.clock() + 10
-                        while not checkstatdone or wtime < os.clock() do wait(0) end
-                        wait(1200)
-                        if sampIsPlayerConnected(id) then
-                            if sampGetPlayerNickname(id)~= nil then
-                                if sampGetPlayerNickname(id) == wnick then
-                                    if wbstyle == 1 then
-                                        if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
-                                            sampSendChat(string.format('/ban %s %s [%s/%s]', id, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
-                                        else
-                                            sampSendChat(string.format('/ban %s %s', id, reason))
+                    if cfg.other.fracstat then
+                        if not checkIntable(punishignor, reason) then
+                            local wnick = sampGetPlayerNickname(id)
+                            warnst = true
+                            sampSendChat('/getstats '..id)
+                            local wtime = os.clock() + 10
+                            while not checkstatdone or wtime < os.clock() do wait(0) end
+                            wait(1200)
+                            if sampIsPlayerConnected(id) then
+                                if sampGetPlayerNickname(id)~= nil then
+                                    if sampGetPlayerNickname(id) == wnick then
+                                        if wbstyle == 1 then
+                                            if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
+                                                sampSendChat(string.format('/ban %s %s [%s/%s]', id, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
+                                            else
+                                                sampSendChat(string.format('/ban %s %s', id, reason))
+                                            end
+                                        elseif wbstyle == 2 then
+                                            if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
+                                                sampSendChat(string.format('/ban %s %s [%s/%s]', id, reason, getFrak(wbfrak), wbrang))
+                                            else
+                                                sampSendChat(string.format('/ban %s %s', id, reason))
+                                            end
                                         end
-                                    elseif wbstyle == 2 then
-                                        if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
-                                            sampSendChat(string.format('/ban %s %s [%s/%s]', id, reason, getFrak(wbfrak), wbrang))
-                                        else
-                                            sampSendChat(string.format('/ban %s %s', id, reason))
-                                        end
+                                    else
+                                        atext('Игрок '..wnick..' вышел из игры')
                                     end
                                 else
                                     atext('Игрок '..wnick..' вышел из игры')
@@ -3222,7 +3238,7 @@ function ban(pam)
                                 atext('Игрок '..wnick..' вышел из игры')
                             end
                         else
-                            atext('Игрок '..wnick..' вышел из игры')
+                            sampSendChat(string.format('/ban %s %s', id, reason))
                         end
                         wnick = nil
                         checkstatdone = false
@@ -3230,7 +3246,9 @@ function ban(pam)
                         wbrang = nil
                         warnst = false
                         wtime = nil
-                    --end
+                    else
+                        sampSendChat(string.format('/ban %s %s', id, reason))
+                    end
                 end
             else
                 atext("Игрок оффлайн")

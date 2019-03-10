@@ -11,6 +11,7 @@ Maks_Wirense
 Angel_Espejo
 Andrey_Zolotoy
 Make_Lendin
+William_Marshal
 Laurence_Lawson
 Vadim_Akufenko
 Jo_Moon
@@ -26,7 +27,6 @@ Jay_Rise
 Christiano_Reks
 Vincento_Lapazzii
 Mihail_Klimov
-Tranquillo_Uorriorz
 Butcher_Wezers
 Gosha_Fantom
 Laymont_Breezy
