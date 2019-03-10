@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.95')
+script_version('1.96')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -527,8 +527,9 @@ end
 function main()
     local samp = getModuleHandle('samp.dll')
 	mem.fill(samp + 0x9D31A, nop, 12, true)
-	mem.fill(samp + 0x9D329, nop, 12, true)
-	require('memory').fill(0x00531155, 0x90, 5, true)
+    mem.fill(samp + 0x9D329, nop, 12, true)
+    mem.fill(sampGetBase() + 0x2D3C45, 0, 2, true)
+	mem.fill(0x00531155, 0x90, 5, true)
 	local DWMAPI = ffi.load('dwmapi')
     local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools'}
     local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt'}
@@ -561,6 +562,7 @@ function main()
 			WorkInBackground(true)
 		end
     end)
+    sampRegisterChatCommand('arecon', arecon)
     sampRegisterChatCommand('guns', function() sampShowDialog(3435, '{ffffff}Оружия', '{ffffff}ID\t{ffffff}Название\n1\tКастет\n2\tКлюшка для гольфа\n3\tПолицейская дубинка\n4\tНож\n5\tБита\n6\tЛопата\n7\tКий\n8\tКатана\n9\tБензопила\n10\tДилдо\n11\tДилдо\n12\tВибратор\n13\tВибратор\n14\tЦветы\n15\tТрость\n16\tГраната\n17\tДымовая граната\n18\tКоктейль Молотова\n22\t9mm пистолет\n23\tSDPistol\n24\tDesert Eagle\n25\tShotgun\n26\tОбрез\n27\tCombat Shotgun\n28\tUZI\n29\tMP5\n30\tAK-47\n31\tM4\n32\tTec-9\n33\tCountry Rifle\n34\tSniper Rifle\n35\tRPG\n36\tHS Rocket\n37\tОгнемёт\n38\tМиниган\n39\tSatchel Charge\n40\tДетонатор\n41\tSpraycan\n42\tОгнетушитель\n43\tФотоаппарат\n44\tNight Vis Goggles\n45\tThermal Goggles\n46\tParachute', 'x', _, 5) end)
     sampRegisterChatCommand('tg', function() sampSendChat('/togphone') end)
     sampRegisterChatCommand('blog', blog)
@@ -827,8 +829,8 @@ local ansr, ansg, ansb = imgui.ImColor(config_colors.anschat.r, config_colors.an
 local anscolor = imgui.ImFloat3(ansr, ansg, ansb)
 function imgui.OnDrawFrame()
 	local ir, ig, ib, ia = rainbow(1, 1)
-	imgui.PushStyleColor(imgui.Col.Border, imgui.ImVec4(ir, ig, ib, ia))
-	imgui.PushStyleColor(imgui.Col.Separator, imgui.ImVec4(ir, ig, ib, ia))
+	--imgui.PushStyleColor(imgui.Col.Border, imgui.ImVec4(ir, ig, ib, ia))
+	--
     if recon.v then
 		local style = imgui.GetStyle()
 		local colors = style.Colors
@@ -839,6 +841,7 @@ function imgui.OnDrawFrame()
         local imvsize = imgui.GetWindowSize()
         local spacing, height = 140.0, 162.0
         local imkx, imky = convertGameScreenCoordsToWindowScreenCoords(530, 199)
+        imgui.PushStyleColor(imgui.Col.Separator, imgui.ImVec4(ir, ig, ib, ia))
 		--imgui.PushStyleColor(imgui.Col.WindowBg, imgui.ImVec4(1, 0, 0, 1))
         imgui.SetNextWindowPos(imgui.ImVec2(cfg.crecon.posx, cfg.crecon.posy), imgui.ImVec2(0.5, 0.5))
         imgui.SetNextWindowSize(imgui.ImVec2(260, 285), imgui.Cond.FirstUseEver)
@@ -868,7 +871,8 @@ function imgui.OnDrawFrame()
         --[[imgui.SameLine()
         imgui.Text(string.format('%s', imgui.GetWindowSize().y))]]
         imgui.End()
-		--imgui.PopStyleColor()
+        --imgui.PopStyleColor()
+        imgui.PopStyleColor()
     end
     if mainwindow.v then
         imgui.LockPlayer = true
@@ -893,6 +897,10 @@ function imgui.OnDrawFrame()
             if imgui.CollapsingHeader('/al', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Сокращение команды /alogin')
                 imgui.TextWrapped(u8 'Использование: /al')
+            end
+            if imgui.CollapsingHeader('/arecon', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Переподключиться к серверу')
+                imgui.TextWrapped(u8 'Использование: /arecon')
             end
             if imgui.CollapsingHeader('/tg', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Сокращение команды /togphone')
@@ -1457,8 +1465,8 @@ function imgui.OnDrawFrame()
 			imgui.End()
 		end
     end
-	imgui.PopStyleColor()
-	imgui.PopStyleColor()
+	--imgui.PopStyleColor()
+	--imgui.PopStyleColor()
 end
 function onHotKey(id, keys)
     lua_thread.create(function()
@@ -3825,4 +3833,9 @@ function blog(pam)
     else
         atext('Введите /blog [id/nick]')
     end
+end
+function arecon()
+    local ip, port = sampGetCurrentServerAddress()
+    sampDisconnectWithReason(0)
+    sampConnectToServer(ip, port)
 end
