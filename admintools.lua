@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.99')
+script_version('1.991')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -563,6 +563,7 @@ function main()
 			WorkInBackground(true)
 		end
     end)
+    sampRegisterChatCommand('fid', function() sampShowDialog(3435, '{ffffff}ID Фракций', '{ffffff}ID\t{ffffff}Фракция\n1\tLSPD\n2\tFBI\n3\tSFA\n5\tLCN\n6\tYakuza\n7\tMayor\n9\tSFN\n10\tSFPD\n11\tInstructors\n12\tBallas\n13\tVagos\n14\tRM\n15\tGrove\n16\tLSN\n17\tAztec\n18\tRifa\n19\tLVA\n20\tLVN\n21\tLVPD\n22\tHospital\n24\tMongols\n26\tWarlocks\n29\tPagans', 'x', _, 5) end)
     sampRegisterChatCommand('arecon', arecon)
     sampRegisterChatCommand('guns', function() sampShowDialog(3435, '{ffffff}Оружия', '{ffffff}ID\t{ffffff}Название\n1\tКастет\n2\tКлюшка для гольфа\n3\tПолицейская дубинка\n4\tНож\n5\tБита\n6\tЛопата\n7\tКий\n8\tКатана\n9\tБензопила\n10\tДилдо\n11\tДилдо\n12\tВибратор\n13\tВибратор\n14\tЦветы\n15\tТрость\n16\tГраната\n17\tДымовая граната\n18\tКоктейль Молотова\n22\t9mm пистолет\n23\tSDPistol\n24\tDesert Eagle\n25\tShotgun\n26\tОбрез\n27\tCombat Shotgun\n28\tUZI\n29\tMP5\n30\tAK-47\n31\tM4\n32\tTec-9\n33\tCountry Rifle\n34\tSniper Rifle\n35\tRPG\n36\tHS Rocket\n37\tОгнемёт\n38\tМиниган\n39\tSatchel Charge\n40\tДетонатор\n41\tSpraycan\n42\tОгнетушитель\n43\tФотоаппарат\n44\tNight Vis Goggles\n45\tThermal Goggles\n46\tParachute', 'x', _, 5) end)
     sampRegisterChatCommand('tg', function() sampSendChat('/togphone') end)
@@ -1319,6 +1320,7 @@ function imgui.OnDrawFrame()
                 if imgui.Checkbox(u8 'Проверка статистики при warn / ban', fracstatb) then cfg.other.fracstat = fracstatb.v inicfg.save(config, 'Admin Tools\\config.ini') end
                 imgui.TextWrapped(u8 ('Игнор проверки статистики будет происходить, если причина бана равна: %s'):format(table.concat(punishignor, ', ')))
                 imgui.TextWrapped(u8 'Настроить список игнора можно по пути moonloader/config/Admin Tools/punishingor.txt')
+                if imgui.Button(u8 'Обновисть список игнона') then punishignor = {} for line in io.lines('moonloader/config/Admin Tools/punishignor.txt') do table.insert(punishignor, line) end end
 			elseif data.imgui.menu == 5 then
 				local creconB = imgui.ImBool(cfg.crecon.enable)
 				local ipassb = imgui.ImBool(cfg.other.passb)
@@ -2008,7 +2010,7 @@ function sampev.onServerMessage(color, text)
 		file:close()
 		file = nil
     end
-    if text:match('^ Ответ от .+') then
+    if text:match('^ Ответ от .+%[%d+%] к .+%[%d+%]:') then
         local color = '0x'..config_colors.anschat.color..'FF'
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
         for i = 0, 1000 do
@@ -3277,9 +3279,10 @@ function ban(pam)
 end
 function wl(pam)
     local id = tonumber(pam)
+    local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     if #pam ~= 0 then
         if id ~= nil then
-            if sampIsPlayerConnected(id) then
+            if sampIsPlayerConnected(id) or id == myid then
                 sampSendChat('/warnlog '..sampGetPlayerNickname(id))
             else
                 sampSendChat('/warnlog ' ..id)
@@ -3293,8 +3296,9 @@ function wl(pam)
 end
 function gs(pam)
     local id = tonumber(pam)
+    local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     if id ~= nil then
-        if sampIsPlayerConnected(id) then
+        if sampIsPlayerConnected(id) or id == myid then
             sampSendChat('/getstats '..id)
         else
             atext('Игрок оффлайн')
@@ -3309,8 +3313,9 @@ function gs(pam)
 end
 function sbiv(pam)
     local id = tonumber(pam)
+    local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     if id ~= nil then
-        if sampIsPlayerConnected(id) then
+        if sampIsPlayerConnected(id) or id == myid then
             sampSendChat('/prison '..id..' '..cfg.timers.sbivtimer..' Сбив анимации')
         else
             atext('Игрок оффлайн')
@@ -3321,8 +3326,9 @@ function sbiv(pam)
 end
 function csbiv(pam)
     local id = tonumber(pam)
+    local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     if id ~= nil then
-        if sampIsPlayerConnected(id) then
+        if sampIsPlayerConnected(id) or id == myid then
             sampSendChat('/prison '..id..' '..cfg.timers.csbivtimer..' Сбив анимации')
         else
             atext('Игрок оффлайн')
@@ -3333,8 +3339,9 @@ function csbiv(pam)
 end
 function cbug(pam)
     local id = tonumber(pam)
+    local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     if id ~= nil then
-        if sampIsPlayerConnected(id) then
+        if sampIsPlayerConnected(id) or id == myid then
             sampSendChat('/prison '..id..' '..cfg.timers.cbugtimer..' +с вне гетто')
         else
             atext('Игрок оффлайн')
@@ -3379,9 +3386,6 @@ function goposk()
         setCharCoordinates(PLAYER_PED, savecoords.x, savecoords.y, savecoords.z)
     end
 end
---24 = mongols
---26 = warlocks
---29 = pagans
 function fonl(pam)
     lua_thread.create(function()
         local num = tonumber(pam)
