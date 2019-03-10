@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.96')
+script_version('1.97')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -684,6 +684,20 @@ function main()
         end
     end
     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
+    ar, ag, ab = imgui.ImColor(config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b):GetFloat4()
+    acolor = imgui.ImFloat3(ar, ag, ab)
+    sr, sg, sb = imgui.ImColor(config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b):GetFloat4()
+    scolor = imgui.ImFloat3(sr, sg, sb)
+    smsr, smsg, smsb = imgui.ImColor(config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b):GetFloat4()
+    smscolor = imgui.ImFloat3(smsr, smsg, smsb)
+    jbr, jbg, jbb = imgui.ImColor(config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b):GetFloat4()
+    jbcolor = imgui.ImFloat3(jbr, jbg, jbb)
+    askr, askg, askb = imgui.ImColor(config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b):GetFloat4()
+    askcolor = imgui.ImFloat3(askr, askg, askb)
+    repr, repg, repb = imgui.ImColor(config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b):GetFloat4()
+    repcolor = imgui.ImFloat3(repr, repg, repb)
+    ansr, ansg, ansb = imgui.ImColor(config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b):GetFloat4()
+    anscolor = imgui.ImFloat3(ansr, ansg, ansb)
 	for k, v in pairs(tBindList) do
         rkeys.registerHotKey(v.v, true, onHotKey)
         if v.time == nil then v.time = 0 end
@@ -729,7 +743,13 @@ function main()
     lua_thread.create(main_funcs)
     lua_thread.create(check_keys_fast)
     while true do wait(0)
-        if wasKeyPressed(key.VK_F12) and not sampIsChatInputActive() and not isSampfuncsConsoleActive() and not sampIsDialogActive() then swork = not swork end
+        if wasKeyPressed(key.VK_F12) and not sampIsChatInputActive() and not isSampfuncsConsoleActive() and not sampIsDialogActive() then swork = not swork 
+            if not swork then
+                nameTagOn()
+            else
+                nameTagOff()
+            end
+        end
         if #tkills > 50 then
             table.remove(tkills, 1)
         end
@@ -813,20 +833,6 @@ function rkeys.onHotKey(id, keys)
         return false
     end
 end
-local ar, ag, ab = imgui.ImColor(config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b):GetFloat4()
-local acolor = imgui.ImFloat3(ar, ag, ab)
-local sr, sg, sb = imgui.ImColor(config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b):GetFloat4()
-local scolor = imgui.ImFloat3(sr, sg, sb)
-local smsr, smsg, smsb = imgui.ImColor(config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b):GetFloat4()
-local smscolor = imgui.ImFloat3(smsr, smsg, smsb)
-local jbr, jbg, jbb = imgui.ImColor(config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b):GetFloat4()
-local jbcolor = imgui.ImFloat3(jbr, jbg, jbb)
-local askr, askg, askb = imgui.ImColor(config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b):GetFloat4()
-local askcolor = imgui.ImFloat3(askr, askg, askb)
-local repr, repg, repb = imgui.ImColor(config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b):GetFloat4()
-local repcolor = imgui.ImFloat3(repr, repg, repb)
-local ansr, ansg, ansb = imgui.ImColor(config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b):GetFloat4()
-local anscolor = imgui.ImFloat3(ansr, ansg, ansb)
 function imgui.OnDrawFrame()
 	local ir, ig, ib, ia = rainbow(1, 1)
 	--imgui.PushStyleColor(imgui.Col.Border, imgui.ImVec4(ir, ig, ib, ia))
@@ -1338,8 +1344,8 @@ function imgui.OnDrawFrame()
 					if imgui.InputText(u8 'Введите ваш админский пароль', iapass, imgui.InputTextFlags.Password) then cfg.other.adminpass = u8:decode(iapass.v) inicfg.save(config, 'Admin Tools\\config.ini') end
 					if imgui.Button(u8 'Узнать пароль##2') then atext('Ваш админский пароль: {a1dd4e}'..cfg.other.adminpass) end
                 end
-                if imgui.InputText(u8 'Шрифт##hud', hudfontb) then cfg.other.hudfont = hudfontb.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
-                if imgui.InputInt(u8 'Размер шрифта##hud', hudsizeb, 0) then cfg.other.hudsize = hudsizeb.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
+                if imgui.InputText(u8 'Шрифт нижней панели##hud', hudfontb) then cfg.other.hudfont = hudfontb.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
+                if imgui.InputInt(u8 'Размер шрифта нижней панели##hud', hudsizeb, 0) then cfg.other.hudsize = hudsizeb.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
             elseif data.imgui.menu == 6 then
                 imgui.CentrText(u8 'Настройка цветов')
                 imgui.Separator()
@@ -1970,7 +1976,7 @@ end
 --------------------------------------------------------------------------------
 function onScriptTerminate(scr)
     if scr == script.this then
-        whoff()
+        nameTagOn()
         showCursor(false)
         removePointMarker()
     end
@@ -3002,14 +3008,14 @@ function wh()
     end
 end
 function nameTagOn()
-	local pStSet = sampGetServerSettingsPtr();
-	NTdist = mem.getfloat(pStSet + 39)
-	NTwalls = mem.getint8(pStSet + 47)
-	NTshow = mem.getint8(pStSet + 56)
-	mem.setfloat(pStSet + 39, 1488.0)
-	mem.setint8(pStSet + 47, 0)
-	mem.setint8(pStSet + 56, 1)
-	nameTag = true
+    local pStSet = sampGetServerSettingsPtr();
+    NTdist = mem.getfloat(pStSet + 39)
+    NTwalls = mem.getint8(pStSet + 47)
+    NTshow = mem.getint8(pStSet + 56)
+    mem.setfloat(pStSet + 39, 36.0)
+    mem.setint8(pStSet + 47, 1)
+    mem.setint8(pStSet + 56, 1)
+    nameTag = true
 end
 function sampGetDeathReason(id)
 	local names = {
