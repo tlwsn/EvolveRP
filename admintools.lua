@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.98')
+script_version('1.99')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -264,7 +264,8 @@ config = {
         whsize = 8,
         hudfont = "Times New Roman",
         hudsize = 10,
-        fracstat = true
+        fracstat = true,
+        chatconsole = false
     }
 }
 function asyncHttpRequest(method, url, args, resolve, reject)
@@ -1197,22 +1198,22 @@ function imgui.OnDrawFrame()
             imgui.SetNextWindowPos(imgui.ImVec2(screenx / 2, screeny / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(15,6))
             imgui.Begin(u8 'Настройки', settingwindows, imgui.WindowFlags.NoResize)
             imgui.BeginChild('##set', imgui.ImVec2(200, 400), true)
-            if imgui.Selectable(u8 'Настройка клавиш') then data.imgui.menu = 1 end
-            if imgui.Selectable(u8 'Настройка читов') then data.imgui.menu = 2 end
+            if imgui.Selectable(u8 'Настройка клавиш', data.imgui.menu == 1 ) then data.imgui.menu = 1 end
+            if imgui.Selectable(u8 'Настройка читов', data.imgui.menu == 2) then data.imgui.menu = 2 end
             if data.imgui.menu == 2 then
-                if imgui.MenuItem(u8 '  AirBrake') then data.imgui.cheat = 1 end
-                if imgui.MenuItem(u8 '  GodMode') then data.imgui.cheat = 2 end
-                if imgui.MenuItem(u8 '  WallHack') then data.imgui.cheat = 3 end
+                if imgui.Selectable(u8 '  AirBrake', data.imgui.cheat == 1) then data.imgui.cheat = 1 end
+                if imgui.Selectable(u8 '  GodMode', data.imgui.cheat == 2) then data.imgui.cheat = 2 end
+                if imgui.Selectable(u8 '  WallHack', data.imgui.cheat == 3) then data.imgui.cheat = 3 end
             end
-            if imgui.Selectable(u8 'Настройка чекеров') then data.imgui.menu = 3 end
+            if imgui.Selectable(u8 'Настройка чекеров', data.imgui.menu == 3) then data.imgui.menu = 3 end
             if data.imgui.menu == 3 then
-                if imgui.MenuItem(u8 '  Чекер админов') then data.imgui.checker = 1 end
-                if imgui.MenuItem(u8 '  Чекер игроков') then data.imgui.checker = 2 end
-				if imgui.MenuItem(u8 '  Временный чекер') then data.imgui.checker = 3 end
+                if imgui.Selectable(u8 '  Чекер админов', data.imgui.checker == 1) then data.imgui.checker = 1 end
+                if imgui.Selectable(u8 '  Чекер игроков', data.imgui.checker == 2) then data.imgui.checker = 2 end
+				if imgui.Selectable(u8 '  Временный чекер', data.imgui.checker == 3) then data.imgui.checker = 3 end
             end
-            if imgui.Selectable(u8 'Настройка выдачи наказаний') then data.imgui.menu = 4 end
-            if imgui.Selectable(u8 'Насройка цветов') then data.imgui.menu = 6 end
-			if imgui.Selectable(u8 'Остальные настройки') then data.imgui.menu = 5 end
+            if imgui.Selectable(u8 'Настройка выдачи наказаний', data.imgui.menu == 4) then data.imgui.menu = 4 end
+            if imgui.Selectable(u8 'Насройка цветов', data.imgui.menu == 6) then data.imgui.menu = 6 end
+			if imgui.Selectable(u8 'Остальные настройки', data.imgui.menu == 5) then data.imgui.menu = 5 end
             imgui.EndChild()
             imgui.SameLine()
             imgui.BeginChild('##set1', imgui.ImVec2(740, 400), true)
@@ -1322,7 +1323,8 @@ function imgui.OnDrawFrame()
 				local creconB = imgui.ImBool(cfg.crecon.enable)
 				local ipassb = imgui.ImBool(cfg.other.passb)
 				local iapassb = imgui.ImBool(cfg.other.apassb)
-				local reconwb = imgui.ImBool(cfg.other.reconw)
+                local reconwb = imgui.ImBool(cfg.other.reconw)
+                local conschat = imgui.ImBool(cfg.other.chatconsole)
 				local ipass = imgui.ImBuffer(tostring(cfg.other.password), 256)
                 local iapass = imgui.ImBuffer(tostring(cfg.other.adminpass), 256)
                 local hudfontb = imgui.ImBuffer(tostring(cfg.other.hudfont), 256)
@@ -1335,7 +1337,8 @@ function imgui.OnDrawFrame()
                 if imgui.Button(u8 'Изменить##3') then data.imgui.reconpos = true; mainwindow.v = false end
                 if imgui.ToggleButton(u8 'Включить замененный рекон##1', creconB) then cfg.crecon.enable = creconB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Включить замененный рекон')
 				if imgui.ToggleButton(u8 'Автологин##11', ipassb) then cfg.other.passb = ipassb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Автологин')
-				if imgui.ToggleButton(u8 'Автоалогин##11', iapassb) then cfg.other.apassb = iapassb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Автоалогин')
+                if imgui.ToggleButton(u8 'Автоалогин##11', iapassb) then cfg.other.apassb = iapassb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Автоалогин')
+                if imgui.ToggleButton(u8 'Чатлог в консоли##11', conschat) then cfg.other.chatconsole = conschat.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Чатлог в консоли')
 				if ipassb.v then
 					if imgui.InputText(u8 'Введите ваш пароль', ipass, imgui.InputTextFlags.Password) then cfg.other.password = u8:decode(ipass.v) inicfg.save(config, 'Admin Tools\\config.ini') end
 					if imgui.Button(u8 'Узнать пароль##1') then atext('Ваш пароль: {a1dd4e}'..cfg.other.password) end
@@ -1998,6 +2001,7 @@ frakcolor = {
     ['Rifa'] = '{2A9170}Rifa{ffffff}'
 }
 function sampev.onServerMessage(color, text)
+    if cfg.other.chatconsole then sampfuncsLog(text) end
 	if doesFileExist('moonloader/Admin Tools/chatlog_all.txt') then
 		local file = io.open('moonloader/Admin Tools/chatlog_all.txt', 'a')
 		file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
