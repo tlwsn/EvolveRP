@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.93')
+script_version('1.94')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -257,7 +257,12 @@ config = {
         password = " ",
         adminpass = " ",
         reconw = true,
-        checksize = 9
+        checksize = 9,
+        checkfont = 'Arial',
+        whfont = "Verdana",
+        whsize = 8,
+        hudfont = "Times New Roman",
+        hudsize = 10
     }
 }
 function asyncHttpRequest(method, url, args, resolve, reject)
@@ -1233,12 +1238,16 @@ function imgui.OnDrawFrame()
                     imgui.Separator()
                     if imgui.ToggleButton(u8 'Включить гмм##11', godModeB) then cfg.cheat.autogm = godModeB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Автоматически включать ГМ при входе в игру')
                 elseif data.imgui.cheat == 3 then
+                    local whfontb = imgui.ImBuffer(tostring(cfg.other.whfont), 256)
+                    local whsizeb = imgui.ImInt(cfg.other.whsize)
                     imgui.CentrText(u8 'WallHack')
                     imgui.Separator()
-					imgui.Text(u8'Пока без настроек =)')
+                    if imgui.InputText(u8 'Шрифт##wh', whfontb) then cfg.other.whfont = whfontb.v whfont = renderCreateFont(cfg.other.whfont, cfg.other.whsize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
+                    if imgui.InputInt(u8 'Размер шрифта##wh', whsizeb, 0) then cfg.other.whsize = whsizeb.v whfont = renderCreateFont(cfg.other.whfont, cfg.other.whsize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
                 end
             elseif data.imgui.menu == 3 then
                 local checksizeb = imgui.ImInt(cfg.other.checksize)
+                local checkfontb = imgui.ImBuffer(tostring(cfg.other.checkfont), 256)
                 if data.imgui.checker == 1 then
                     local admCheckerB = imgui.ImBool(cfg.admchecker.enable)
                     imgui.CentrText(u8 'Чекер админов')
@@ -1273,7 +1282,8 @@ function imgui.OnDrawFrame()
                     end
                 end
                 imgui.Separator()
-                if imgui.InputInt(u8 'Размер шрифта', checksizeb, 0) then cfg.other.checksize = checksizeb.v; checkfont = renderCreateFont("Arial", cfg.other.checksize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
+                if imgui.InputText(u8 'Шрифт', checkfontb) then cfg.other.checkfont = checkfontb.v checkfont = renderCreateFont(cfg.other.checkfont, cfg.other.checksize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
+                if imgui.InputInt(u8 'Размер шрифта', checksizeb, 0) then cfg.other.checksize = checksizeb.v; checkfont = renderCreateFont(cfg.other.checkfont, cfg.other.checksize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
             elseif data.imgui.menu == 4 then
 				local sbivb = imgui.ImInt(cfg.timers.sbivtimer)
 				local csbivb = imgui.ImInt(cfg.timers.csbivtimer)
@@ -1289,7 +1299,9 @@ function imgui.OnDrawFrame()
 				local iapassb = imgui.ImBool(cfg.other.apassb)
 				local reconwb = imgui.ImBool(cfg.other.reconw)
 				local ipass = imgui.ImBuffer(tostring(cfg.other.password), 256)
-				local iapass = imgui.ImBuffer(tostring(cfg.other.adminpass), 256)
+                local iapass = imgui.ImBuffer(tostring(cfg.other.adminpass), 256)
+                local hudfontb = imgui.ImBuffer(tostring(cfg.other.hudfont), 256)
+                local hudsizeb = imgui.ImInt(cfg.other.hudsize)
 				imgui.CentrText(u8 'Остальное')
 				imgui.Separator()
 				if imgui.ToggleButton(u8 'reconw##1', reconwb) then cfg.other.reconw = reconwb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Варнинги на клео реконнект')
@@ -1306,7 +1318,9 @@ function imgui.OnDrawFrame()
 				if iapassb.v then
 					if imgui.InputText(u8 'Введите ваш админский пароль', iapass, imgui.InputTextFlags.Password) then cfg.other.adminpass = u8:decode(iapass.v) inicfg.save(config, 'Admin Tools\\config.ini') end
 					if imgui.Button(u8 'Узнать пароль##2') then atext('Ваш админский пароль: {a1dd4e}'..cfg.other.adminpass) end
-				end
+                end
+                if imgui.InputText(u8 'Шрифт##hud', hudfontb) then cfg.other.hudfont = hudfontb.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
+                if imgui.InputInt(u8 'Размер шрифта##hud', hudsizeb, 0) then cfg.other.hudsize = hudsizeb.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
             elseif data.imgui.menu == 6 then
                 imgui.CentrText(u8 'Настройка цветов')
                 imgui.Separator()
@@ -1705,10 +1719,10 @@ function initializeRender()
     deathfont = renderCreateFont('Arial', 10, 5)
     nizfont = renderCreateFont('Arial', 10, 0)
     gunfont = renderCreateFont(getGameDirectory()..'\\gtaweap3.ttf', 10, 0)
-    whfont = renderCreateFont("Verdana", 8, 4)
+    whfont = renderCreateFont(cfg.other.whfont, cfg.other.whsize, 4)
     whhpfont = renderCreateFont("Verdana", 8, 4)
-	checkfont = renderCreateFont("Arial", cfg.other.checksize, 4)
-	hudfont = renderCreateFont("Times New Roman", 10, 4)
+	checkfont = renderCreateFont(cfg.other.checkfont, cfg.other.checksize, 4)
+	hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4)
 end
 function rotateCarAroundUpAxis(car, vec)
     local mat = Matrix3X3(getVehicleRotationMatrix(car))
