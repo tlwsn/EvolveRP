@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.991')
+script_version('1.992')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -3848,7 +3848,10 @@ function blog(pam)
     end
 end
 function arecon()
-    local ip, port = sampGetCurrentServerAddress()
-    sampDisconnectWithReason(0)
-    sampConnectToServer(ip, port)
+    lua_thread.create(function()
+        local ip, port = sampGetCurrentServerAddress()
+        sampDisconnectWithReason(quit)
+        wait(200)
+        sampConnectToServer(ip, port)
+    end)
 end
