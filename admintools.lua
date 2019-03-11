@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.993')
+script_version('1.994')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -533,7 +533,7 @@ function main()
 	mem.fill(0x00531155, 0x90, 5, true)
     local DWMAPI = ffi.load('dwmapi')
     local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools'}
-    local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt'}
+    local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt', 'moonloader/Admin Tools/punishjb.txt'}
 	for k, v in pairs(directors) do
 		if not doesDirectoryExist(v) then createDirectory(v) end
 	end
@@ -563,6 +563,7 @@ function main()
 			WorkInBackground(true)
 		end
     end)
+    sampRegisterChatCommand('punish', punish)
     sampRegisterChatCommand('fid', function() sampShowDialog(3435, '{ffffff}ID Фракций', '{ffffff}ID\t{ffffff}Фракция\n1\tLSPD\n2\tFBI\n3\tSFA\n5\tLCN\n6\tYakuza\n7\tMayor\n9\tSFN\n10\tSFPD\n11\tInstructors\n12\tBallas\n13\tVagos\n14\tRM\n15\tGrove\n16\tLSN\n17\tAztec\n18\tRifa\n19\tLVA\n20\tLVN\n21\tLVPD\n22\tHospital\n24\tMongols\n26\tWarlocks\n29\tPagans', 'x', _, 5) end)
     sampRegisterChatCommand('arecon', arecon)
     sampRegisterChatCommand('guns', function() sampShowDialog(3435, '{ffffff}Оружия', '{ffffff}ID\t{ffffff}Название\n1\tКастет\n2\tКлюшка для гольфа\n3\tПолицейская дубинка\n4\tНож\n5\tБита\n6\tЛопата\n7\tКий\n8\tКатана\n9\tБензопила\n10\tДилдо\n11\tДилдо\n12\tВибратор\n13\tВибратор\n14\tЦветы\n15\tТрость\n16\tГраната\n17\tДымовая граната\n18\tКоктейль Молотова\n22\t9mm пистолет\n23\tSDPistol\n24\tDesert Eagle\n25\tShotgun\n26\tОбрез\n27\tCombat Shotgun\n28\tUZI\n29\tMP5\n30\tAK-47\n31\tM4\n32\tTec-9\n33\tCountry Rifle\n34\tSniper Rifle\n35\tRPG\n36\tHS Rocket\n37\tОгнемёт\n38\tМиниган\n39\tSatchel Charge\n40\tДетонатор\n41\tSpraycan\n42\tОгнетушитель\n43\tФотоаппарат\n44\tNight Vis Goggles\n45\tThermal Goggles\n46\tParachute', 'x', _, 5) end)
@@ -1020,6 +1021,10 @@ function imgui.OnDrawFrame()
             if imgui.CollapsingHeader('/givehb', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Выдать комлпект объектов игроку')
                 imgui.TextWrapped(u8 'Использование: /givehb [id] [имя комплекта]')
+            end
+            if imgui.CollapsingHeader('/punish', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Выдать наказания по жалобам из списка, заготовленым прогаммой Стронга')
+                imgui.TextWrapped(u8 'Использование: /punish')
             end
             imgui.End()
         end
@@ -3814,7 +3819,8 @@ function masstp()
     lua_thread.create(function()
         masstpon = not masstpon
         smsids = {}
-        atext(masstpon and 'Телепортация начата' or 'Телепортация окончена')
+        local skoktp = 0
+        atext(masstpon and 'Телепортация начата' or 'Телепортация окончена. Всего телепортировано: {a1dd4e}'..skoktp..'{ffffff} игроков')
         if not masstpon then 
             wait(1200)
             sampSendChat('/togphone')
@@ -3824,13 +3830,14 @@ function masstp()
                     if not masstpon then return end
                     if #smsids > 0 then
                         sampSendChat('/gethere '..table.remove(smsids, 1))
+                        skoktp = skoktp + 1
                     end    
                 end
             end)
             while true do wait(0)
                 if masstpon then
                     local smsx, smsy = convertGameScreenCoordsToWindowScreenCoords(242, 366)
-                    renderFontDrawText(hudfont, 'Телепортация игроков. Осталось: {a1dd4e}'..#smsids, smsx, smsy, -1)
+                    renderFontDrawText(hudfont, 'Телепортация игроков. Осталось: {a1dd4e}'..#smsids..'\n{ffffff}Всего телепортировано: {a1dd4e}'..skoktp, smsx, smsy, -1)
                 else return end
             end
         end    
@@ -3879,5 +3886,78 @@ function arecon()
         sampDisconnectWithReason(quit)
         wait(200)
         sampConnectToServer(ip, port)
+    end)
+end
+function punish()
+    lua_thread.create(function()
+        atext('Выдача наказаний по жалобам начата')
+        for line in io.lines(os.getenv('TEMP')..'\\Punishment.txt') do
+            if line:match('%[W%] Ник: .+ Количество дней: %d+ Причина: .+') then
+                local pnick, pdays, preason = line:match('%[W%] Ник: (.+) Количество дней: (%d+) Причина: (.+)')
+                local pnick = pnick:gsub(' ', '_')
+                if sampGetPlayerIdByNickname(pnick) ~= nil then
+                    sampSendChat(('/warn %s %s %s'):format(sampGetPlayerIdByNickname(pnick), pdays, preason))
+                else
+                    sampSendChat(('/offwarn %s %s %s'):format(pnick, pdays, preason))
+                end
+                local pnick, pdays, preason = nil, nil, nil
+                wait(1200)
+            end
+            if line:match('%[B%] Ник: .+ Количество дней:  Причина: .+') then
+                local pnick, preason = line:match('%[B%] Ник: (.+) Количество дней:  Причина: (.+)')
+                local pnick = pnick:gsub(' ', '_')
+                if sampGetPlayerIdByNickname(pnick) ~= nil then
+                    sampSendChat(('/ban %s %s'):format(sampGetPlayerIdByNickname(pnick), preason))
+                else
+                    sampSendChat(('/offban %s %s'):format(pnick, preason))
+                end
+                local pnick, preason = nil, nil
+                wait(1200)
+            end
+            if line:match('%[P%] Ник: .+ Количество минут: %d+ Причина: .+') then
+                local pnick, pminutes, preason = line:match('%[P%] Ник: (.+) Количество минут: (%d+) Причина: (.+)')
+                local pnick = pnick:gsub(' ', '_')
+                if sampGetPlayerIdByNickname(pnick) ~= nil then
+                    sampSendChat(('/prison %s %s %s'):format(sampGetPlayerIdByNickname(pnick), pminutes, preason))
+                else
+                    sampSendChat(('/offprison %s %s %s'):format(pnick, preason, pminutes))
+                end
+                local pnick, pminutes, preason = nil, nil, nil
+                wait(1200)
+            end
+            if line:match('%[M%] Ник: .+ Количество минут: %d+ Причина: .+') then
+                local pnick, pminutes, preason = line:match('%[M%] Ник: (.+) Количество минут: (%d+) Причина: (.+)')
+                local pnick = pnick:gsub(' ', '_')
+                if sampGetPlayerIdByNickname(pnick) ~= nil then
+                    sampSendChat(('/mute %s %s %s'):format(sampGetPlayerIdByNickname(pnick), pminutes, preason))
+                else
+                    sampSendChat(('/offmute %s %s %s'):format(pnick, preason, pminutes))
+                end
+                local pnick, pminutes, preason = nil, nil, nil
+                wait(1200)
+            end
+            if line:match('%[IB%] Ник: .+ Количество дней: 2038 Причина: .+') then
+                local pnick, preason = line:match('%[IB%] Ник: (.+) Количество дней: 2038 Причина: (.+)')
+                local pnick = pnick:gsub(' ', '_')
+                if sampGetPlayerIdByNickname(pnick) ~= nil then
+                    sampSendChat(('/iban %s %s'):format(sampGetPlayerIdByNickname(pnick), preason))
+                else
+                    sampSendChat(('/ioffban %s %s'):format(pnick, preason))
+                end
+                local pnick, preason = nil, nil
+                wait(1200)
+            end
+        end
+        atext('Выдача наказаний по жалобам окончена')
+        local pfile = io.open('moonloader/Admin Tools/punishjb.txt', 'a')
+        pfile:write('\n')
+        pfile:write(os.date()..'\n')
+        pfile:close()
+        for line in io.lines(os.getenv('TEMP')..'\\Punishment.txt') do
+            pfile:write(line..'\n')
+        end
+        pfile:close()
+        local ppfile = io.open(os.getenv('TEMP')..'\\Punishment.txt', 'w')
+        ppfile:close()
     end)
 end
