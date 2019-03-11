@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.995')
+script_version('1.996')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -3819,8 +3819,8 @@ function masstp()
     lua_thread.create(function()
         masstpon = not masstpon
         smsids = {}
-        local skoktp = 0
         atext(masstpon and 'Телепортация начата' or 'Телепортация окончена. Всего телепортировано: {a1dd4e}'..skoktp..'{ffffff} игроков')
+        local skoktp = 0
         if not masstpon then 
             wait(1200)
             sampSendChat('/togphone')
