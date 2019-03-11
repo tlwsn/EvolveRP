@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.994')
+script_version('1.995')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -3952,7 +3952,6 @@ function punish()
         local pfile = io.open('moonloader/Admin Tools/punishjb.txt', 'a')
         pfile:write('\n')
         pfile:write(os.date()..'\n')
-        pfile:close()
         for line in io.lines(os.getenv('TEMP')..'\\Punishment.txt') do
             pfile:write(line..'\n')
         end
