@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.997')
+script_version('1.998')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -3821,7 +3821,7 @@ function masstp()
         masstpon = not masstpon
         smsids = {}
         atext(masstpon and 'Телепортация начата' or 'Телепортация окончена. Всего телепортировано: {a1dd4e}'..skoktp..'{ffffff} игроков')
-        local skoktp = 0
+        skoktp = 0
         if not masstpon then 
             wait(1200)
             sampSendChat('/togphone')
