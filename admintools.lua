@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.992')
+script_version('1.993')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -531,7 +531,7 @@ function main()
     mem.fill(samp + 0x9D329, nop, 12, true)
     mem.fill(sampGetBase() + 0x2D3C45, 0, 2, true)
 	mem.fill(0x00531155, 0x90, 5, true)
-	local DWMAPI = ffi.load('dwmapi')
+    local DWMAPI = ffi.load('dwmapi')
     local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools'}
     local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt'}
 	for k, v in pairs(directors) do
@@ -550,9 +550,9 @@ function main()
     end
     for line in io.lines('moonloader/config/Admin Tools/punishignor.txt') do table.insert(punishignor, line) end
     DWMAPI.DwmEnableComposition(1)
+    cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     repeat wait(0) until isSampAvailable()
     autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", '[Admin Tools]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439")
-    cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     lua_thread.create(wh)
 	lua_thread.create(renderHud)
     registerFastAnswer()
@@ -3813,6 +3813,32 @@ end
 function masstp()
     lua_thread.create(function()
         masstpon = not masstpon
+        smsids = {}
+        atext(masstpon and 'Телепортация начата' or 'Телепортация окончена')
+        if not masstpon then 
+            wait(1200)
+            sampSendChat('/togphone')
+        else
+            lua_thread.create(function()
+                while true do wait(1200)
+                    if not masstpon then return end
+                    if #smsids > 0 then
+                        sampSendChat('/gethere '..table.remove(smsids, 1))
+                    end    
+                end
+            end)
+            while true do wait(0)
+                if masstpon then
+                    local smsx, smsy = convertGameScreenCoordsToWindowScreenCoords(242, 366)
+                    renderFontDrawText(hudfont, 'Телепортация игроков. Осталось: {a1dd4e}'..#smsids, smsx, smsy, -1)
+                else return end
+            end
+        end    
+    end)
+end
+--[[function masstp()
+    lua_thread.create(function()
+        masstpon = not masstpon
         if not masstpon then wait(1200) sampSendChat('/togphone') end
         smsids = {}
         atext(masstpon and 'Телепортация начата' or 'Телепортация окончена')
@@ -3822,7 +3848,7 @@ function masstp()
                 renderFontDrawText(hudfont, 'Телепортация игроков. Осталось: {a1dd4e}'..#smsids, smsx, smsy, -1)
                 lua_thread.create(function()
                     for k, v in pairs(smsids) do
-                        sampSendChat('/gethere '..v)
+                        sampSendChat('gethere '..v)
                         table.remove(smsids, k)
                         wait(1200)
                     end
@@ -3830,7 +3856,7 @@ function masstp()
             end
         end
     end)
-end
+end]]
 function blog(pam)
     local id = tonumber(pam)
     if #pam ~= 0 then
