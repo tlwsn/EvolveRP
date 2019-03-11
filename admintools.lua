@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.996')
+script_version('1.997')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -44,6 +44,7 @@ tpcount = 0
 tprep = false
 swork = true
 nametag = true
+skoktp = 0
 checkf = {}
 ips = {}
 temp_checker = {}
