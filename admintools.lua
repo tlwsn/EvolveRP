@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.992')
+script_version('1.9991')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -44,6 +44,7 @@ tpcount = 0
 tprep = false
 swork = true
 nametag = true
+skoktp = 0
 checkf = {}
 ips = {}
 temp_checker = {}
@@ -531,9 +532,9 @@ function main()
     mem.fill(samp + 0x9D329, nop, 12, true)
     mem.fill(sampGetBase() + 0x2D3C45, 0, 2, true)
 	mem.fill(0x00531155, 0x90, 5, true)
-	local DWMAPI = ffi.load('dwmapi')
+    local DWMAPI = ffi.load('dwmapi')
     local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools'}
-    local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt'}
+    local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt', 'moonloader/Admin Tools/punishjb.txt'}
 	for k, v in pairs(directors) do
 		if not doesDirectoryExist(v) then createDirectory(v) end
 	end
@@ -550,9 +551,9 @@ function main()
     end
     for line in io.lines('moonloader/config/Admin Tools/punishignor.txt') do table.insert(punishignor, line) end
     DWMAPI.DwmEnableComposition(1)
+    cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     repeat wait(0) until isSampAvailable()
     autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", '[Admin Tools]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439")
-    cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     lua_thread.create(wh)
 	lua_thread.create(renderHud)
     registerFastAnswer()
@@ -563,6 +564,7 @@ function main()
 			WorkInBackground(true)
 		end
     end)
+    sampRegisterChatCommand('punish', punish)
     sampRegisterChatCommand('fid', function() sampShowDialog(3435, '{ffffff}ID Фракций', '{ffffff}ID\t{ffffff}Фракция\n1\tLSPD\n2\tFBI\n3\tSFA\n5\tLCN\n6\tYakuza\n7\tMayor\n9\tSFN\n10\tSFPD\n11\tInstructors\n12\tBallas\n13\tVagos\n14\tRM\n15\tGrove\n16\tLSN\n17\tAztec\n18\tRifa\n19\tLVA\n20\tLVN\n21\tLVPD\n22\tHospital\n24\tMongols\n26\tWarlocks\n29\tPagans', 'x', _, 5) end)
     sampRegisterChatCommand('arecon', arecon)
     sampRegisterChatCommand('guns', function() sampShowDialog(3435, '{ffffff}Оружия', '{ffffff}ID\t{ffffff}Название\n1\tКастет\n2\tКлюшка для гольфа\n3\tПолицейская дубинка\n4\tНож\n5\tБита\n6\tЛопата\n7\tКий\n8\tКатана\n9\tБензопила\n10\tДилдо\n11\tДилдо\n12\tВибратор\n13\tВибратор\n14\tЦветы\n15\tТрость\n16\tГраната\n17\tДымовая граната\n18\tКоктейль Молотова\n22\t9mm пистолет\n23\tSDPistol\n24\tDesert Eagle\n25\tShotgun\n26\tОбрез\n27\tCombat Shotgun\n28\tUZI\n29\tMP5\n30\tAK-47\n31\tM4\n32\tTec-9\n33\tCountry Rifle\n34\tSniper Rifle\n35\tRPG\n36\tHS Rocket\n37\tОгнемёт\n38\tМиниган\n39\tSatchel Charge\n40\tДетонатор\n41\tSpraycan\n42\tОгнетушитель\n43\tФотоаппарат\n44\tNight Vis Goggles\n45\tThermal Goggles\n46\tParachute', 'x', _, 5) end)
@@ -1015,11 +1017,15 @@ function imgui.OnDrawFrame()
             end
             if imgui.CollapsingHeader('/masshb', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Выдать комплект объектов игрокам в зоне стрима')
-                imgui.TextWrapped(u8 'Использование: /masshb [имя комплекта]')
+                imgui.TextWrapped(u8 'Испол Tekashi_Toyotaьзование: /masshb [имя комплекта]')
             end
             if imgui.CollapsingHeader('/givehb', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Выдать комлпект объектов игроку')
                 imgui.TextWrapped(u8 'Использование: /givehb [id] [имя комплекта]')
+            end
+            if imgui.CollapsingHeader('/punish', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Выдать наказания по жалобам из списка, заготовленым прогаммой Стронга')
+                imgui.TextWrapped(u8 'Использование: /punish')
             end
             imgui.End()
         end
@@ -2095,186 +2101,188 @@ function sampev.onServerMessage(color, text)
         if text:match('^ ID: %d+ |.+') then
             local cid, cnick, crang = text:match('^ ID%: (%d+) | %d+%:%d+ %d+%.%d+%.%d+ | (.+)%: .+%[(%d+)%]')
             local lvl = sampGetPlayerScore(cid)
-            local crang = tonumber(crang)
-            if check_frak == 1 or check_frak == 10 or check_frak == 21 then
-                if lvl < frakrang.PD.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                end
-                if crang == 11 then
-                    if lvl < frakrang.PD.rang_11 then
+            if lvl ~= 0 then
+                local crang = tonumber(crang)
+                if check_frak == 1 or check_frak == 10 or check_frak == 21 then
+                    if lvl < frakrang.PD.inv and lvl ~= 0 then
                         table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
-                end
-                if crang == 12 then
-                    if lvl < frakrang.PD.rang_12 then
+                    if crang == 11 then
+                        if lvl < frakrang.PD.rang_11 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 12 then
+                        if lvl < frakrang.PD.rang_12 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 13 then
+                        if lvl < frakrang.PD.rang_13 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                elseif check_frak == 2 then
+                    if lvl < frakrang.FBI.inv and lvl ~= 0 then
                         table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
-                end
-                if crang == 13 then
-                    if lvl < frakrang.PD.rang_13 then
+                    if crang == 6 then
+                        if lvl < frakrang.FBI.rang_6 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 7 then
+                        if lvl < frakrang.FBI.rang_7 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 8 then
+                        if lvl < frakrang.FBI.rang_8 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 9 then
+                        if lvl < frakrang.FBI.rang_9 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                elseif check_frak == 3 or check_frak == 19 then
+                    if lvl < frakrang.Army.inv and lvl ~= 0 then
                         table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
-                end
-            elseif check_frak == 2 then
-                if lvl < frakrang.FBI.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                end
-                if crang == 6 then
-                    if lvl < frakrang.FBI.rang_6 then
+                    if crang == 12 then
+                        if lvl < frakrang.Army.rang_12 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 13 then
+                        if lvl < frakrang.Army.rang_13 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 14 then
+                        if lvl < frakrang.Army.rang_14 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                elseif check_frak == 5 or check_frak == 6 or check_frak == 14 then
+                    if lvl < frakrang.Mafia.inv and lvl ~= 0 then
                         table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
-                end
-                if crang == 7 then
-                    if lvl < frakrang.FBI.rang_7 then
+                    if crang == 7 then
+                        if lvl < frakrang.Mafia.rang_7 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 8 then
+                        if lvl < frakrang.Mafia.rang_8 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 9 then
+                        if lvl < frakrang.Mafia.rang_9 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                elseif check_frak == 11 then
+                    if lvl < frakrang.Autoschool.inv and lvl ~= 0 then
                         table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
-                end
-                if crang == 8 then
-                    if lvl < frakrang.FBI.rang_8 then
+                    if crang == 7 then
+                        if lvl < frakrang.Autoschool.rang_7 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 8 then
+                        if lvl < frakrang.Autoschool.rang_8 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 9 then
+                        if lvl < frakrang.Autoschool.rang_9 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                elseif check_frak == 12 or check_frak == 13 or check_frak == 15 or check_frak == 17 or check_frak == 18 then
+                    if lvl < frakrang.Gangs.inv and lvl ~= 0 then
                         table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
-                end
-                if crang == 9 then
-                    if lvl < frakrang.FBI.rang_9 then
+                    if crang == 7 then
+                        if lvl < frakrang.Gangs.rang_7 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 8 then
+                        if lvl < frakrang.Gangs.rang_8 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 9 then
+                        if lvl < frakrang.Gangs.rang_9 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                elseif check_frak == 22 then
+                    if lvl < frakrang.MOH.inv and lvl ~= 0 then
                         table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
-                end
-            elseif check_frak == 3 or check_frak == 19 then
-                if lvl < frakrang.Army.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                end
-                if crang == 12 then
-                    if lvl < frakrang.Army.rang_12 then
+                    if crang == 7 then
+                        if lvl < frakrang.MOH.rang_7 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 8 then
+                        if lvl < frakrang.MOH.rang_8 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 9 then
+                        if lvl < frakrang.MOH.rang_9 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                elseif check_frak == 24 or check_frak == 26 or check_frak == 29 then
+                    if lvl < frakrang.Bikers.inv and lvl ~= 0 then
                         table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
-                end
-                if crang == 13 then
-                    if lvl < frakrang.Army.rang_13 then
+                    if crang == 5 then
+                        if lvl < frakrang.Bikers.rang_5 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 6 then
+                        if lvl < frakrang.Bikers.rang_6 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 7 then
+                        if lvl < frakrang.Bikers.rang_7 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                    if crang == 8 then
+                        if lvl < frakrang.Bikers.rang_8 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
+                    end
+                elseif check_frak == 9 or check_frak == 16 or check_frak == 20 then
+                    if lvl < frakrang.News.inv and lvl ~= 0 then
                         table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                     end
-                end
-                if crang == 14 then
-                    if lvl < frakrang.Army.rang_14 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                    if crang == 7 then
+                        if lvl < frakrang.News.rang_7 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
                     end
-                end
-            elseif check_frak == 5 or check_frak == 6 or check_frak == 14 then
-                if lvl < frakrang.Mafia.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                end
-                if crang == 7 then
-                    if lvl < frakrang.Mafia.rang_7 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                    if crang == 8 then
+                        if lvl < frakrang.News.rang_8 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
                     end
-                end
-                if crang == 8 then
-                    if lvl < frakrang.Mafia.rang_8 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-                if crang == 9 then
-                    if lvl < frakrang.Mafia.rang_9 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-            elseif check_frak == 11 then
-                if lvl < frakrang.Autoschool.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                end
-                if crang == 7 then
-                    if lvl < frakrang.Autoschool.rang_7 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-                if crang == 8 then
-                    if lvl < frakrang.Autoschool.rang_8 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-                if crang == 9 then
-                    if lvl < frakrang.Autoschool.rang_9 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-            elseif check_frak == 12 or check_frak == 13 or check_frak == 15 or check_frak == 17 or check_frak == 18 then
-                if lvl < frakrang.Gangs.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                end
-                if crang == 7 then
-                    if lvl < frakrang.Gangs.rang_7 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-                if crang == 8 then
-                    if lvl < frakrang.Gangs.rang_8 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-                if crang == 9 then
-                    if lvl < frakrang.Gangs.rang_9 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-            elseif check_frak == 22 then
-                if lvl < frakrang.MOH.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                end
-                if crang == 7 then
-                    if lvl < frakrang.MOH.rang_7 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-                if crang == 8 then
-                    if lvl < frakrang.MOH.rang_8 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-                if crang == 9 then
-                    if lvl < frakrang.MOH.rang_9 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-            elseif check_frak == 24 or check_frak == 26 or check_frak == 29 then
-                if lvl < frakrang.Bikers.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                end
-                if crang == 5 then
-                    if lvl < frakrang.Bikers.rang_5 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-                if crang == 6 then
-                    if lvl < frakrang.Bikers.rang_6 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-                if crang == 7 then
-                    if lvl < frakrang.Bikers.rang_7 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-                if crang == 8 then
-                    if lvl < frakrang.Bikers.rang_8 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-            elseif check_frak == 9 or check_frak == 16 or check_frak == 20 then
-                if lvl < frakrang.News.inv and lvl ~= 0 then
-                    table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                end
-                if crang == 7 then
-                    if lvl < frakrang.News.rang_7 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-                if crang == 8 then
-                    if lvl < frakrang.News.rang_8 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
-                    end
-                end
-                if crang == 9 then
-                    if lvl < frakrang.News.rang_9 then
-                        table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                    if crang == 9 then
+                        if lvl < frakrang.News.rang_9 then
+                            table.insert(checkf, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
+                        end
                     end
                 end
             end
@@ -2980,7 +2988,7 @@ function wh()
                                     local sdsd = posy
                                     for _, v in ipairs(nametagCoords) do
                                         if v["pos_y"] > posy-22.5 and v["pos_y"] < posy+22.5 and v["pos_x"] > posx-50 and v["pos_x"] < posx+50 then
-                                            posy = v["pos_y"] + 22.5
+                                            posy = v["pos_y"] - 22.5
                                         end
                                     end
                                     nametagCoords[#nametagCoords+1] = {
@@ -3813,6 +3821,34 @@ end
 function masstp()
     lua_thread.create(function()
         masstpon = not masstpon
+        smsids = {}
+        atext(masstpon and 'Телепортация начата' or 'Телепортация окончена. Всего телепортировано: {a1dd4e}'..skoktp..'{ffffff} игроков')
+        skoktp = 0
+        if not masstpon then 
+            wait(1200)
+            sampSendChat('/togphone')
+        else
+            lua_thread.create(function()
+                while true do wait(1200)
+                    if not masstpon then return end
+                    if #smsids > 0 then
+                        sampSendChat('/gethere '..table.remove(smsids, 1))
+                        skoktp = skoktp + 1
+                    end    
+                end
+            end)
+            while true do wait(0)
+                if masstpon then
+                    local smsx, smsy = convertGameScreenCoordsToWindowScreenCoords(242, 366)
+                    renderFontDrawText(hudfont, 'Телепортация игроков. Осталось: {a1dd4e}'..#smsids..'\n{ffffff}Всего телепортировано: {a1dd4e}'..skoktp, smsx, smsy, -1)
+                else return end
+            end
+        end    
+    end)
+end
+--[[function masstp()
+    lua_thread.create(function()
+        masstpon = not masstpon
         if not masstpon then wait(1200) sampSendChat('/togphone') end
         smsids = {}
         atext(masstpon and 'Телепортация начата' or 'Телепортация окончена')
@@ -3822,7 +3858,7 @@ function masstp()
                 renderFontDrawText(hudfont, 'Телепортация игроков. Осталось: {a1dd4e}'..#smsids, smsx, smsy, -1)
                 lua_thread.create(function()
                     for k, v in pairs(smsids) do
-                        sampSendChat('/gethere '..v)
+                        sampSendChat('gethere '..v)
                         table.remove(smsids, k)
                         wait(1200)
                     end
@@ -3830,7 +3866,7 @@ function masstp()
             end
         end
     end)
-end
+end]]
 function blog(pam)
     local id = tonumber(pam)
     if #pam ~= 0 then
@@ -3853,5 +3889,77 @@ function arecon()
         sampDisconnectWithReason(quit)
         wait(200)
         sampConnectToServer(ip, port)
+    end)
+end
+function punish()
+    lua_thread.create(function()
+        atext('Выдача наказаний по жалобам начата')
+        for line in io.lines(os.getenv('TEMP')..'\\Punishment.txt') do
+            if line:match('%[W%] Ник: .+ Количество дней: %d+ Причина: .+') then
+                local pnick, pdays, preason = line:match('%[W%] Ник: (.+) Количество дней: (%d+) Причина: (.+)')
+                local pnick = pnick:gsub(' ', '_')
+                if sampGetPlayerIdByNickname(pnick) ~= nil then
+                    warn(('%s %s %s'):format(sampGetPlayerIdByNickname(pnick), pdays, preason))
+                else
+                    sampSendChat(('/offwarn %s %s %s'):format(pnick, pdays, preason))
+                end
+                local pnick, pdays, preason = nil, nil, nil
+                wait(1200)
+            end
+            if line:match('%[B%] Ник: .+ Количество дней:  Причина: .+') then
+                local pnick, preason = line:match('%[B%] Ник: (.+) Количество дней:  Причина: (.+)')
+                local pnick = pnick:gsub(' ', '_')
+                if sampGetPlayerIdByNickname(pnick) ~= nil then
+                    ban(('%s %s'):format(sampGetPlayerIdByNickname(pnick), preason))
+                else
+                    sampSendChat(('/offban %s %s'):format(pnick, preason))
+                end
+                local pnick, preason = nil, nil
+                wait(1200)
+            end
+            if line:match('%[P%] Ник: .+ Количество минут: %d+ Причина: .+') then
+                local pnick, pminutes, preason = line:match('%[P%] Ник: (.+) Количество минут: (%d+) Причина: (.+)')
+                local pnick = pnick:gsub(' ', '_')
+                if sampGetPlayerIdByNickname(pnick) ~= nil then
+                    sampSendChat(('/prison %s %s %s'):format(sampGetPlayerIdByNickname(pnick), pminutes, preason))
+                else
+                    sampSendChat(('/offprison %s %s %s'):format(pnick, preason, pminutes))
+                end
+                local pnick, pminutes, preason = nil, nil, nil
+                wait(1200)
+            end
+            if line:match('%[M%] Ник: .+ Количество минут: %d+ Причина: .+') then
+                local pnick, pminutes, preason = line:match('%[M%] Ник: (.+) Количество минут: (%d+) Причина: (.+)')
+                local pnick = pnick:gsub(' ', '_')
+                if sampGetPlayerIdByNickname(pnick) ~= nil then
+                    sampSendChat(('/mute %s %s %s'):format(sampGetPlayerIdByNickname(pnick), pminutes, preason))
+                else
+                    sampSendChat(('/offmute %s %s %s'):format(pnick, preason, pminutes))
+                end
+                local pnick, pminutes, preason = nil, nil, nil
+                wait(1200)
+            end
+            if line:match('%[IB%] Ник: .+ Количество дней: 2038 Причина: .+') then
+                local pnick, preason = line:match('%[IB%] Ник: (.+) Количество дней: 2038 Причина: (.+)')
+                local pnick = pnick:gsub(' ', '_')
+                if sampGetPlayerIdByNickname(pnick) ~= nil then
+                    sampSendChat(('/iban %s %s'):format(sampGetPlayerIdByNickname(pnick), preason))
+                else
+                    sampSendChat(('/ioffban %s %s'):format(pnick, preason))
+                end
+                local pnick, preason = nil, nil
+                wait(1200)
+            end
+        end
+        atext('Выдача наказаний по жалобам окончена')
+        local pfile = io.open('moonloader/Admin Tools/punishjb.txt', 'a')
+        pfile:write('\n')
+        pfile:write(os.date()..'\n')
+        for line in io.lines(os.getenv('TEMP')..'\\Punishment.txt') do
+            pfile:write(line..'\n')
+        end
+        pfile:close()
+        local ppfile = io.open(os.getenv('TEMP')..'\\Punishment.txt', 'w')
+        ppfile:close()
     end)
 end
