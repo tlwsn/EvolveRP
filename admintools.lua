@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.9991')
+script_version('1.9992')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -534,7 +534,7 @@ function main()
 	mem.fill(0x00531155, 0x90, 5, true)
     local DWMAPI = ffi.load('dwmapi')
     local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools'}
-    local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt', 'moonloader/Admin Tools/punishjb.txt'}
+    local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt', 'moonloader/Admin Tools/punishjb.txt', 'moonloader/Admin Tools/punishlogs.txt'}
 	for k, v in pairs(directors) do
 		if not doesDirectoryExist(v) then createDirectory(v) end
 	end
@@ -2009,6 +2009,7 @@ frakcolor = {
     ['Rifa'] = '{2A9170}Rifa{ffffff}'
 }
 function sampev.onServerMessage(color, text)
+    punishlog(text)
     if cfg.other.chatconsole then sampfuncsLog(text) end
 	if doesFileExist('moonloader/Admin Tools/chatlog_all.txt') then
 		local file = io.open('moonloader/Admin Tools/chatlog_all.txt', 'a')
@@ -3962,4 +3963,84 @@ function punish()
         local ppfile = io.open(os.getenv('TEMP')..'\\Punishment.txt', 'w')
         ppfile:close()
     end)
+end
+function punishlog(text)
+    local mynick = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
+    if text:match('^ .+ получил предупреждение до .+ от .+') then
+        local nick = text:match('^ .+ получил предупреждение до .+ от (.+)')
+        if nick == mynick then
+            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
+            file:write(text..'\n')
+            file:close()
+        end
+    end
+    if text:match('^ Администратор .+ поместил в ДеМорган .+ на %d+ минут. Причина: .+') then
+        local nick = text:match('^ Администратор (.+) поместил в ДеМорган .+ на %d+ минут. Причина: .+')
+        if nick == mynick then
+            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
+            file:write(text..'\n')
+            file:close()
+        end
+    end
+    if text:match('^ Администратор: .+ выдал warn .+. Причина: .+') then
+        local nick = text:match('^ Администратор: (.+) выдал warn .+. Причина: .+')
+        if nick == mynick then
+            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
+            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
+            file:close()
+        end
+    end
+    if text:match('^ Администратор: .+ забанил .+. Причина: .+') then
+        local nick = text:match('^ Администратор: (.+) забанил .+. Причина: .+ ')
+        if nick == mynick then
+            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
+            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
+            file:close()
+        end
+    end
+    if text:match('^ IOffBan%[забанил: .+%]%[забанен: .+%]%[Причина: .+%]%[.+%]') then
+        local nick = text:match('^ IOffBan%[забанил: (.+)%]%[забанен: .+%]%[Причина: .+%]%[.+%]')
+        if nick == mynick then
+            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
+            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
+            file:close()
+        end
+    end
+    if text:match('^ OffBan%[забанил: .+%]%[забанен: .+%]%[Причина: .+%]%[дней: %d+%]%[.+%]') then
+        local nick = text:match('^ OffBan%[забанил: (.+)%]%[забанен: .+%]%[Причина: .+%]%[дней: %d+%]%[.+%]')
+        if nick == mynick then
+            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
+            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
+            file:close()
+        end
+    end
+    if text:match('^ .+ посажен в prison на %d+ минут. Администратор: .+. Причина: .+') then
+        local nick = text:match('^ .+ посажен в prison на %d+ минут. Администратор: (.+). Причина: .+')
+        if nick == mynick then
+            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
+            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
+            file:close()
+        end
+    end
+    if text:match('^ OffMute%[Заткнул: .+%]%[Заткнут: .+%]%[Причина: .+%]%[минут: %d+%]') then
+        local nick = text:match('^ OffMute%[Заткнул: (.+)%]%[Заткнут: .+%]%[Причина: .+%]%[минут: %d+%]')
+        if nick == mynick then
+            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
+            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
+            file:close()
+        end
+    end
+    if text:match('^ Администратор .+ заблокировал чат игрока .+, на %d+ минут. Причина: .+') then
+        local nick = text:match('^ Администратор (.+) заблокировал чат игрока .+, на %d+ минут. Причина: .+')
+        if nick == mynick then
+            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
+            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
+            file:close()
+        end
+    end
+    if text:match('^ Вы посадили .+ в тюрьму на %d+ минут') then
+        local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
+        file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
+        file:close()
+    end
 end
