@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.999')
+script_version('1.9991')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -3899,7 +3899,7 @@ function punish()
                 local pnick, pdays, preason = line:match('%[W%] Ник: (.+) Количество дней: (%d+) Причина: (.+)')
                 local pnick = pnick:gsub(' ', '_')
                 if sampGetPlayerIdByNickname(pnick) ~= nil then
-                    sampSendChat(('/warn %s %s %s'):format(sampGetPlayerIdByNickname(pnick), pdays, preason))
+                    warn(('%s %s %s'):format(sampGetPlayerIdByNickname(pnick), pdays, preason))
                 else
                     sampSendChat(('/offwarn %s %s %s'):format(pnick, pdays, preason))
                 end
@@ -3910,7 +3910,7 @@ function punish()
                 local pnick, preason = line:match('%[B%] Ник: (.+) Количество дней:  Причина: (.+)')
                 local pnick = pnick:gsub(' ', '_')
                 if sampGetPlayerIdByNickname(pnick) ~= nil then
-                    sampSendChat(('/ban %s %s'):format(sampGetPlayerIdByNickname(pnick), preason))
+                    ban(('%s %s'):format(sampGetPlayerIdByNickname(pnick), preason))
                 else
                     sampSendChat(('/offban %s %s'):format(pnick, preason))
                 end
