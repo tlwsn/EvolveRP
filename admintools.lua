@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.9994')
+script_version('1.9995')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -4053,6 +4053,14 @@ function punishlog(text)
     end
     if text:match('^ Администратор: .+ кикнул .+. Причина: .+') then
         local nick = text:match('^ Администратор: (.+) кикнул .+. Причина: .+')
+        if nick == mynick then
+            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
+            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
+            file:close()
+        end
+    end
+    if text:match('^ SBan%[забанил: .+%]%[забанен: .+%]%[причина: .+%]%[.+%]') then
+        local nick = text:match('^ SBan%[забанил: (.+)%]%[забанен: .+%]%[причина: .+%]%[.+%]')
         if nick == mynick then
             local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
             file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
