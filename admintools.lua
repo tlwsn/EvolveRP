@@ -59,7 +59,7 @@ config_keys = {
     saveposkey = {v = {key.VK_M}},
     goposkey = {v = {key.VK_J}},
 	tpmetka = {v = {key.VK_K}},
-    cwarningkey = {v = {226}},
+    cwarningkey = {v = {key.VK_R}},
     airbrkkey = {v = key.VK_RSHIFT}
 }
 config_colors = {
@@ -620,11 +620,11 @@ function main()
 				    saveposkey = {v = {key.VK_M}},
 				    goposkey = {v = {key.VK_J}},
 					tpmetka = {v = {key.VK_K}},
-                    cwarningkey = {v = {226}},
+                    cwarningkey = {v = {key.VK_R}},
                     airbrkkey = {v = key.VK_RSHIFT}
 				}
 			end
-			if config_keys.cwarningkey == nil then config_keys.cwarningkey = {v = {226}} end
+			if config_keys.cwarningkey == nil then config_keys.cwarningkey = {v = {key.VK_R}} end
             if config_keys.airbrkkey == nil then config_keys.airbrkkey = {v = key.VK_RSHIFT} end
         end
     end
