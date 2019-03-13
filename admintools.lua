@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.9995')
+script_version('1.9996')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -27,9 +27,14 @@ settingwindows = imgui.ImBool(false)
 tpwindow = imgui.ImBool(false)
 recon = imgui.ImBool(false)
 cmdwindow = imgui.ImBool(false)
+mpwindow = imgui.ImBool(false)
 bMainWindow = imgui.ImBool(false)
 sInputEdit = imgui.ImBuffer(256)
 bIsEnterEdit = imgui.ImBool(false)
+mpend = imgui.ImBool(false)
+mpname = imgui.ImBuffer(256)
+mpsponsors = imgui.ImBuffer(256)
+mpwinner = imgui.ImBuffer(256)
 wrecon = {}
 punishignor = {}
 local nop = 0x90
@@ -893,8 +898,48 @@ function imgui.OnDrawFrame()
         if imgui.Button(u8 'Настройки', btn_size) then settingwindows.v = not settingwindows.v end
         if imgui.Button(u8 'Телепорты', btn_size) then tpwindow.v = not tpwindow.v end
         if imgui.Button(u8 'Команды скрипта', btn_size) then cmdwindow.v = not cmdwindow.v end
+        if imgui.Button(u8 'Мероприятие', btn_size) then mpwindow.v = not mpwindow.v end
 		if imgui.Button(u8 'Биндер', btn_size) then bMainWindow.v = not bMainWindow.v end
         imgui.End()
+        if mpwindow.v then
+            imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+            imgui.SetNextWindowSize(imgui.ImVec2(500, 300), imgui.Cond.FirstUseEver)
+            imgui.Begin(u8 'Admin Tools | Мероприятие', mpwindow, imgui.WindowFlags.NoResize)
+            imgui.Checkbox(u8 'Конец МП', mpend)
+            imgui.Separator()
+            if not mpend.v then
+                imgui.InputText(u8 'Название мероприятия', mpname)
+                imgui.InputText(u8 'Спонсоры мероприятия', mpsponsors)
+                imgui.Text(u8'Пример:')
+                imgui.Separator()
+                imgui.TextWrapped((u8'Желающие на МП "%s" + в SMS. Сразу из машин выходите'):format(mpname.v))
+            else
+                imgui.InputText(u8 'Победитель мероприятия', mpwinner)
+                imgui.InputText(u8 'Спонсоры мероприятия', mpsponsors)
+                imgui.Text(u8'Пример:')
+                imgui.Separator()
+                imgui.TextWrapped((u8'Победитель МП "%s" - %s'):format(mpname.v, mpwinner.v))
+                imgui.TextWrapped((u8'Спонсоры: %s'):format(mpsponsors.v))
+            end
+            if imgui.Button(u8 'Объявить в /o') then
+                lua_thread.create(function()
+                    if mpend.v then
+                        sampSendChat(('/o Победитель МП "%s" - %s'):format(u8:decode(mpname.v), u8:decode(mpwinner.v)))
+                        wait(1200)
+                        sampSendChat(('/o Спонсоры: %s'):format(u8:decode(mpsponsors.v)))
+                    else
+                        sampSendChat((('/o Желающие на МП "%s" + в SMS. Сразу из машин выходите'):format(u8:decode(mpname.v))))
+                    end
+                end)
+            end
+            imgui.SameLine()
+            if imgui.Button(u8 'Очистить поля') then
+                mpname.v = ''
+                mpwinner.v = ''
+                mpsponsors.v = ''
+            end
+            imgui.End()
+        end
         if cmdwindow.v then
             imgui.SetNextWindowSize(imgui.ImVec2(500, 500), imgui.Cond.FirstUseEver)
             imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
