@@ -1,6 +1,6 @@
 script_name("Activity checker") 
 script_author('Edward_Franklin')
-script_version("1.1")
+script_version("1.21")
 script_properties('work-in-pause')
 --------------------------------------------------------------------
 require "lib.moonloader"
@@ -44,14 +44,19 @@ local sInfo = {
   onlineTime = 0,
   isALogin = false
 }
+local whiteList = {}
+local ips = {}
+local punishName = {"Ban", "Warn", "Kick", "Prison", "Mute", "BanIP", "RMute", "Jail"}
+local dayName = {"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"}
 local nick = ""
-local autoupdate = 0
-
 --------------------------------------------------------------------
 function main()
     if not isSampfuncsLoaded() or not isSampLoaded() then return end
     while not isSampAvailable() do wait(100) end
     sampRegisterChatCommand("activity", checkActivity)
+    sampRegisterChatCommand("ppv", cmd_ppv)
+    sampRegisterChatCommand("ego", cmd_ego)
+    sampRegisterChatCommand("gip", cmd_gip)
     --------------------=========----------------------
     if not doesDirectoryExist("moonloader\\config") then
       createDirectory("moonloader\\config")
@@ -68,10 +73,16 @@ function main()
       elseif weeknum == 5 then pInfo.weeks.Friday = pInfo.info.dayOnline
       elseif weeknum == 6 then pInfo.weeks.Saturday = pInfo.info.dayOnline
       elseif weeknum == 0 then pInfo.weeks.Sunday = pInfo.info.dayOnline end
-      print(string.format("Начался новый день. Итог прошлого дня (%s): %s", pInfo.info.day, secToTime(pInfo.info.dayOnline)))
+      atext(string.format("Начался новый день. Итог прошлого дня (%s): %s", pInfo.info.day, secToTime(pInfo.info.dayOnline)))
       -----------------
-      if weeknum > tonumber(weekday) then
-        print('Началась новая неделя. Итог прошлой недели: %s', secToTime(pInfo.info.weekOnline))
+      if weeknum == 0 then
+        atext('Началась новая неделя. Итог прошлой недели: %s', secToTime(pInfo.info.weekOnline))
+        for key in pairs(pInfo) do
+          for k in pairs(pInfo[key]) do
+            pInfo[key][k] = 0
+          end
+        end
+        --[[
         pInfo.info.weekOnline = 0
         pInfo.info.weekPM = 0
         pInfo.weeks.Monday = 0
@@ -88,82 +99,163 @@ function main()
         pInfo.punish.kick = 0
         pInfo.punish.jail = 0
         pInfo.punish.prison = 0
-        pInfo.punish.rmute = 0
+        pInfo.punish.rmute = 0]]
       end
       pInfo.info.day = day
       pInfo.info.dayPM = 0
       pInfo.info.dayOnline = 0
       pInfo.info.dayAFK = 0
     end
-    sInfo.sessionStart = os.time()
     sInfo.authTime = os.date("%d.%m.%y %H:%M:%S")
+    if doesFileExist("moonloader/config/ip_whitelist.txt") then
+      for player in io.lines("moonloader/config/ip_whitelist.txt") do
+        table.insert(whiteList, player:match("(%S+)"))
+      end
+    else
+      io.open("moonloader/config/ip_whitelist.txt", "w"):close()
+    end
     --------------------=========----------------------
     while not sampIsLocalPlayerSpawned() do wait(0) end
     local _, myid = sampGetPlayerIdByCharHandle(playerPed)
     nick = sampGetPlayerNickname(myid)
     while true do
       wait(1000)
+      --if not sampIsPlayerConnected(myid) then sInfo.isALogin = false atext("not connected") end
       if sInfo.isALogin then
         pInfo.info.dayOnline = pInfo.info.dayOnline + 1
         pInfo.info.weekOnline = pInfo.info.weekOnline + 1
         sInfo.onlineTime = sInfo.onlineTime + 1
-        autoupdate = autoupdate + 1
-        if autoupdate >= 60 then
+        if sInfo.onlineTime >= 30 then
           if sInfo.sessionStart ~= 0 then
             pInfo.info.dayAFK = pInfo.info.dayAFK + (os.time() - sInfo.sessionStart - sInfo.onlineTime)
           end
           sInfo.onlineTime = 0
           sInfo.sessionStart = os.time()
           inicfg.save(pInfo, "activity-checker")
-          autoupdate = 0
         end
       end
     end
 end
 
+function cmd_ego(params)
+  if #params == 0 then
+    sampAddChatMessage("Введите: /ego [id/nick]", -1)
+    return
+  end
+  local playername = ""
+  local paramid = tonumber(params)
+  if sampIsPlayerConnected(paramid) then playername = sampGetPlayerNickname(paramid)
+  else playername = params
+  end
+  if checkIntable(whiteList, playername) then
+    local i = 1
+    while i <= #whiteList do
+        if whiteList[i] == playername then
+            table.remove(whiteList, i)
+        else
+            i = i + 1
+        end
+    end
+    local open = io.open("moonloader/config/ip_whitelist.txt", "w")
+    for k, v in pairs(whiteList) do
+        open:write('\n'..v)
+    end
+    open:close()
+    open = nil
+    atext("Игрок "..playername.." успешно удален из белого списка")
+  else
+    local open = io.open("moonloader/config/ip_whitelist.txt", 'a')
+    open:write('\n'..playername)
+    open:close()
+    open = nil
+    table.insert(whiteList, playername)
+    atext("Игрок "..playername.." успешно добавлен в белый список")
+  end  
+end
+
+function cmd_gip(params)
+  if #params == 0 then
+    sampAddChatMessage("Введите: /gip [playerid]", -1)
+    return
+  end
+  params = tonumber(params)
+  if not sampIsPlayerConnected(params) then
+    sampAddChatMessage("Игрок оффлайн!", 0xCCCCCC)
+    return
+  end
+  sampSendChat("/getip "..params)
+  if checkIntable(whiteList, sampGetPlayerNickname(params)) then
+    atext("Игрок найден в белом списке!")
+  end
+end
+
+function cmd_ppv()
+  -- ips[#ips+1] = { "name" = nick, "regip" = rip, "ip" = ip }
+  local zstring = "{FFFFFF}Ник\t{FFFFFF}R-IP\t{FFFFFF}IP\n"
+  local count = #ips
+  for i = 1, count do
+    zstring = zstring..string.format("%s\t%s\t%s\n", ips[i].name, ips[i].regip, ips[i].lip)
+  end
+  lua_thread.create(function()
+    sampShowDialog(811653, "{FFFFFF}Проверенные аккаунты | {954F4F}Список", zstring, "Удалить", "Закрыть", DIALOG_STYLE_TABLIST_HEADERS)
+    while sampIsDialogActive(811653) do wait(50) end
+    local _, button, list, _ = sampHasDialogRespond(811653)
+    if button == 1 then
+      table.remove(ips, list+1)
+      cmd_ppv()
+    end
+  end)  
+end
+
 function checkPunishments()
   local zstring = "{FFFFFF}Наказание\t{FFFFFF}Количество\n"
-  zstring = zstring..string.format("Ban\t%s\n", pInfo.punish.ban)
-  zstring = zstring..string.format("Warn\t%s\n", pInfo.punish.warn)
-  zstring = zstring..string.format("Kick\t%s\n", pInfo.punish.kick)
-  zstring = zstring..string.format("Prison\t%s\n", pInfo.punish.prison)
-  zstring = zstring..string.format("Mute\t%s\n", pInfo.punish.mute)
-  zstring = zstring..string.format("BanIP\t%s\n", pInfo.punish.banip)
-  zstring = zstring..string.format("RMute\t%s\n", pInfo.punish.rmute)
-  zstring = zstring..string.format("Jail\t%s\n", pInfo.punish.jail)
-  sampShowDialog(835163, string.format("{FFFFFF}Наказания за неделю | {954F4F}%s", nick), zstring, "Закрыть", "", DIALOG_STYLE_TABLIST_HEADERS)	
+  local i = 1
+  for key, value in pairs(pInfo.punish) do
+    zstring = zstring..string.format("%s\t%s\n", punishName[i], value)
+    i = i + 1
+  end
+  lua_thread.create(function()
+    sampShowDialog(835163, string.format("{FFFFFF}Наказания за неделю | {954F4F}%s", nick), zstring, "Закрыть", "Назад", DIALOG_STYLE_TABLIST_HEADERS)
+    while sampIsDialogActive(835163) do wait(50) end
+    local _, button, _, _ = sampHasDialogRespond(835163)
+    if button == 0 then
+      checkActivity()
+    end
+  end)
 end
 
 function checkWeek()
   local daynumber = dateToWeekNumber(os.date("%d.%m.%y"))
-  local colour = {}
-  for i = 1, 7 do
-    if daynumber > 0 then
-      if daynumber < i then colour[i] = "ec3737"
-      elseif daynumber == i then colour[i] = "FFFFFF"
-      else colour[i] = "00BF80" end
-    else
-      if daynumber == 0 and i == 7 then colour[i] = "FFFFFF"
-      else colour[i] = "00BF80" end
-    end
-  end
-  local dayonline = pInfo.info.dayOnline + os.time() - sInfo.sessionStart
+  local i = 1
   local zstring = "{FFFFFF}День\t{FFFFFF}Онлайн\n"
-  zstring = zstring..string.format("Понедельник\t{%s}%s\n", colour[1], daynumber == 1 and secToTime(dayonline) or secToTime(pInfo.weeks.Monday))
-  zstring = zstring..string.format("Вторник\t{%s}%s\n", colour[2], daynumber == 2 and secToTime(dayonline) or secToTime(pInfo.weeks.Tuesday))
-  zstring = zstring..string.format("Среда\t{%s}%s\n", colour[3], daynumber == 3 and secToTime(dayonline) or secToTime(pInfo.weeks.Wednesday))
-  zstring = zstring..string.format("Четверг\t{%s}%s\n", colour[4], daynumber == 4 and secToTime(dayonline) or secToTime(pInfo.weeks.Thursday))
-  zstring = zstring..string.format("Пятница\t{%s}%s\n", colour[5], daynumber == 5 and secToTime(dayonline) or secToTime(pInfo.weeks.Friday))
-  zstring = zstring..string.format("Суббота\t{%s}%s\n", colour[6], daynumber == 6 and secToTime(dayonline) or secToTime(pInfo.weeks.Saturday))
-  zstring = zstring..string.format("Воскресенье\t{%s}%s\n", colour[7], daynumber == 0 and secToTime(dayonline) or secToTime(pInfo.weeks.Sunday))
-  sampShowDialog(837763, string.format("{FFFFFF}Активность по дням недели | {954F4F}%s", nick), zstring, "Закрыть", "", DIALOG_STYLE_TABLIST_HEADERS)
+  for key, value in pairs(pInfo.weeks) do
+    local colour = ""
+    if daynumber > 0 then
+      if daynumber < i then colour = "ec3737"
+      elseif daynumber == i then colour = "FFFFFF"
+      else colour = "00BF80" end
+    else
+      if daynumber == 0 and i == 7 then colour = "FFFFFF"
+      else colour = "00BF80" end
+    end
+    zstring = zstring..string.format("%s\t{%s}%s\n", dayName[i], colour, daynumber == i and secToTime(pInfo.info.dayOnline) or secToTime(value))
+    i = i + 1
+  end
+  lua_thread.create(function()
+    sampShowDialog(837763, string.format("{FFFFFF}Активность по дням недели | {954F4F}%s", nick), zstring, "Закрыть", "Назад", DIALOG_STYLE_TABLIST_HEADERS)
+    while sampIsDialogActive(837763) do wait(50) end
+    local _, button, _, _ = sampHasDialogRespond(837763)
+    if button == 0 then
+      checkActivity()
+    end
+  end)
 end
 
 function checkActivity()
   local zstring = "{ffffff}Параметр\t{FFFFFF}Значение\n"
   zstring = zstring.."Просмотреть онлайн по дням недели\n"
   zstring = zstring.."Посмотреть счётчик наказаний за неделю\n"
-  zstring = zstring..string.format("Последнее обновление\t%s секунд назад\n", os.time() - sInfo.sessionStart)
+  zstring = zstring..string.format("Последнее обновление\t%s секунд назад\n", sInfo.sessionStart == 0 and "-" or (os.time() - sInfo.sessionStart))
   zstring = zstring..string.format("Время авторизации\t%s\n", sInfo.authTime)
   zstring = zstring..string.format("Авторизация в ALogin\t%s\n", sInfo.isALogin and "Авторизирован" or "Отсутствует")
   if sInfo.isALogin then
@@ -176,9 +268,9 @@ function checkActivity()
   zstring = zstring..string.format("Отыграно за неделю\t%s\n", secToTime(pInfo.info.weekOnline))
   -------
   lua_thread.create(function()
-    sampShowDialog(837453, string.format("{FFFFFF}Активность | {954F4F}%s", nick), zstring, "Закрыть", "", DIALOG_STYLE_TABLIST_HEADERS)
-    while sampIsDialogActive(837453) do wait(50) end
-    local _, button, list, _ = sampHasDialogRespond(837453)
+    sampShowDialog(827453, string.format("{FFFFFF}Активность | {954F4F}%s", nick), zstring, "Закрыть", "", DIALOG_STYLE_TABLIST_HEADERS)
+    while sampIsDialogActive(827453) do wait(50) end
+    local _, button, list, _ = sampHasDialogRespond(827453)
     if button == 1 and list == 0 then
       checkWeek()
     elseif button == 1 and list == 1 then
@@ -196,18 +288,6 @@ function onScriptTerminate(script, quitGame)
   end
 end
 
---[[
-  punish = {
-  	ban = 0,
-  	warn = 0,
-  	kick = 0,
-  	prison = 0,
-  	mute = 0,
-  	banip = 0,
-  	rmute = 0,
-  	jail = 0
-  }
-]]
 function sampevents.onServerMessage(color, text)
   if text:match(nick) then
     -- OffBan[забанил: Laurence_Lawson][забанен: Raffaell_Vailiane][Причина: upom_rodnix_JB 30][дней: 30][27/12/2018  0:6]
@@ -252,6 +332,7 @@ function sampevents.onServerMessage(color, text)
   if text:match("Вы авторизировались как модератор .+ уровня") then
     sInfo.lvlAdmin = tonumber(text:match("Вы авторизировались как модератор (.+) уровня"))
     sInfo.isALogin = true
+    sInfo.sessionStart = os.time()
   end
   if text:match("Ответ от "..nick) then
     pInfo.info.dayPM = pInfo.info.dayPM + 1
@@ -261,8 +342,46 @@ function sampevents.onServerMessage(color, text)
   if text:match("Время online за текущий день") then -- CP1251
     sampAddChatMessage(string.format(" Время online за неделю - %s (Без учета АФК) | Ответов: %d", secToTime(pInfo.info.weekOnline), pInfo.info.weekPM), 0xCCCCCC)
   end
+  if text:match("Nik %[.+%]  R%-IP %[.+%]  L%-IP %[.+%]  IP %[(.+)%]") and color == -10270806 then
+    local nick, rip, ip = text:match("Nik %[(.+)%]  R%-IP %[(.+)%]  L%-IP %[.+%]  IP %[(.+)%]")
+    local checked = false
+    for i = 1, #ips do
+      if checkIntable(ips[i], nick) then
+        checked = true
+      end
+    end
+    if not checked then
+      local sp = string.split(rip, ".")
+      local sp2 = string.split(ip, ".")
+      if sp[1] ~= sp2[1] or sp[2] ~= sp2[2] then 
+        ips[#ips+1] = { name = nick, regip = rip, lip = ip }
+      end  
+    end   
+  end
+  if text:match('^ Nik %[.+%]   R%-IP %[.+%]   L%-IP %[.+%]   IP %[.+%]$') then
+    local nick, rip, ip = text:match('^ Nik %[(.+)%]   R%-IP %[(.+)%]   L%-IP %[.+%]   IP %[(.+)%]$')
+    local checked = false
+    for i = 1, #ips do
+      if checkIntable(ips[i], nick) then
+        checked = true
+      end
+    end
+    if not checked then
+      local sp = string.split(rip, ".")
+      local sp2 = string.split(ip, ".")
+      if sp[1] ~= sp2[1] or sp[2] ~= sp2[2] then 
+        ips[#ips+1] = { name = nick, regip = rip, lip = ip }
+      end  
+    end  
+  end
 end
 --------------------------------------------------------------------
+function checkIntable(t, key)
+  for k, v in pairs(t) do
+      if v == key then return true end
+  end
+  return false
+end
 function dateToWeekNumber(date) -- Start on Sunday(0)
   --print(date)
   local wsplit = string.split(date, ".")
