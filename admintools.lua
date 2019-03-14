@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.9998')
+script_version('1.9999')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -569,6 +569,7 @@ function main()
 			WorkInBackground(true)
 		end
     end)
+    sampRegisterChatCommand('hblist', hblist)
     sampRegisterChatCommand('getlvl', getlvl)
     sampRegisterChatCommand('punish', punish)
     sampRegisterChatCommand('fid', function() sampShowDialog(3435, '{ffffff}ID Фракций', '{ffffff}ID\t{ffffff}Фракция\n1\tLSPD\n2\tFBI\n3\tSFA\n5\tLCN\n6\tYakuza\n7\tMayor\n9\tSFN\n10\tSFPD\n11\tInstructors\n12\tBallas\n13\tVagos\n14\tRM\n15\tGrove\n16\tLSN\n17\tAztec\n18\tRifa\n19\tLVA\n20\tLVN\n21\tLVPD\n22\tHospital\n24\tMongols\n26\tWarlocks\n29\tPagans', 'x', _, 5) end)
@@ -1067,7 +1068,11 @@ function imgui.OnDrawFrame()
             end
             if imgui.CollapsingHeader('/masshb', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Выдать комплект объектов игрокам в зоне стрима')
-                imgui.TextWrapped(u8 'Испол Tekashi_Toyotaьзование: /masshb [имя комплекта]')
+                imgui.TextWrapped(u8 'Использование: /masshb [имя комплекта]')
+            end
+            if imgui.CollapsingHeader('/hblist', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Узнать список комплектов с объевтами (Комплекты находятся по пути moonloader/Admin Tools/hblist)')
+                imgui.TextWrapped(u8 'Использование: /hblist')
             end
             if imgui.CollapsingHeader('/givehb', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Выдать комлпект объектов игроку')
@@ -4248,5 +4253,13 @@ function getlvl(pam)
         sampShowDialog(2131, '{ffffff}Игроки с уровнем: {a1dd4e}'..cid, table.concat(t, '\n'), 'x', _, 2)
     else
         atext('Введите: /getlvl [уровень]')
+    end
+end
+function hblist()
+    local lfs = require 'lfs'
+    for line in lfs.dir('moonloader/Admin Tools/hblist') do
+        if line:match('.+.txt') then
+            atext(line)
+        end
     end
 end
