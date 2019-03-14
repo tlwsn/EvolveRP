@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.9997')
+script_version('1.9998')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -18,46 +18,46 @@ local mem = require 'memory'
 local wm = require 'lib.windows.message'
 local screenx, screeny = getScreenResolution()
 encoding.default = 'CP1251'
-imgui = require 'imgui'
+local imgui = require 'imgui'
 imgui.HotKey = require('imgui_addons').HotKey
 imgui.ToggleButton = require('imgui_addons').ToggleButton
-rkeys = require 'rkeys'
-mainwindow = imgui.ImBool(false)
-settingwindows = imgui.ImBool(false)
-tpwindow = imgui.ImBool(false)
-recon = imgui.ImBool(false)
-cmdwindow = imgui.ImBool(false)
-mpwindow = imgui.ImBool(false)
-bMainWindow = imgui.ImBool(false)
-sInputEdit = imgui.ImBuffer(256)
-bIsEnterEdit = imgui.ImBool(false)
-mpend = imgui.ImBool(false)
-mpname = imgui.ImBuffer(256)
-mpsponsors = imgui.ImBuffer(256)
-mpwinner = imgui.ImBuffer(256)
-wrecon = {}
-punishignor = {}
+local rkeys = require 'rkeys'
+local mainwindow = imgui.ImBool(false)
+local settingwindows = imgui.ImBool(false)
+local tpwindow = imgui.ImBool(false)
+local recon = imgui.ImBool(false)
+local cmdwindow = imgui.ImBool(false)
+local mpwindow = imgui.ImBool(false)
+local bMainWindow = imgui.ImBool(false)
+local sInputEdit = imgui.ImBuffer(256)
+local bIsEnterEdit = imgui.ImBool(false)
+local mpend = imgui.ImBool(false)
+local mpname = imgui.ImBuffer(256)
+local mpsponsors = imgui.ImBuffer(256)
+local mpwinner = imgui.ImBuffer(256)
+local wrecon = {}
+local punishignor = {}
 local nop = 0x90
-u8 = encoding.UTF8
-airspeed = nil
-reid = '-1'
-cwid = nil
-check = false
-admins = {}
-nametagCoords = {}
-tpcount = 0
-tprep = false
-swork = true
-nametag = true
-skoktp = 0
-checkf = {}
-ips = {}
-temp_checker = {}
-temp_checker_online = {}
-rnick = nil
-smsids = {}
-PlayersNickname = {}
-config_keys = {
+local u8 = encoding.UTF8
+local airspeed = nil
+local reid = '-1'
+local cwid = nil
+local check = false
+local admins = {}
+local nametagCoords = {}
+local tpcount = 0
+local tprep = false
+local swork = true
+local nametag = true
+local skoktp = 0
+local checkf = {}
+local ips = {}
+local temp_checker = {}
+local temp_checker_online = {}
+local rnick = nil
+local smsids = {}
+local PlayersNickname = {}
+local config_keys = {
     banipkey = {v = {190}},
     warningkey = {v = {key.VK_Z}},
     reportkey = {v = {key.VK_X}},
@@ -67,7 +67,7 @@ config_keys = {
     cwarningkey = {v = {key.VK_R}},
     airbrkkey = {v = key.VK_RSHIFT}
 }
-config_colors = {
+local config_colors = {
     admchat = {r = 255, g = 255, b = 0, color = "FFFF00"},
     supchat = {r = 0, g = 255, b = 153, color = '00FF99'},
     smschat = {r = 255, g = 255, b = 0, color = "FFFF00"},
@@ -80,7 +80,7 @@ local tEditData = {
 	id = -1,
 	inputActive = false
 }
-frakrang = {
+local frakrang = {
     Mayor = {
         rang_5 = 15,
         inv = 6
@@ -159,19 +159,19 @@ tBindList = {
 		time = 0
 	}
 }
-tkills = {}
-BulletSync = {lastId = 0, maxLines = 15}
+local tkills = {}
+local BulletSync = {lastId = 0, maxLines = 15}
 for i = 1, BulletSync.maxLines do
 	BulletSync[i] = {enable = true, o = {x, y, z}, t = {x, y, z}, time = 0, tType = 0}
 end
 local savecoords = {x = 0, y = 0, z = 0}
-traceid = -1
-players = {}
-admins_online = {}
-players_online = {}
+local traceid = -1
+local players = {}
+local admins_online = {}
+local players_online = {}
 local funcsStatus = {ClickWarp = false, Inv = false, AirBrk = false}
-tLastKeys = {}
-aafk = false
+local tLastKeys = {}
+local aafk = false
 function WorkInBackground(wstate)
     local memory = require 'memory'
     if wstate then -- on
@@ -199,26 +199,26 @@ end
 function argb_to_rgba(argb)
     local a, r, g, b = explode_argb(argb)
     return join_argb(r, g, b, a)
-  end
+end
   
-  function explode_argb(argb)
+function explode_argb(argb)
     local a = bit.band(bit.rshift(argb, 24), 0xFF)
     local r = bit.band(bit.rshift(argb, 16), 0xFF)
     local g = bit.band(bit.rshift(argb, 8), 0xFF)
     local b = bit.band(argb, 0xFF)
     return a, r, g, b
-  end
+end
   
-  function join_argb(a, r, g, b)
+function join_argb(a, r, g, b)
      local argb = b
      argb = bit.bor(argb, bit.lshift(g, 8))
      argb = bit.bor(argb, bit.lshift(r, 16))
      argb = bit.bor(argb, bit.lshift(a, 24))
      return argb
-  end
+end
   
-  function ARGBtoRGB(color) return bit32 or require'bit'.band(color, 0xFFFFFF) end
-data = {
+function ARGBtoRGB(color) return bit32 or require'bit'.band(color, 0xFFFFFF) end
+local data = {
     imgui = {
         menu = 1,
         cheat = 1,
@@ -569,6 +569,7 @@ function main()
 			WorkInBackground(true)
 		end
     end)
+    sampRegisterChatCommand('getlvl', getlvl)
     sampRegisterChatCommand('punish', punish)
     sampRegisterChatCommand('fid', function() sampShowDialog(3435, '{ffffff}ID Фракций', '{ffffff}ID\t{ffffff}Фракция\n1\tLSPD\n2\tFBI\n3\tSFA\n5\tLCN\n6\tYakuza\n7\tMayor\n9\tSFN\n10\tSFPD\n11\tInstructors\n12\tBallas\n13\tVagos\n14\tRM\n15\tGrove\n16\tLSN\n17\tAztec\n18\tRifa\n19\tLVA\n20\tLVN\n21\tLVPD\n22\tHospital\n24\tMongols\n26\tWarlocks\n29\tPagans', 'x', _, 5) end)
     sampRegisterChatCommand('arecon', arecon)
@@ -963,6 +964,10 @@ function imgui.OnDrawFrame()
             if imgui.CollapsingHeader('/spiar', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Написать пиар /ask в /o чат')
                 imgui.TextWrapped(u8 'Использование: /spiar')
+            end
+            if imgui.CollapsingHeader('/getlvl', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Узнать всех игроков с определенным уровнем на сервере')
+                imgui.TextWrapped(u8 'Использование: /getlvl [уровень]')
             end
             if imgui.CollapsingHeader('/fonl', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Узнать кол-во людей онлайн во фракции')
@@ -4227,5 +4232,21 @@ function punishlog(text)
             file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
             file:close()
         end
+    end
+end
+function getlvl(pam)
+    local t = {}
+    local cid = tonumber(pam)
+    if cid ~= nil then
+        for i = 0, 999 do
+            if sampIsPlayerConnected(i) then
+                if sampGetPlayerScore(i) == cid then
+                    table.insert(t, ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                end
+            end
+        end
+        sampShowDialog(2131, '{ffffff}Игроки с уровнем: {a1dd4e}'..cid, table.concat(t, '\n'), 'x', _, 2)
+    else
+        atext('Введите: /getlvl [уровень]')
     end
 end
