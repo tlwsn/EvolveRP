@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.99991')
+script_version('1.99992')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -3166,11 +3166,11 @@ function getBodyPartCoordinates(id, handle)
 end
 function warningsKey()
     local wtext, wprefix, wcolor, wpcolor = sampGetChatString(99)
-    if wcolor == 4294967295 and wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[%d+%] - .+') and not wtext:find('возможно использует ExtraWS/Auto +C.') then
+    if wcolor == 4294967295 and wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[%d+%] - .+') and not wtext:find('ExtraWS') then
         cwid = wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[(%d+)%] - .+')
     end
-    if wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[%d+%] - .+') and wcolor == 4294967295 and wtext:find('возможно использует ExtraWS/Auto +C.') then
-        if cfg.other.extraignor then
+    if wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[%d+%] - .+') and wcolor == 4294967295 and wtext:find('ExtraWS') then
+        if not cfg.other.extraignor then
             cwid = wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[(%d+)%] - .+')
         end
     end
