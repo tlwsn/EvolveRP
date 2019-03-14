@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.9996')
+script_version('1.9997')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -3937,6 +3937,122 @@ function arecon()
         sampConnectToServer(ip, port)
     end)
 end
+function pwarn(pam)
+        local id, days, reason = pam:match('(%d+) (%d+) (.+)')
+        if id and days and reason then
+            if sampIsPlayerConnected(id) then
+                if sampGetPlayerScore(id) < 3 then
+                    sampSendChat(string.format("/warn %s %s %s", id, days, reason))
+                else
+                    if cfg.other.fracstat then
+                        warnst = true
+                        local wnick = sampGetPlayerNickname(id)
+                        sampSendChat('/getstats '..id)
+                        local wtime = os.clock() + 10
+                        while not checkstatdone or wtime < os.clock() do wait(0) end
+                        wait(1200)
+                        if sampIsPlayerConnected(id) then
+                            if sampGetPlayerNickname(id) ~= nil then
+                                if sampGetPlayerNickname(id) == wnick then
+                                    if wbstyle == 1 then
+                                        if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
+                                            sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
+                                        else
+                                            sampSendChat(string.format('/warn %s %s %s', id, days, reason))
+                                        end
+                                    elseif wbstyle == 2 then
+                                        if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
+                                            sampSendChat(string.format('/warn %s %s %s [%s/%s]', id, days, reason, getFrak(wbfrak), wbrang))
+                                        else
+                                            sampSendChat(string.format('/warn %s %s %s', id, days, reason))
+                                        end
+                                    end
+                                else
+                                    atext('Игрок '..wnick..' вышел из игры')
+                                end
+                            else
+                                atext('Игрок '..wnick..' вышел из игры')
+                            end
+                        else
+                            atext('Игрок '..wnick..' вышел из игры')
+                        end
+                    else
+                        sampSendChat(string.format('/warn %s %s %s', id, days, reason))
+                    end
+                    checkstatdone = false
+                    warnst = false
+                    wbfrak = nil
+                    wbrang = nil
+                    wnick = nil
+                    wtime = nil
+                end
+            else
+                atext("Игрок оффлайн")
+            end
+        else
+            atext('Введите: /warn [id] [дни] [причина]')
+        end
+end
+function pban(pam)
+        local id, reason = pam:match('(%d+) (.+)')
+        if id and reason then
+            if sampIsPlayerConnected(id) then
+                if sampGetPlayerScore(id) < 3 then
+                    sampSendChat(string.format('/ban %s %s', id, reason))
+                else
+                    if cfg.other.fracstat then
+                        if not checkIntable(punishignor, reason) then
+                            local wnick = sampGetPlayerNickname(id)
+                            warnst = true
+                            sampSendChat('/getstats '..id)
+                            local wtime = os.clock() + 10
+                            while not checkstatdone or wtime < os.clock() do wait(0) end
+                            wait(1200)
+                            if sampIsPlayerConnected(id) then
+                                if sampGetPlayerNickname(id)~= nil then
+                                    if sampGetPlayerNickname(id) == wnick then
+                                        if wbstyle == 1 then
+                                            if getRank(wbfrak, wbrang) ~= nil and getFrak(wbfrak) ~= nil then
+                                                sampSendChat(string.format('/ban %s %s [%s/%s]', id, reason, getFrak(wbfrak), getRank(wbfrak, wbrang)))
+                                            else
+                                                sampSendChat(string.format('/ban %s %s', id, reason))
+                                            end
+                                        elseif wbstyle == 2 then
+                                            if getFrak(wbfrak) ~= nil and wbfrak ~= 'Нет' then
+                                                sampSendChat(string.format('/ban %s %s [%s/%s]', id, reason, getFrak(wbfrak), wbrang))
+                                            else
+                                                sampSendChat(string.format('/ban %s %s', id, reason))
+                                            end
+                                        end
+                                    else
+                                        atext('Игрок '..wnick..' вышел из игры')
+                                    end
+                                else
+                                    atext('Игрок '..wnick..' вышел из игры')
+                                end
+                            else
+                                atext('Игрок '..wnick..' вышел из игры')
+                            end
+                        else
+                            sampSendChat(string.format('/ban %s %s', id, reason))
+                        end
+                        wnick = nil
+                        checkstatdone = false
+                        wbfrak = nil
+                        wbrang = nil
+                        warnst = false
+                        wtime = nil
+                    else
+                        sampSendChat(string.format('/ban %s %s', id, reason))
+                    end
+                end
+            else
+                atext("Игрок оффлайн")
+            end
+        else
+            atext('Введите: /ban [id] [причина]')
+        end
+end
 function punish()
     lua_thread.create(function()
         atext('Выдача наказаний по жалобам начата')
@@ -3945,7 +4061,7 @@ function punish()
                 local pnick, pdays, preason = line:match('%[W%] Ник: (.+) Количество дней: (%d+) Причина: (.+)')
                 local pnick = pnick:gsub(' ', '_')
                 if sampGetPlayerIdByNickname(pnick) ~= nil then
-                    warn(('%s %s %s'):format(sampGetPlayerIdByNickname(pnick), pdays, preason))
+                    pwarn(('%s %s %s'):format(sampGetPlayerIdByNickname(pnick), pdays, preason))
                 else
                     sampSendChat(('/offwarn %s %s %s'):format(pnick, pdays, preason))
                 end
@@ -3956,7 +4072,7 @@ function punish()
                 local pnick, preason = line:match('%[B%] Ник: (.+) Количество дней:  Причина: (.+)')
                 local pnick = pnick:gsub(' ', '_')
                 if sampGetPlayerIdByNickname(pnick) ~= nil then
-                    ban(('%s %s'):format(sampGetPlayerIdByNickname(pnick), preason))
+                    pban(('%s %s'):format(sampGetPlayerIdByNickname(pnick), preason))
                 else
                     sampSendChat(('/offban %s %s'):format(pnick, preason))
                 end
