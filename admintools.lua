@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.9999')
+script_version('1.99991')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -271,7 +271,8 @@ config = {
         hudfont = "Times New Roman",
         hudsize = 10,
         fracstat = true,
-        chatconsole = false
+        chatconsole = false,
+        extraignor = false
     }
 }
 function asyncHttpRequest(method, url, args, resolve, reject)
@@ -1388,6 +1389,7 @@ function imgui.OnDrawFrame()
 				local iapassb = imgui.ImBool(cfg.other.apassb)
                 local reconwb = imgui.ImBool(cfg.other.reconw)
                 local conschat = imgui.ImBool(cfg.other.chatconsole)
+                local extraignorb = imgui.ImBool(cfg.other.extraignor)
 				local ipass = imgui.ImBuffer(tostring(cfg.other.password), 256)
                 local iapass = imgui.ImBuffer(tostring(cfg.other.adminpass), 256)
                 local hudfontb = imgui.ImBuffer(tostring(cfg.other.hudfont), 256)
@@ -1402,6 +1404,7 @@ function imgui.OnDrawFrame()
 				if imgui.ToggleButton(u8 'Автологин##11', ipassb) then cfg.other.passb = ipassb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Автологин')
                 if imgui.ToggleButton(u8 'Автоалогин##11', iapassb) then cfg.other.apassb = iapassb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Автоалогин')
                 if imgui.ToggleButton(u8 'Чатлог в консоли##11', conschat) then cfg.other.chatconsole = conschat.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Чатлог в консоли')
+                if imgui.ToggleButton(u8 'Игнор варнингов печени на ExtraWS##11', extraignorb) then cfg.other.extraignor = extraignorb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Игнор варнингов печени на ExtraWS') imgui.SameLine() imgui.TextQuestion(u8 'При переходе в рекон по варнингу будет игнорироваться варнинг на Екстру')
 				if ipassb.v then
 					if imgui.InputText(u8 'Введите ваш пароль', ipass, imgui.InputTextFlags.Password) then cfg.other.password = u8:decode(ipass.v) inicfg.save(config, 'Admin Tools\\config.ini') end
 					if imgui.Button(u8 'Узнать пароль##1') then atext('Ваш пароль: {a1dd4e}'..cfg.other.password) end
@@ -3163,8 +3166,13 @@ function getBodyPartCoordinates(id, handle)
 end
 function warningsKey()
     local wtext, wprefix, wcolor, wpcolor = sampGetChatString(99)
-    if wcolor == 4294967295 and wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[%d+%] - .+') then
+    if wcolor == 4294967295 and wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[%d+%] - .+') and not wtext:find('возможно использует ExtraWS/Auto +C.') then
         cwid = wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[(%d+)%] - .+')
+    end
+    if wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[%d+%] - .+') and wcolor == 4294967295 and wtext:find('возможно использует ExtraWS/Auto +C.') then
+        if cfg.other.extraignor then
+            cwid = wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[(%d+)%] - .+')
+        end
     end
     if wcolor == 4294911012 and wtext:match('<Warning> {.+}.+%[%d+%]% .+') and not wtext:match("<Warning> {.+}.+%[%d+%] возможно попал сквозь текстуру в {.+}.+%[%d+%] из .+ %(model: %d+%)") then
         cwid = wtext:match('<Warning> {.+}.+%[(%d+)%]% .+')
