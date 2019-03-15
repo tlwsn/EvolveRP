@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.99993')
+script_version('1.99994')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -1802,9 +1802,6 @@ function getRank(frak, rang)
     end
     return trangs[rang]
 end
---------------------------------------------------------------------------------
----------------------------------CLICKWARPFUNCS---------------------------------
---------------------------------------------------------------------------------
 function fps_correction()
 	return representIntAsFloat(readMemory(0xB7CB5C, 4, false))
 end
@@ -2041,9 +2038,6 @@ function clickF()
         removePointMarker()
     end
 end
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
 function onScriptTerminate(scr)
     if scr == script.this then
         nameTagOn()
@@ -3046,7 +3040,6 @@ function wh()
                                     local cpedHealth = sampGetPlayerHealth(i)
                                     local cpedArmor = sampGetPlayerArmor(i)
                                     local cpedlvl = sampGetPlayerScore(i)
-                                    --------- test ----------
                                     local posy = headposy - 40
                                     local posx = headposx - 60
                                     local sdsd = posy
@@ -3059,7 +3052,6 @@ function wh()
                                         pos_y = posy,
                                         pos_x = posx
                                     }
-                                    -------------------------
                                     renderFontDrawText(whfont, string.format('{%s}%s [%s] %s', color, nick, i, isAfk and '{cccccc}[AFK]' or ''), posx, posy, -1)
                                     local hp2 = cpedHealth
                                     if cpedHealth > 100 then cpedHealth = 100 end
@@ -3193,7 +3185,16 @@ function warningsKey()
 	end
 	if wtext:match('^Warning:{.+} .+%[%d+%] возможно попал сквозь текстуру в{.+} .+%[%d+%] из: .+ %(texture: %d+%)') then
 		cwid = wtext:match('^Warning:{.+} .+%[(%d+)%] возможно попал сквозь текстуру в{.+} .+%[%d+%] из: .+ %(texture: %d+%)')
-	end
+    end
+    if wtext:match('^%[mkrn. wrn%]:%{.+%} .+%[%d+%] .+') and not wtext:match('^%[mkrn. wrn%]:%{.+%} .+%[%d+%] возможно дамажит/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+') and not wtext:match('^%[mkrn. wrn%]:%{.+%} .+%[%d+%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+') then
+        cwid = wtext:match('^%[mkrn. wrn%]:%{.+%} .+%[(%d+)%] .+')
+    end
+    if wtext:match('^%[mkrn. wrn%]:%{.+%} .+%[%d+%] возможно дамажит/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+') then
+        cwid = wtext:match('^%[mkrn. wrn%]:%{.+%} .+%[(%d+)%] возможно дамажит/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+')
+    end
+    if wtext:match('^%[mkrn. wrn%]:%{.+%} .+%[%d+%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+') then
+        cwid = wtext:match('^%[mkrn. wrn%]:%{.+%} .+%[(%d+)%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+')
+    end
 end
 function gun(pam)
     lua_thread.create(function()
@@ -3229,7 +3230,7 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
         sampSendDialogResponse(id, 1, _, tostring(cfg.other.password))
         return false
     end
-    if id == 1227 and #tostring(cfg.other.adminpass) >=6 then
+    if id == 1227 and #tostring(cfg.other.adminpass) >=6 and cfg.other.apassb then
         sampSendDialogResponse(id, 1, _, tostring(cfg.other.adminpass))
         return false
     end
@@ -3585,39 +3586,6 @@ function cheat(pam)
 		end
 	end)
 end
---[[function tpstart()
-	tpstatus = not tpstatus
-	if tpstatus then
-		atext('Сбор игроков для телепорта начат. Для начала телепортирования введите /tpstart еще раз')
-	else
-		atext('Начинаю телепорт игроков. Всего игроков в очереди: ')
-		tpactive = lua_thread.create(function()
-		end)
-	end
-end
-function tpstop()
-	if tpstatus then
-		tpstatus = false
-		atext("Сбор игроков остановлен")
-	else
-		if tpactive ~= nil then
-			atext(tpactive:status())
-			if tpactive:status() == 'running' then
-				atext("Телепортация остановлена")
-				tpactive:terminate()
-			end
-		end
-	end
-end
-function tpcount(pam)
-	if pam:match("%d+ %d+") then
-		local count, rep = pam:match("(%d+) (%d+)")
-		tpcount = count
-		if rep == 0 then tprep = true else tprep = false end
-	else
-		atext("Введите: /tpcount [ко-во игроков/0(Для снятия ограничения)] [0/1(выключение/включение повторения игроков)]")
-	end
-end]]
 function getTargetBlipCoordinatesFixed()
     local bool, x, y, z = getTargetBlipCoordinates(); if not bool then return false end
     requestCollision(x, y); loadScene(x, y, z)
@@ -3653,11 +3621,6 @@ function cip(pam)
 		asyncHttpRequest("POST", "http://ip-api.com/batch?fields=25305&lang=ru", { data = jsonips },
 		function(response)
 			local rdata = decodeJson(u8:decode(response.text))
-					--[[atext(rdata[i]["query"])
-					atext(rdata[i]["country"])
-					atext(rdata[i]["city"])
-					atext(rdata[i]["isp"])
-					atext(math.floor(distances))]]
 			if rdata[1]["status"] == "success" and rdata[2]["status"] == "success" then
 				local distances = distance_cord(rdata[1]["lat"], rdata[1]["lon"], rdata[2]["lat"], rdata[2]["lon"])
 				if tonumber(pam) == nil then
@@ -3915,27 +3878,6 @@ function masstp()
         end    
     end)
 end
---[[function masstp()
-    lua_thread.create(function()
-        masstpon = not masstpon
-        if not masstpon then wait(1200) sampSendChat('/togphone') end
-        smsids = {}
-        atext(masstpon and 'Телепортация начата' or 'Телепортация окончена')
-        while true do wait(0)
-            if masstpon then
-                local smsx, smsy = convertGameScreenCoordsToWindowScreenCoords(242, 366)
-                renderFontDrawText(hudfont, 'Телепортация игроков. Осталось: {a1dd4e}'..#smsids, smsx, smsy, -1)
-                lua_thread.create(function()
-                    for k, v in pairs(smsids) do
-                        sampSendChat('gethere '..v)
-                        table.remove(smsids, k)
-                        wait(1200)
-                    end
-                end)
-            end
-        end
-    end)
-end]]
 function blog(pam)
     local id = tonumber(pam)
     if #pam ~= 0 then
