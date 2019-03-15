@@ -44,9 +44,7 @@ local sInfo = {
   onlineTime = 0,
   isALogin = false
 }
-local whiteList = {}
 local ips = {}
-local punishName = {"Ban", "Warn", "Kick", "Prison", "Mute", "BanIP", "RMute", "Jail"}
 local dayName = {"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"}
 local nick = ""
 --------------------------------------------------------------------
@@ -55,7 +53,6 @@ function main()
     while not isSampAvailable() do wait(100) end
     sampRegisterChatCommand("activity", checkActivity)
     sampRegisterChatCommand("ppv", cmd_ppv)
-    sampRegisterChatCommand("ego", cmd_ego)
     sampRegisterChatCommand("gip", cmd_gip)
     --------------------=========----------------------
     if not doesDirectoryExist("moonloader\\config") then
@@ -82,24 +79,6 @@ function main()
             pInfo[key][k] = 0
           end
         end
-        --[[
-        pInfo.info.weekOnline = 0
-        pInfo.info.weekPM = 0
-        pInfo.weeks.Monday = 0
-        pInfo.weeks.Tuesday = 0
-        pInfo.weeks.Wednesday = 0
-        pInfo.weeks.Thursday = 0
-        pInfo.weeks.Friday = 0
-        pInfo.weeks.Saturday = 0
-        pInfo.weeks.Sunday = 0
-        pInfo.punish.mute = 0
-        pInfo.punish.banip = 0
-        pInfo.punish.ban = 0
-        pInfo.punish.warn = 0
-        pInfo.punish.kick = 0
-        pInfo.punish.jail = 0
-        pInfo.punish.prison = 0
-        pInfo.punish.rmute = 0]]
       end
       pInfo.info.day = day
       pInfo.info.dayPM = 0
@@ -107,13 +86,6 @@ function main()
       pInfo.info.dayAFK = 0
     end
     sInfo.authTime = os.date("%d.%m.%y %H:%M:%S")
-    if doesFileExist("moonloader/config/ip_whitelist.txt") then
-      for player in io.lines("moonloader/config/ip_whitelist.txt") do
-        table.insert(whiteList, player:match("(%S+)"))
-      end
-    else
-      io.open("moonloader/config/ip_whitelist.txt", "w"):close()
-    end
     --------------------=========----------------------
     while not sampIsLocalPlayerSpawned() do wait(0) end
     local _, myid = sampGetPlayerIdByCharHandle(playerPed)
@@ -121,72 +93,31 @@ function main()
     while true do
       wait(1000)
       --if not sampIsPlayerConnected(myid) then sInfo.isALogin = false atext("not connected") end
-      if sInfo.isALogin then
-        pInfo.info.dayOnline = pInfo.info.dayOnline + 1
-        pInfo.info.weekOnline = pInfo.info.weekOnline + 1
-        sInfo.onlineTime = sInfo.onlineTime + 1
-        if sInfo.onlineTime >= 30 then
-          if sInfo.sessionStart ~= 0 then
-            pInfo.info.dayAFK = pInfo.info.dayAFK + (os.time() - sInfo.sessionStart - sInfo.onlineTime)
-          end
-          sInfo.onlineTime = 0
-          sInfo.sessionStart = os.time()
-          inicfg.save(pInfo, "activity-checker")
+      pInfo.info.dayOnline = pInfo.info.dayOnline + 1
+      pInfo.info.weekOnline = pInfo.info.weekOnline + 1
+      sInfo.onlineTime = sInfo.onlineTime + 1
+      if sInfo.onlineTime >= 30 then
+        if sInfo.sessionStart ~= 0 then
+          pInfo.info.dayAFK = pInfo.info.dayAFK + (os.time() - sInfo.sessionStart - sInfo.onlineTime)
         end
+        sInfo.onlineTime = 0
+        sInfo.sessionStart = os.time()
+        inicfg.save(pInfo, "activity-checker")
       end
     end
 end
 
-function cmd_ego(params)
-  if #params == 0 then
-    sampAddChatMessage("Введите: /ego [id/nick]", -1)
-    return
-  end
-  local playername = ""
-  local paramid = tonumber(params)
-  if sampIsPlayerConnected(paramid) then playername = sampGetPlayerNickname(paramid)
-  else playername = params
-  end
-  if checkIntable(whiteList, playername) then
-    local i = 1
-    while i <= #whiteList do
-        if whiteList[i] == playername then
-            table.remove(whiteList, i)
-        else
-            i = i + 1
-        end
-    end
-    local open = io.open("moonloader/config/ip_whitelist.txt", "w")
-    for k, v in pairs(whiteList) do
-        open:write('\n'..v)
-    end
-    open:close()
-    open = nil
-    atext("Игрок "..playername.." успешно удален из белого списка")
-  else
-    local open = io.open("moonloader/config/ip_whitelist.txt", 'a')
-    open:write('\n'..playername)
-    open:close()
-    open = nil
-    table.insert(whiteList, playername)
-    atext("Игрок "..playername.." успешно добавлен в белый список")
-  end  
-end
-
 function cmd_gip(params)
   if #params == 0 then
-    sampAddChatMessage("Введите: /gip [playerid]", -1)
+    sampAddChatMessage("Введите: /gip [playerid / nick]", -1)
     return
   end
-  params = tonumber(params)
-  if not sampIsPlayerConnected(params) then
-    sampAddChatMessage("Игрок оффлайн!", 0xCCCCCC)
-    return
-  end
-  sampSendChat("/getip "..params)
-  if checkIntable(whiteList, sampGetPlayerNickname(params)) then
-    atext("Игрок найден в белом списке!")
-  end
+  local paramid = tonumber(params)
+  if paramid ~= nil then
+    sampSendChat("/getip "..params)
+  else
+    sampSendChat("/agetip "..params)
+  end  
 end
 
 function cmd_ppv()
@@ -211,7 +142,7 @@ function checkPunishments()
   local zstring = "{FFFFFF}Наказание\t{FFFFFF}Количество\n"
   local i = 1
   for key, value in pairs(pInfo.punish) do
-    zstring = zstring..string.format("%s\t%s\n", punishName[i], value)
+    zstring = zstring..string.format("%s\t%s\n", key, value)
     i = i + 1
   end
   lua_thread.create(function()
@@ -294,7 +225,7 @@ function sampevents.onServerMessage(color, text)
     -- Администратор: Maks_Wirense забанил Skylar_Love. Причина: Мультиаккаунт
     -- SBan[забанил: Native_Pechenkov][забанен: CblH_Admina][причина: nick][27/12/2018  18:24]
     -- IOffBan[забанил: Salvatore_Amici][забанен: Jonathans_Wilsons][Причина: akk_prodavca/ppv][27/12/2018  18:36]
-    if text:match("OffBan") or text:match("забанил .+ Причина") or text:match("SBan") or text:match("IOffBan") then
+    if text:match("OffBan") or text:match("забанил (.+) Причина") or text:match("SBan") or text:match("IOffBan") then
       pInfo.punish.ban = pInfo.punish.ban + 1
     end
     -- Администратор: Diego_Hudson выдал warn Dean_Voodoo. Причина: cheat [ballas/6]
