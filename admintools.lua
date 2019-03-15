@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.99994')
+script_version('1.99995')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -3797,9 +3797,10 @@ function deltemp(pam)
 end
 function givehb(pam)
     lua_thread.create(function()
+        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
         local id, pack = pam:match('(%d+)%s+(.+)')
         if id and pack then
-            if sampIsPlayerConnected(id) then
+            if sampIsPlayerConnected(id) or id == myid then
                 if doesFileExist('moonloader/Admin Tools/hblist/'..pack..'.txt') then
                     atext('Начата выдача объектов игроку '..sampGetPlayerNickname(id)..' ['..id..']')
                     for line in io.lines('moonloader/Admin Tools/hblist/'..pack..'.txt') do
