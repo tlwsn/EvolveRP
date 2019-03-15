@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.99995')
+script_version('1.99996')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -3186,14 +3186,14 @@ function warningsKey()
 	if wtext:match('^Warning:{.+} .+%[%d+%] возможно попал сквозь текстуру в{.+} .+%[%d+%] из: .+ %(texture: %d+%)') then
 		cwid = wtext:match('^Warning:{.+} .+%[(%d+)%] возможно попал сквозь текстуру в{.+} .+%[%d+%] из: .+ %(texture: %d+%)')
     end
-    if wtext:match('^%[mkrn. wrn%]:%{.+%} .+%[%d+%] .+') and not wtext:match('^%[mkrn. wrn%]:%{.+%} .+%[%d+%] возможно дамажит/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+') and not wtext:match('^%[mkrn. wrn%]:%{.+%} .+%[%d+%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+') then
-        cwid = wtext:match('^%[mkrn. wrn%]:%{.+%} .+%[(%d+)%] .+')
+    if wcolor == 16722731 and wtext:match('^%[mkrn wrn%]:%{.+%} .+%[%d+%].+') and not wtext:match('^%[mkrn wrn%]:%{.+%} .+%[%d+%] возможно дамажит%/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+') and not wtext:match('^%[mkrn wrn%]:%{.+%} .+%[%d+%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+, texture: %d+ %[.+%]') then
+        cwid = wtext:match('^%[mkrn wrn%]:%{.+%} .+%[(%d+)%].+')
     end
-    if wtext:match('^%[mkrn. wrn%]:%{.+%} .+%[%d+%] возможно дамажит/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+') then
-        cwid = wtext:match('^%[mkrn. wrn%]:%{.+%} .+%[(%d+)%] возможно дамажит/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+')
+    if wcolor == 16722731 and wtext:match('^%[mkrn wrn%]:%{.+%} .+%[%d+%] возможно дамажит%/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+') then
+        cwid = wtext:match('^%[mkrn wrn%]:%{.+%} .+%[(%d+)%] возможно дамажит/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+')
     end
-    if wtext:match('^%[mkrn. wrn%]:%{.+%} .+%[%d+%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+') then
-        cwid = wtext:match('^%[mkrn. wrn%]:%{.+%} .+%[(%d+)%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+')
+    if wcolor == 16722731 and wtext:match('^%[mkrn wrn%]:%{.+%} .+%[%d+%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+, texture: %d+ %[.+%]') then
+        cwid = wtext:match('^%[mkrn wrn%]:%{.+%} .+%[(%d+)%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+, texture: %d+ %[.+%]')
     end
 end
 function gun(pam)
