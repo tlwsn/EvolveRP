@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.99992')
+script_version('1.99993')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -57,6 +57,7 @@ local temp_checker_online = {}
 local rnick = nil
 local smsids = {}
 local PlayersNickname = {}
+local reconstate = false
 local config_keys = {
     banipkey = {v = {190}},
     warningkey = {v = {key.VK_Z}},
@@ -2462,6 +2463,7 @@ function sampev.onTextDrawSetString(id, text)
     end
 end
 function sampev.onShowTextDraw(id, textdraw)
+    if id == 2163 then reconstate = true end
     if cfg.crecon.enable then
         if id == 2163 then recon.v = true return false end
         if id == 2164 then return false end
@@ -2471,6 +2473,7 @@ function sampev.onShowTextDraw(id, textdraw)
     end
 end
 function sampev.onTextDrawHide(id)
+    if id == 2164 then reconstate = false end
     if cfg.crecon.enable then if id == 2164 then recon.v = false; reid = nil end end
 end
 function sampev.onPlayerQuit(id, reason)
@@ -2924,10 +2927,12 @@ function main_funcs()
                         airBrkCoords[1] = airBrkCoords[1] - airspeed * math.sin(-math.rad(heading + 90))
                         airBrkCoords[2] = airBrkCoords[2] - airspeed * math.cos(-math.rad(heading + 90))
                     end
-                    if isKeyDown(key.VK_UP) then airBrkCoords[3] = airBrkCoords[3] + airspeed / 2.0 end
-                    if isKeyDown(key.VK_DOWN) and airBrkCoords[3] > -95.0 then airBrkCoords[3] = airBrkCoords[3] - airspeed / 2.0 end
-                    if isKeyDown(key.VK_LSHIFT) and not isKeyDown(key.VK_RSHIFT) and airspeed > 0.06 then airspeed = airspeed - 0.050; printStringNow('Speed: '..airspeed, 1000) end
-                    if isKeyDown(key.VK_SPACE) then airspeed = airspeed + 0.050; printStringNow('Speed: '..airspeed, 1000) end
+                    if not reconstate then
+                        if isKeyDown(key.VK_UP) then airBrkCoords[3] = airBrkCoords[3] + airspeed / 2.0 end
+                        if isKeyDown(key.VK_DOWN) and airBrkCoords[3] > -95.0 then airBrkCoords[3] = airBrkCoords[3] - airspeed / 2.0 end
+                        if isKeyDown(key.VK_LSHIFT) and not isKeyDown(key.VK_RSHIFT) and airspeed > 0.06 then airspeed = airspeed - 0.050; printStringNow('Speed: '..airspeed, 1000) end
+                        if isKeyDown(key.VK_SPACE) then airspeed = airspeed + 0.050; printStringNow('Speed: '..airspeed, 1000) end
+                    end
                 end
             end
         end
@@ -3687,7 +3692,7 @@ function renderHud()
             local hpos = ("%0.2f %0.2f %0.2f"):format(posx, posy, posz)
             local fps = memory.getfloat(0xB7CB50, 4, false)
             local sx, sy = getScreenResolution()
-            renderFontDrawText(hudfont, ('%s %s %s [%s %s] [FPS: %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, posint, math.floor(fps)), 5, sy-20, -1)
+            renderFontDrawText(hudfont, ('%s %s %s [%s %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, posint), 5, sy-20, -1)
         end
     end
 end
