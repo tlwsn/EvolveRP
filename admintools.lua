@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.99997')
+script_version('1.99998')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -55,6 +55,8 @@ local ips = {}
 local temp_checker = {}
 local temp_checker_online = {}
 local rnick = nil
+local notification_connect = nil
+local notification_disconnect = nil
 local smsids = {}
 local PlayersNickname = {}
 local reconstate = false
@@ -258,7 +260,14 @@ config = {
 		sbivtimer = 30,
 		csbivtimer = 60,
 		cbugtimer = 60
-	},
+    },
+    joinquit = {
+        joinposx = screenx/2,
+        joinposy = screeny/2,
+        quitposx = screenx/2,
+        quitposy = screeny/2+20,
+        enable = true
+    },
     other = {
 		passb = false,
 		apassb = false,
@@ -533,6 +542,36 @@ function autoupdate(json_url, prefix, url)
     )
     while update ~= false do wait(100) end
 end
+function split(str, delim, plain)
+    local lines, pos, plain = {}, 1, not (plain == false) --[[ delimiter is plain text by default ]]
+    repeat
+        local npos, epos = string.find(str, delim, pos, plain)
+        table.insert(lines, string.sub(str, pos, npos and npos - 1))
+        pos = epos and epos + 1
+    until not pos
+    return lines
+end
+
+function text_notify_connect(msg, color)
+    if not msg then return end
+    local displayDuration = math.max(#msg * 0.065, 3)
+    notification_connect = {
+        color = bit.band(color or 0xEEEEEE, 0xFFFFFF),
+        lines = split(msg, '\n'),
+        duration = displayDuration,
+        tick = localClock()
+    }
+end
+function text_notify_disconnect(msg, color)
+    if not msg then return end
+    local displayDuration = math.max(#msg * 0.065, 3)
+    notification_disconnect = {
+        color = bit.band(color or 0xEEEEEE, 0xFFFFFF),
+        lines = split(msg, '\n'),
+        duration = displayDuration,
+        tick = localClock()
+    }
+end
 function main()
     local samp = getModuleHandle('samp.dll')
 	mem.fill(samp + 0x9D31A, nop, 12, true)
@@ -562,7 +601,6 @@ function main()
     repeat wait(0) until isSampAvailable()
     autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", '[Admin Tools]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439")
     lua_thread.create(wh)
-	lua_thread.create(renderHud)
     registerFastAnswer()
 	sampRegisterChatCommand('aafk', function()
 		if aafk then
@@ -751,8 +789,7 @@ function main()
 		end
 	end
     lua_thread.create(clickF)
-    lua_thread.create(renderChecker)
-    lua_thread.create(check_keystrokes)
+    lua_thread.create(renders)
     lua_thread.create(main_funcs)
     lua_thread.create(check_keys_fast)
     while true do wait(0)
@@ -805,11 +842,25 @@ function main()
             cfg.tempChecker.posx = curX
             cfg.tempChecker.posy = curY
         end
-        if isKeyJustPressed(key.VK_LBUTTON) and (data.imgui.admcheckpos or data.imgui.playercheckpos or data.imgui.reconpos or data.imgui.tempcheckpos) then
+        if data.imgui.joinpos then
+            sampToggleCursor(true)
+            local curX, curY = getCursorPos()
+            cfg.joinquit.joinposx = curX
+            cfg.joinquit.joinposy = curY
+        end
+        if data.imgui.quitpos then
+            sampToggleCursor(true)
+            local curX, curY = getCursorPos()
+            cfg.joinquit.quitposx = curX
+            cfg.joinquit.quitposy = curY
+        end
+        if isKeyJustPressed(key.VK_LBUTTON) and (data.imgui.admcheckpos or data.imgui.playercheckpos or data.imgui.reconpos or data.imgui.tempcheckpos or data.imgui.joinpos or data.imgui.quitpos) then
             data.imgui.admcheckpos = false
             data.imgui.playercheckpos = false
             data.imgui.reconpos = false
-			data.imgui.tempcheckpos = false
+            data.imgui.tempcheckpos = false
+            data.imgui.joinpos = false
+            data.imgui.quitpos = false
             recon.v = false
             sampToggleCursor(false)
             mainwindow.v = true
@@ -1391,6 +1442,7 @@ function imgui.OnDrawFrame()
                 local reconwb = imgui.ImBool(cfg.other.reconw)
                 local conschat = imgui.ImBool(cfg.other.chatconsole)
                 local extraignorb = imgui.ImBool(cfg.other.extraignor)
+                local joinquitb = imgui.ImBool(cfg.joinquit.enable)
 				local ipass = imgui.ImBuffer(tostring(cfg.other.password), 256)
                 local iapass = imgui.ImBuffer(tostring(cfg.other.adminpass), 256)
                 local hudfontb = imgui.ImBuffer(tostring(cfg.other.hudfont), 256)
@@ -1406,6 +1458,12 @@ function imgui.OnDrawFrame()
                 if imgui.ToggleButton(u8 'Автоалогин##11', iapassb) then cfg.other.apassb = iapassb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Автоалогин')
                 if imgui.ToggleButton(u8 'Чатлог в консоли##11', conschat) then cfg.other.chatconsole = conschat.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Чатлог в консоли')
                 if imgui.ToggleButton(u8 'Игнор варнингов печени на ExtraWS##11', extraignorb) then cfg.other.extraignor = extraignorb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Игнор варнингов печени на ExtraWS') imgui.SameLine() imgui.TextQuestion(u8 'При переходе в рекон по варнингу будет игнорироваться варнинг на Екстру')
+                if imgui.ToggleButton(u8 'joinquit##11', joinquitb) then cfg.joinquit.enable = joinquitb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Лог подключившися/отключивашися игроков')
+                if joinquitb.v then 
+                    if imgui.Button(u8'Изменить местоположения подключившихся##1') then data.imgui.joinpos = true; mainwindow.v = false end
+                    imgui.SameLine()
+                    if imgui.Button(u8'Изменить местоположения отключившихся##1') then data.imgui.quitpos = true; mainwindow.v = false end
+                end
 				if ipassb.v then
 					if imgui.InputText(u8 'Введите ваш пароль', ipass, imgui.InputTextFlags.Password) then cfg.other.password = u8:decode(ipass.v) inicfg.save(config, 'Admin Tools\\config.ini') end
 					if imgui.Button(u8 'Узнать пароль##1') then atext('Ваш пароль: {a1dd4e}'..cfg.other.password) end
@@ -2471,6 +2529,7 @@ function sampev.onTextDrawHide(id)
     if cfg.crecon.enable then if id == 2164 then recon.v = false; reid = nil end end
 end
 function sampev.onPlayerQuit(id, reason)
+    text_notify_disconnect('{ff0000}Отключился: {ffffff}'..sampGetPlayerNickname(id)..' ['..id..']')
 	if reason == 2 or reason == 3 then table.insert(wrecon, {nick = sampGetPlayerNickname(id), time = os.time()}) end
 	for i, v in ipairs(admins_online) do
 		if v["id"] == id then
@@ -2525,6 +2584,7 @@ function sampev.onBulletSync(playerid, data)
 	end
 end
 function sampev.onPlayerJoin(id, clist, isNPC, nick)
+    text_notify_connect('{00ff00}Подключился: {ffffff}'..nick..' ['..id..']')
 	for i, v in ipairs(wrecon) do
 		if v["nick"] == nick then
 			if (os.time() - v["time"]) < 5 and (os.time() - v["time"]) > 0 then
@@ -2554,12 +2614,49 @@ function sampev.onPlayerJoin(id, clist, isNPC, nick)
 		end
 	end
 end
-function renderChecker()
+function renders()
     while true do wait(0)
         if swork then
             local admrenderPosY = cfg.admchecker.posy
             local playerRenderPosY = cfg.playerChecker.posy
             local tempRenderPosY = cfg.tempChecker.posy
+            local memory = require 'memory'
+            local posx, posy, posz = getCharCoordinates(PLAYER_PED)
+            local posint = getActiveInterior()
+            local hpos = ("%0.2f %0.2f %0.2f"):format(posx, posy, posz)
+            local fps = memory.getfloat(0xB7CB50, 4, false)
+            local sx, sy = getScreenResolution()
+            if cfg.joinquit.enable then
+                if notification_connect then
+                    if localClock() - notification_connect.tick <= notification_connect.duration then
+                        local alpha = 255 * math.min(1, notification_connect.duration - (localClock() - notification_connect.tick)) -- затухание на последней секунде
+                        local color = bit.bor(notification_connect.color, bit.lshift(alpha, 24))
+                        for k = #notification_connect.lines, 1, -1 do
+                            local text = notification_connect.lines[k]
+                            if #text > 0 then
+                                renderFontDrawText(hudfont, text, cfg.joinquit.joinposx, cfg.joinquit.joinposy, color)
+                            end
+                        end
+                    else
+                        notification_connect = nil
+                    end
+                end
+                if notification_disconnect then
+                    if localClock() - notification_disconnect.tick <= notification_disconnect.duration then
+                        local alpha = 255 * math.min(1, notification_disconnect.duration - (localClock() - notification_disconnect.tick)) -- затухание на последней секунде
+                        local color = bit.bor(notification_disconnect.color, bit.lshift(alpha, 24))
+                        for k = #notification_disconnect.lines, 1, -1 do
+                            local text = notification_disconnect.lines[k]
+                            if #text > 0 then
+                                renderFontDrawText(hudfont, text, cfg.joinquit.quitposx, cfg.joinquit.quitposy, color)
+                            end
+                        end
+                    else
+                        notification_disconnect = nil
+                    end
+                end
+            end
+            renderFontDrawText(hudfont, ('%s %s %s [%s %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, posint), 5, sy-20, -1)
             if cfg.admchecker.enable then
                 renderFontDrawText(checkfont, "{00ff00}Админы онлайн ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY, -1)
                 for _, v in ipairs(admins_online) do
@@ -2581,6 +2678,7 @@ function renderChecker()
                     tempRenderPosY = tempRenderPosY + 15
                 end
             end
+            
         end
     end
 end
@@ -2939,6 +3037,20 @@ function check_keys_fast()
             local veh = nil
             if isInVeh then veh = storeCarCharIsInNoSave(playerPed) end
             if not isSampfuncsConsoleActive() and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() then
+                if isKeyJustPressed(key.VK_F3) then
+                    setCharHealth(PLAYER_PED, 0)
+                end
+                if isKeyJustPressed(key.VK_INSERT) then
+                    funcsStatus.Inv = not funcsStatus.Inv
+                end
+                if isKeyJustPressed(config_keys.airbrkkey.v) then -- airbrake
+                    airspeed = cfg.cheat.airbrkspeed
+                    funcsStatus.AirBrk = not funcsStatus.AirBrk
+                    if funcsStatus.AirBrk then
+                        local posX, posY, posZ = getCharCoordinates(playerPed)
+                        airBrkCoords = {posX, posY, posZ, 0.0, 0.0, getCharHeading(playerPed)}
+                    end
+                end
                 if isKeyJustPressed(key.VK_B) then -- hop
                     if isCharInAnyCar(playerPed) then
                         local cVecX, cVecY, cVecZ = getCarSpeedVector(storeCarCharIsInNoSave(playerPed))
@@ -3009,12 +3121,14 @@ function onReceiveRpc(id, bs) --перехватываем все входящие рпс
     end
 end
 function tr(pam)
+    local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     local idd = tonumber(pam)
-    if idd ~= nil and sampIsPlayerConnected(idd) then
+    if idd ~= nil and sampIsPlayerConnected(idd) or idd == myid then
         traceid = idd
         atext("Трейсера сменены на: {a1dd4e}"..traceid)
     else
         atext('Используйте: /tr [id]')
+        traceid = '-1'
     end
 end
 function wh()
@@ -3434,19 +3548,16 @@ end
 function reportk()
     if reportid ~= nil then
         sampSendChat('/re '..reportid)
-        traceid = reportid
     end
 end
 function warningk()
 	if wid ~= nil then
 		sampSendChat('/re '..wid)
-	    traceid = wid
 	end
 end
 function cwarningk()
 	if cwid ~= nil then
 		sampSendChat('/re '..cwid)
-	    traceid = cwid
 	end
 end
 function banipk()
@@ -3645,19 +3756,6 @@ function cip(pam)
 	else
 		atext('Не найдено IP адресов для сравнения')
 	end
-end
-function renderHud()
-    while true do wait(0)
-        if swork then
-            local memory = require 'memory'
-            local posx, posy, posz = getCharCoordinates(PLAYER_PED)
-            local posint = getActiveInterior()
-            local hpos = ("%0.2f %0.2f %0.2f"):format(posx, posy, posz)
-            local fps = memory.getfloat(0xB7CB50, 4, false)
-            local sx, sy = getScreenResolution()
-            renderFontDrawText(hudfont, ('%s %s %s [%s %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, posint), 5, sy-20, -1)
-        end
-    end
 end
 function massgun(pam)
 	lua_thread.create(function()
