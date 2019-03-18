@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.99998')
+script_version('1.99999')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -651,7 +651,8 @@ function main()
     sampRegisterChatCommand('deladm', deladm)
     initializeRender()
     apply_custom_style()
-    loadadmins()
+    --loadadmins()
+    admchecker()
     if not doesFileExist("moonloader/config/Admin Tools/keys.json") then
         local fa = io.open("moonloader/config/Admin Tools/keys.json", "w")
         fa:close()
@@ -777,15 +778,15 @@ function main()
         funcsStatus.Inv = true
     end
 	for k, v in ipairs(admins) do
-		local id = sampGetPlayerIdByNickname(v)
+		local id = sampGetPlayerIdByNickname(v['nick'])
 		if id ~= nil then
-			table.insert(admins_online, {nick = v, id = id})
+			table.insert(admins_online, {nick = v['nick'], id = id, color = v['color'], text = v['text']})
 		end
     end
     for k, v in ipairs(players) do
-		local id = sampGetPlayerIdByNickname(v)
+		local id = sampGetPlayerIdByNickname(v['nick'])
 		if id ~= nil then
-			table.insert(players_online, {nick = v, id = id})
+			table.insert(players_online, {nick = v['nick'], id = id, color = v['color'], text = v['text']})
 		end
 	end
     lua_thread.create(clickF)
@@ -959,19 +960,19 @@ function imgui.OnDrawFrame()
         if mpwindow.v then
             imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
             imgui.SetNextWindowSize(imgui.ImVec2(500, 300), imgui.Cond.FirstUseEver)
-            imgui.Begin(u8 'Admin Tools | Мероприятие', mpwindow, imgui.WindowFlags.NoResize)
+            imgui.Begin(u8 'Admin Tools | Мероприятие', mpwindow, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize)
             imgui.Checkbox(u8 'Конец МП', mpend)
             imgui.Separator()
             if not mpend.v then
                 imgui.InputText(u8 'Название мероприятия', mpname)
                 imgui.InputText(u8 'Спонсоры мероприятия', mpsponsors)
-                imgui.Text(u8'Пример:')
+                imgui.Text(u8'Вывод:')
                 imgui.Separator()
                 imgui.TextWrapped((u8'Желающие на МП "%s" + в SMS. Сразу из машин выходите'):format(mpname.v))
             else
                 imgui.InputText(u8 'Победитель мероприятия', mpwinner)
                 imgui.InputText(u8 'Спонсоры мероприятия', mpsponsors)
-                imgui.Text(u8'Пример:')
+                imgui.Text(u8'Вывод:')
                 imgui.Separator()
                 imgui.TextWrapped((u8'Победитель МП "%s" - %s'):format(mpname.v, mpwinner.v))
                 imgui.TextWrapped((u8'Спонсоры: %s'):format(mpsponsors.v))
@@ -1311,7 +1312,7 @@ function imgui.OnDrawFrame()
         if settingwindows.v then
             imgui.LockPlayer = true
             imgui.SetNextWindowPos(imgui.ImVec2(screenx / 2, screeny / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(15,6))
-            imgui.Begin(u8 'Настройки', settingwindows, imgui.WindowFlags.NoResize)
+            imgui.Begin(u8 'Admin Tools | Настройки', settingwindows, imgui.WindowFlags.NoResize)
             imgui.BeginChild('##set', imgui.ImVec2(200, 400), true)
             if imgui.Selectable(u8 'Настройка клавиш', data.imgui.menu == 1 ) then data.imgui.menu = 1 end
             if imgui.Selectable(u8 'Настройка читов', data.imgui.menu == 2) then data.imgui.menu = 2 end
@@ -2450,8 +2451,8 @@ function sampev.onServerMessage(color, text)
 		wid = ccwid
         if cfg.tempChecker.wadd then
             if not checkIntable(temp_checker, cnick) then
-                table.insert(temp_checker_online, {nick = cnick, id = tonumber(ccwid)})
-                table.insert(temp_checker, cnick)
+                table.insert(temp_checker_online, {nick = cnick, id = tonumber(ccwid), color = 'ffffff', text = ''})
+                table.insert(temp_checker, {{nick = cnick, color = 'ffffff', text = ''}})
             end
 		end
     end
@@ -2529,6 +2530,7 @@ function sampev.onTextDrawHide(id)
     if cfg.crecon.enable then if id == 2164 then recon.v = false; reid = nil end end
 end
 function sampev.onPlayerQuit(id, reason)
+    local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     text_notify_disconnect('{ff0000}Отключился: {ffffff}'..sampGetPlayerNickname(id)..' ['..id..']')
 	if reason == 2 or reason == 3 then table.insert(wrecon, {nick = sampGetPlayerNickname(id), time = os.time()}) end
 	for i, v in ipairs(admins_online) do
@@ -2596,20 +2598,20 @@ function sampev.onPlayerJoin(id, clist, isNPC, nick)
 		end
 	end
 	for i, v in ipairs(admins) do
-		if nick == v then
-			table.insert(admins_online, {nick = nick, id = id})
+		if nick == v['nick'] then
+			table.insert(admins_online, {nick = nick, id = id, color = v['color'], text = v['text']})
 			break
 		end
     end
     for i, v in ipairs(players) do
-		if nick == v then
-			table.insert(players_online, {nick = nick, id = id})
+		if nick == v['nick'] then
+			table.insert(players_online, {nick = nick, id = id, color = v['color'], text = v['text']})
 			break
 		end
 	end
 	for i, v in ipairs(temp_checker) do
-		if nick == v then
-			table.insert(temp_checker_online, {nick = nick, id = id})
+		if nick == v['nick'] then
+			table.insert(temp_checker_online, {nick = nick, id = id, color = v['color'], text = v['text']})
 			break
 		end
 	end
@@ -2658,24 +2660,21 @@ function renders()
             end
             renderFontDrawText(hudfont, ('%s %s %s [%s %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, posint), 5, sy-20, -1)
             if cfg.admchecker.enable then
-                renderFontDrawText(checkfont, "{00ff00}Админы онлайн ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY, -1)
-                for _, v in ipairs(admins_online) do
-                    renderFontDrawText(checkfont,string.format('%s [%s] %s{ffffff}', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.admchecker.posx, admrenderPosY + 20, -1)
-                    admrenderPosY = admrenderPosY + 15
+                renderFontDrawText(checkfont, "{00ff00}Админы онлайн ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY-#admins_online*15, -1)
+                for k, v in ipairs(admins_online) do
+                    renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', v['text']) , cfg.admchecker.posx, (admrenderPosY - k*15)+15, -1)
                 end
             end
             if cfg.playerChecker.enable then
-                renderFontDrawText(checkfont, "{FFFF00}Игроки онлайн ["..#players_online.."]:", cfg.playerChecker.posx, playerRenderPosY, -1)
-                for _, v in ipairs(players_online) do
-                    renderFontDrawText(checkfont,string.format('%s [%s] %s', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.playerChecker.posx, playerRenderPosY + 20, -1)
-                    playerRenderPosY = playerRenderPosY + 15
+                renderFontDrawText(checkfont, "{FFFF00}Игроки онлайн ["..#players_online.."]:", cfg.playerChecker.posx, playerRenderPosY-#players_online*15, -1)
+                for k, v in ipairs(players_online) do
+                    renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', v['text']) , cfg.playerChecker.posx, (playerRenderPosY - k*15)+15, -1)
                 end
             end
             if cfg.tempChecker.enable then
-                renderFontDrawText(checkfont, "{ff0000}Temp Checker ["..#temp_checker_online.."]:", cfg.tempChecker.posx, tempRenderPosY, -1)
-                for _, v in ipairs(temp_checker_online) do
-                    renderFontDrawText(checkfont,string.format('%s [%s] %s', v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '') , cfg.tempChecker.posx, tempRenderPosY + 20, -1)
-                    tempRenderPosY = tempRenderPosY + 15
+                renderFontDrawText(checkfont, "{ff0000}Temp Checker ["..#temp_checker_online.."]:", cfg.tempChecker.posx, tempRenderPosY-#temp_checker_online*15, -1)
+                for k, v in ipairs(temp_checker_online) do
+                    renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', v['text']) , cfg.tempChecker.posx, (tempRenderPosY - k*15)+15, -1)
                 end
             end
             
@@ -2703,7 +2702,7 @@ function sampGetPlayerIdByNickname(nick)
     if tostring(nick) == sampGetPlayerNickname(myid) then return myid end
     for i = 0, 1000 do if sampIsPlayerConnected(i) and sampGetPlayerNickname(i) == tostring(nick) then return i end end
 end
-function addadm(pam)
+--[[function addadm(pam)
     local pId = tonumber(pam)
     if pId ~= nil then
         if sampIsPlayerConnected(pId) then
@@ -2737,7 +2736,7 @@ function addadm(pam)
         atext('Введите /addadm [id/nick]')
     end
 end
-function addplayer(pam)
+--function addplayer(pam)
     local pId = tonumber(pam)
     if pId ~= nil then
         if sampIsPlayerConnected(pId) then
@@ -2952,7 +2951,7 @@ function deladm(pam)
             end
         end
     end)
-end
+end]]
 function check_keystrokes() -- inv
     while true do wait(0)
         if swork then
@@ -3799,7 +3798,7 @@ function massarm(pam)
 		end
 	end)
 end
-function addtemp(pam)
+--[[function addtemp(pam)
     local pId = tonumber(pam)
     if pId ~= nil then
         if sampIsPlayerConnected(pId) then
@@ -3892,7 +3891,7 @@ function deltemp(pam)
             end
         end
     end)
-end
+end]]
 function givehb(pam)
     lua_thread.create(function()
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
@@ -4315,5 +4314,370 @@ function hblist()
         if line:match('.+.txt') then
             atext(line)
         end
+    end
+end
+function admchecker()
+    if not doesFileExist('moonloader/config/Admin Tools/admchecker.json') then
+        local file = io.open('moonloader/config/Admin Tools/admchecker.json', 'w')
+        file:close()
+    else
+        local f = io.open('moonloader/config/Admin Tools/admchecker.json', 'r')
+        if f then
+            admins = decodeJson(f:read('*a'))
+            f:close()
+        end
+    end
+    for line in io.lines('moonloader/config/Admin Tools/adminlist.txt') do
+        table.insert(admins, {
+            nick = line,
+            color = 'ffffff',
+            text = ''
+        })
+    end
+    if not doesFileExist('moonloader/config/Admin Tools/playerchecker.json') then
+        local file = io.open('moonloader/config/Admin Tools/playerchecker.json', 'w')
+        file:close()
+    else
+        local f = io.open('moonloader/config/Admin Tools/playerchecker.json', 'r')
+        if f then
+            players = decodeJson(f:read('*a'))
+            f:close()
+        end
+    end
+    for line in io.lines('moonloader/config/Admin Tools/playerlist.txt') do
+        table.insert(players, {
+            nick = line,
+            color = 'ffffff',
+            text = ''
+        })
+    end
+    saveData(admins, 'moonloader/config/Admin Tools/admchecker.json')
+    saveData(players, 'moonloader/config/Admin Tools/playerchecker.json')
+    io.open('moonloader/config/Admin Tools/adminlist.txt', 'w'):close()
+    io.open('moonloader/config/Admin Tools/playerlist.txt', 'w'):close()
+end
+function addplayer(pam)
+    if pam:match('(%d+) (.+)%s(.+)') then
+        local id, color, text = pam:match('(%d+) (.+)%s(.+)')
+        if color == '-1' then color = 'ffffff' end
+        if sampIsPlayerConnected(tonumber(id)) then
+            table.insert(players, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = text})
+            table.insert(players_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = color, text = text})
+            atext(('Игрок %s [%s] добавлен в чекер игроков'):format(sampGetPlayerNickname(tonumber(id)), id))
+        else
+            table.insert(players, {nick = id, color = color, text = text})
+            atext(('Игрок %s добавлен в чекер игроков'):format(id))
+        end
+    elseif pam:match("(%a+) (.+)%s(.+)") then
+        local nick, color, text = pam:match("(%a+) (.+)%s(.+)")
+        local id = sampGetPlayerIdByNickname(nick)
+        table.insert(players, {nick = nick, color = color, text = text})
+        if id ~= nil then
+            table.insert(players_online, {nick = nick, id = id, color = color, text = text})
+            atext(('Игрок %s [%s] добавлен в чекер игроков'):format(nick, id))
+        else
+            atext(('Игрок %s добавлен в чекер игроков'):format(nick))
+        end
+    elseif pam:match("(%d+)") then
+        local id = pam:match('(%d+)')
+        if sampIsPlayerConnected(tonumber(id)) then
+            table.insert(players, {nick = sampGetPlayerNickname(tonumber(id)), color = 'ffffff', text = ''})
+            table.insert(players_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = 'ffffff', text = ''})
+            atext(('Игрок %s [%s] добавлен в чекер игроков'):format(sampGetPlayerNickname(tonumber(id)), id))
+        else
+            table.insert(players, {nick = id, color = 'ffffff', text = ''})
+            atext(('Игрок %s добавлен в чекер игроков'):format(id))
+        end
+    elseif pam:match('(%a+)') then
+        local nick = pam:match('(%a+)')
+        local id = sampGetPlayerIdByNickname(nick)
+        table.insert(players, {nick = nick, color = 'ffffff', text = ''})
+        if id ~= nil then
+            table.insert(players_online, {nick = nick, id = id, color = 'ffffff', text = ''})
+            atext(('Игрок %s [%s] добавлен в чекер игроков'):format(nick, id))
+        else
+            atext(('Игрок %s добавлен в чекер игроков'):format(nick))
+        end
+    elseif #pam == 0 or not pam:match('(%a+)') or not pam:match("(%d+)") or not pam:match("(%a+) (%a+) (.+)") or not pam:match('(%d+) (%a+) (.+)') then
+        atext('Введите: /addplayer [id/nick] [color(Пример: ffffff)] [примечание]')
+    end
+    saveData(players, 'moonloader/config/Admin Tools/playerchecker.json')
+end
+function addadm(pam)
+    if pam:match('(%d+) (.+)%s(.+)') then
+        local id, color, text = pam:match('(%d+) (.+)%s(.+)')
+        if color == '-1' then color = 'ffffff' end
+        if sampIsPlayerConnected(tonumber(id)) then
+            table.insert(admins, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = text})
+            table.insert(admins_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = color, text = text})
+            atext(('Игрок %s [%s] добавлен в чекер админов'):format(sampGetPlayerNickname(tonumber(id)), id))
+        else
+            table.insert(admins, {nick = id, color = color, text = text})
+            atext(('Игрок %s добавлен в чекер админов'):format(id))
+        end
+    elseif pam:match("(%a+) (.+)%s(.+)") then
+        local nick, color, text = pam:match("(%a+) (.+)%s(.+)")
+        local id = sampGetPlayerIdByNickname(nick)
+        table.insert(admins, {nick = nick, color = color, text = text})
+        if id ~= nil then
+            table.insert(admins_online, {nick = nick, id = id, color = color, text = text})
+            atext(('Игрок %s [%s] добавлен в чекер админов'):format(nick, id))
+        else
+            atext(('Игрок %s добавлен в чекер админов'):format(nick))
+        end
+    elseif pam:match("(%d+)") then
+        local id = pam:match('(%d+)')
+        if sampIsPlayerConnected(tonumber(id)) then
+            table.insert(admins, {nick = sampGetPlayerNickname(tonumber(id)), color = 'ffffff', text = ''})
+            table.insert(admins_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = 'ffffff', text = ''})
+            atext(('Игрок %s [%s] добавлен в чекер админов'):format(sampGetPlayerNickname(tonumber(id)), id))
+        else
+            table.insert(players, {nick = id, color = 'ffffff', text = ''})
+            atext(('Игрок %s добавлен в чекер админов'):format(id))
+        end
+    elseif pam:match('(%a+)') then
+        local nick = pam:match('(%a+)')
+        local id = sampGetPlayerIdByNickname(nick)
+        table.insert(admins, {nick = nick, color = 'ffffff', text = ''})
+        if id ~= nil then
+            table.insert(admins_online, {nick = nick, id = id, color = 'ffffff', text = ''})
+            atext(('Игрок %s [%s] добавлен в чекер админов'):format(nick, id))
+        else
+            atext(('Игрок %s добавлен в чекер админов'):format(nick))
+        end
+    elseif #pam == 0 or not pam:match('(%a+)') or not pam:match("(%d+)") or not pam:match("(%a+) (%a+) (.+)") or not pam:match('(%d+) (%a+) (.+)') then
+        atext('Введите: /addadm [id/nick] [color(Пример: ffffff)] [примечание]')
+    end
+    saveData(admins, 'moonloader/config/Admin Tools/admchecker.json')
+end
+function delplayer(pam)
+    if pam:match("(%d+)") then
+        local id = pam:match("(%d+)")
+        local i = 1
+        local k = 1
+        if sampIsPlayerConnected(tonumber(id)) then
+            local nick = sampGetPlayerNickname(tonumber(id))
+            while i <= #players_online do
+                if players_online[i]['nick'] == nick then
+                    table.remove(players_online, i)
+                else
+                    i = i + 1
+                end
+            end
+            while k <= #players do
+                if players[k]['nick'] == nick then
+                    table.remove(players, k)
+                else
+                    k = k + 1
+                end
+            end
+            atext(('Игрок %s [%s] удален из чекера игроков'):format(nick, id))
+        else
+            local v = 1
+            while v <= #players do
+                if players[v]['nick'] == id then
+                    table.remove(players, v)
+                else
+                    v = v + 1
+                end
+            end
+            atext(('Игрок %s удален из чекера игроков'):format(id))
+        end
+    elseif pam:match('(%a+)') then
+        local nick = pam:match('(%a+)')
+        local i = 1
+        local k = 1
+        local id = sampGetPlayerIdByNickname(nick)
+        if id ~= nil then
+            while i <= #players_online do
+                if players_online[i]['nick'] == nick then
+                    table.remove(players_online, i)
+                else
+                    i = i + 1
+                end
+            end
+            atext(('Игрок %s [%s] удален из чекера игроков'):format(nick, id))
+        else
+            atext(('Игрок %s удален из чекера игроков'):format(nick))
+        end
+        while k <= #players do
+            if players[k]['nick'] == nick then
+                table.remove(players, k)
+            else
+                k = k + 1
+            end
+        end
+    elseif #pam == 0 or not pam:match('(%a+)') or not pam:match("(%d+)") then
+        atext('Введите: /delplayer [id/nick]')
+    end
+    saveData(players, 'moonloader/config/Admin Tools/playerchecker.json')
+end
+function deladm(pam)
+    if pam:match("(%d+)") then
+        local id = pam:match("(%d+)")
+        local i = 1
+        local k = 1
+        if sampIsPlayerConnected(tonumber(id)) then
+            local nick = sampGetPlayerNickname(tonumber(id))
+            while i <= #admins_online do
+                if admins_online[i]['nick'] == nick then
+                    table.remove(admins_online, i)
+                else
+                    i = i + 1
+                end
+            end
+            while k <= #admins do
+                if admins[k]['nick'] == nick then
+                    table.remove(admins, k)
+                else
+                    k = k + 1
+                end
+            end
+            atext(('Игрок %s [%s] удален из чекера игроков'):format(nick, id))
+        else
+            local v = 1
+            while v <= #admins do
+                if admins[v]['nick'] == id then
+                    table.remove(admins, v)
+                else
+                    v = v + 1
+                end
+            end
+            atext(('Игрок %s удален из чекера игроков'):format(id))
+        end
+    elseif pam:match('(%a+)') then
+        local nick = pam:match('(%a+)')
+        local i = 1
+        local k = 1
+        local id = sampGetPlayerIdByNickname(nick)
+        if id ~= nil then
+            while i <= #admins_online do
+                if admins_online[i]['nick'] == nick then
+                    table.remove(admins_online, i)
+                else
+                    i = i + 1
+                end
+            end
+            atext(('Игрок %s [%s] удален из чекера игроков'):format(nick, id))
+        else
+            atext(('Игрок %s удален из чекера игроков'):format(nick))
+        end
+        while k <= #admins do
+            if admins[k]['nick'] == nick then
+                table.remove(admins, k)
+            else
+                k = k + 1
+            end
+        end
+    elseif #pam == 0 or not pam:match('(%a+)') or not pam:match("(%d+)") then
+        atext('Введите: /deladm [id/nick]')
+    end
+    saveData(admins, 'moonloader/config/Admin Tools/admchecker.json')
+end
+function addtemp(pam)
+    if pam:match('(%d+) (.+)%s(.+)') then
+        local id, color, text = pam:match('(%d+) (.+)%s(.+)')
+        if color == '-1' then color = 'ffffff' end
+        if sampIsPlayerConnected(tonumber(id)) then
+            table.insert(temp_checker, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = text})
+            table.insert(temp_checker_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = color, text = text})
+            atext(('Игрок %s [%s] добавлен в временный чекер'):format(sampGetPlayerNickname(tonumber(id)), id))
+        else
+            table.insert(temp_checker, {nick = id, color = color, text = text})
+            atext(('Игрок %s добавлен в временный чекер'):format(id))
+        end
+    elseif pam:match("(%a+) (.+)%s(.+)") then
+        local nick, color, text = pam:match("(%a+) (.+)%s(.+)")
+        local id = sampGetPlayerIdByNickname(nick)
+        table.insert(temp_checker, {nick = nick, color = color, text = text})
+        if id ~= nil then
+            table.insert(temp_checker_online, {nick = nick, id = id, color = color, text = text})
+            atext(('Игрок %s [%s] добавлен в временный чекер'):format(nick, id))
+        else
+            atext(('Игрок %s добавлен в временный чекер'):format(nick))
+        end
+    elseif pam:match("(%d+)") then
+        local id = pam:match('(%d+)')
+        if sampIsPlayerConnected(tonumber(id)) then
+            table.insert(temp_checker, {nick = sampGetPlayerNickname(tonumber(id)), color = 'ffffff', text = ''})
+            table.insert(temp_checker_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = 'ffffff', text = ''})
+            atext(('Игрок %s [%s] добавлен в временный чекер'):format(sampGetPlayerNickname(tonumber(id)), id))
+        else
+            table.insert(players, {nick = id, color = 'ffffff', text = ''})
+            atext(('Игрок %s добавлен в временный чекер'):format(id))
+        end
+    elseif pam:match('(%a+)') then
+        local nick = pam:match('(%a+)')
+        local id = sampGetPlayerIdByNickname(nick)
+        table.insert(temp_checker, {nick = nick, color = 'ffffff', text = ''})
+        if id ~= nil then
+            table.insert(temp_checker_online, {nick = nick, id = id, color = 'ffffff', text = ''})
+            atext(('Игрок %s [%s] добавлен в временный чекер'):format(nick, id))
+        else
+            atext(('Игрок %s добавлен в временный чекер'):format(nick))
+        end
+    elseif #pam == 0 or not pam:match('(%a+)') or not pam:match("(%d+)") or not pam:match("(%a+) (%a+) (.+)") or not pam:match('(%d+) (%a+) (.+)') then
+        atext('Введите: /addtemp [id/nick] [color(Пример: ffffff)] [примечание]')
+    end
+end
+function deltemp(pam)
+    if pam:match("(%d+)") then
+        local id = pam:match("(%d+)")
+        local i = 1
+        local k = 1
+        if sampIsPlayerConnected(tonumber(id)) then
+            local nick = sampGetPlayerNickname(tonumber(id))
+            while i <= #temp_checker_online do
+                if temp_checker_online[i]['nick'] == nick then
+                    table.remove(temp_checker_online, i)
+                else
+                    i = i + 1
+                end
+            end
+            while k <= #temp_checker do
+                if temp_checker[k]['nick'] == nick then
+                    table.remove(temp_checker, k)
+                else
+                    k = k + 1
+                end
+            end
+            atext(('Игрок %s [%s] удален из временного чекера'):format(nick, id))
+        else
+            local v = 1
+            while v <= #temp_checker do
+                if temp_checker[v]['nick'] == id then
+                    table.remove(temp_checker, v)
+                else
+                    v = v + 1
+                end
+            end
+            atext(('Игрок %s удален из временного чекера'):format(id))
+        end
+    elseif pam:match('(%a+)') then
+        local nick = pam:match('(%a+)')
+        local i = 1
+        local k = 1
+        local id = sampGetPlayerIdByNickname(nick)
+        if id ~= nil then
+            while i <= #temp_checker_online do
+                if temp_checker_online[i]['nick'] == nick then
+                    table.remove(temp_checker_online, i)
+                else
+                    i = i + 1
+                end
+            end
+            atext(('Игрок %s [%s] удален из временного чекера'):format(nick, id))
+        else
+            atext(('Игрок %s удален из временного чекера'):format(nick))
+        end
+        while k <= #temp_checker do
+            if temp_checker[k]['nick'] == nick then
+                table.remove(temp_checker, k)
+            else
+                k = k + 1
+            end
+        end
+    elseif #pam == 0 or not pam:match('(%a+)') or not pam:match("(%d+)") then
+        atext('Введите: /deltemp [id/nick]')
     end
 end
