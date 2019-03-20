@@ -4405,8 +4405,8 @@ function hblist()
     end
 end
 function admchecker()
-    if not doesFileExist('moonloader/config/Admin Tools/adminlist.txt') then op.open('moonloader/config/Admin Tools/adminlist.txt', 'w'):close() end
-    if not doesFileExist('moonloader/config/Admin Tools/playerlist.txt') then op.open('moonloader/config/Admin Tools/playerlist.txt', 'w'):close() end
+    if not doesFileExist('moonloader/config/Admin Tools/adminlist.txt') then io.open('moonloader/config/Admin Tools/adminlist.txt', 'w'):close() end
+    if not doesFileExist('moonloader/config/Admin Tools/playerlist.txt') then io.open('moonloader/config/Admin Tools/playerlist.txt', 'w'):close() end
     if not doesFileExist('moonloader/config/Admin Tools/admchecker.json') then
         local file = io.open('moonloader/config/Admin Tools/admchecker.json', 'w')
         file:close()
