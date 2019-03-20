@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.999991')
+script_version('1.999992')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -4405,6 +4405,8 @@ function hblist()
     end
 end
 function admchecker()
+    if not doesFileExist('moonloader/config/Admin Tools/adminlist.txt') then op.open('moonloader/config/Admin Tools/adminlist.txt', 'w'):close() end
+    if not doesFileExist('moonloader/config/Admin Tools/playerlist.txt') then op.open('moonloader/config/Admin Tools/playerlist.txt', 'w'):close() end
     if not doesFileExist('moonloader/config/Admin Tools/admchecker.json') then
         local file = io.open('moonloader/config/Admin Tools/admchecker.json', 'w')
         file:close()
@@ -4476,8 +4478,8 @@ function addplayer(pam)
             table.insert(players, {nick = id, color = 'ffffff', text = ''})
             atext(('Игрок %s добавлен в чекер игроков'):format(id))
         end
-    elseif pam:match('(%a+)') then
-        local nick = pam:match('(%a+)')
+    elseif pam:match('(%S+)') then
+        local nick = pam:match('(%S+)')
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(players, {nick = nick, color = 'ffffff', text = ''})
         if id ~= nil then
@@ -4486,7 +4488,7 @@ function addplayer(pam)
         else
             atext(('Игрок %s добавлен в чекер игроков'):format(nick))
         end
-    elseif #pam == 0 or not pam:match('(%a+)') or not pam:match("(%d+)") or not pam:match("(%a+) (%a+) (.+)") or not pam:match('(%d+) (%a+) (.+)') then
+    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") or not pam:match("(%a+) (%S+) (.+)") or not pam:match('(%d+) (%S+) (.+)') then
         atext('Введите: /addplayer [id/nick] [color(Пример: ffffff)/-1] [примечание]')
     end
     saveData(players, 'moonloader/config/Admin Tools/playerchecker.json')
@@ -4523,8 +4525,8 @@ function addadm(pam)
             table.insert(players, {nick = id, color = 'ffffff', text = ''})
             atext(('Игрок %s добавлен в чекер админов'):format(id))
         end
-    elseif pam:match('(%a+)') then
-        local nick = pam:match('(%a+)')
+    elseif pam:match('(%S+)') then
+        local nick = pam:match('(%S+)')
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(admins, {nick = nick, color = 'ffffff', text = ''})
         if id ~= nil then
@@ -4533,7 +4535,7 @@ function addadm(pam)
         else
             atext(('Игрок %s добавлен в чекер админов'):format(nick))
         end
-    elseif #pam == 0 or not pam:match('(%a+)') or not pam:match("(%d+)") or not pam:match("(%a+) (%a+) (.+)") or not pam:match('(%d+) (%a+) (.+)') then
+    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") or not pam:match("(%a+) (%S+) (.+)") or not pam:match('(%d+) (%S+) (.+)') then
         atext('Введите: /addadm [id/nick] [color(Пример: ffffff)/-1] [примечание]')
     end
     saveData(admins, 'moonloader/config/Admin Tools/admchecker.json')
@@ -4694,8 +4696,8 @@ function addtemp(pam)
             table.insert(players, {nick = id, color = 'ffffff', text = ''})
             atext(('Игрок %s добавлен в временный чекер'):format(id))
         end
-    elseif pam:match('(%a+)') then
-        local nick = pam:match('(%a+)')
+    elseif pam:match('(%S+)') then
+        local nick = pam:match('(%S+)')
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(temp_checker, {nick = nick, color = 'ffffff', text = ''})
         if id ~= nil then
@@ -4704,7 +4706,7 @@ function addtemp(pam)
         else
             atext(('Игрок %s добавлен в временный чекер'):format(nick))
         end
-    elseif #pam == 0 or not pam:match('(%a+)') or not pam:match("(%d+)") or not pam:match("(%a+) (%a+) (.+)") or not pam:match('(%d+) (%a+) (.+)') then
+    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") or not pam:match("(%a+) (%S+) (.+)") or not pam:match('(%d+) (%S+) (.+)') then
         atext('Введите: /addtemp [id/nick] [color(Пример: ffffff)/-1] [примечание]')
     end
 end
