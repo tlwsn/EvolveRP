@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.99999')
+script_version('1.999991')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -324,8 +324,97 @@ function asyncHttpRequest(method, url, args, resolve, reject)
    end)
 end
 function atext(text)
-    sampAddChatMessage(string.format(' [Admin Tools] {ffffff}%s', text), 0xa1dd4e)
+    sampAddChatMessage(string.format(' [Admin Tools] {ffffff}%s', text), 0x66FF00)
 end
+--[[function apply_custom_style()
+    imgui.SwitchContext()
+    local style = imgui.GetStyle()
+    local colors = style.Colors
+    local clr = imgui.Col
+    local ImVec4 = imgui.ImVec4
+    --[[style.WindowTitleAlign = imgui.ImVec2(0.5, 0.5)
+    style.ChildWindowRounding = 2.0
+    style.FrameRounding = 2.0
+    style.ItemSpacing = imgui.ImVec2(5.0, 4.0)
+    style.ScrollbarSize = 13.0
+    style.ScrollbarRounding = 0
+    style.GrabMinSize = 8.0
+    style.GrabRounding = 1.0
+    colors[clr.WindowBg]               = ImVec4(0.00, 0.00, 0.00, 0.9)
+    colors[clr.FrameBg]                = ImVec4(0.11, 0.79, 0.07, 0.37)
+    colors[clr.FrameBgHovered]         = ImVec4(0.11, 0.79, 0.07, 0.51)
+    colors[clr.FrameBgActive]          = ImVec4(0.11, 0.79, 0.07, 0.76)
+    colors[clr.TitleBg]                = ImVec4(0.07, 0.07, 0.08, 0.83)
+    colors[clr.TitleBgActive]          = ImVec4(0.07, 0.07, 0.08, 1.00)
+    colors[clr.TitleBgCollapsed]       = ImVec4(0.07, 0.07, 0.08, 0.42)
+    colors[clr.ScrollbarBg]            = ImVec4(0.00, 0.00, 0.00, 0.15)
+    colors[clr.ScrollbarGrab]          = ImVec4(0.11, 0.79, 0.07, 0.79)
+    colors[clr.ScrollbarGrabHovered]   = ImVec4(0.11, 0.79, 0.07, 1.00)
+    colors[clr.ScrollbarGrabActive]    = ImVec4(0.11, 0.79, 0.07, 0.40)
+    colors[clr.Button]                 = ImVec4(0.11, 0.79, 0.07, 0.37)
+    colors[clr.ButtonHovered]          = ImVec4(0.11, 0.79, 0.07, 0.51)
+    colors[clr.ButtonActive]           = ImVec4(0.11, 0.79, 0.07, 0.76)
+    colors[clr.Header]                 = ImVec4(0.11, 0.79, 0.07, 0.37)
+    colors[clr.HeaderHovered]          = ImVec4(0.11, 0.79, 0.07, 0.51)
+    colors[clr.HeaderActive]           = ImVec4(0.11, 0.79, 0.07, 0.76)
+    colors[clr.ResizeGrip] = ImVec4(0.00, 0.00, 0.00, 0.00)
+    colors[clr.CloseButton]            = ImVec4(0.11, 0.79, 0.07, 0.37)
+    colors[clr.CloseButtonHovered]     = ImVec4(0.11, 0.79, 0.07, 0.51)
+    colors[clr.CloseButtonActive]      = ImVec4(0.11, 0.79, 0.07, 0.76) тут было ] ]
+    style.WindowRounding = 2.0
+    style.WindowTitleAlign = imgui.ImVec2(0.5, 0.5)
+    style.ChildWindowRounding = 2.0
+    style.FrameRounding = 2.0
+    style.ItemSpacing = imgui.ImVec2(5.0, 4.0)
+    style.ScrollbarSize = 13.0
+    style.ScrollbarRounding = 0
+    style.GrabMinSize = 8.0
+    style.GrabRounding = 1.0
+
+    colors[clr.FrameBg]                = ImVec4(0.48, 0.16, 0.16, 0.54)
+    colors[clr.FrameBgHovered]         = ImVec4(0.98, 0.26, 0.26, 0.40)
+    colors[clr.FrameBgActive]          = ImVec4(0.98, 0.26, 0.26, 0.67)
+    colors[clr.TitleBg]                = ImVec4(0.04, 0.04, 0.04, 1.00)
+    colors[clr.TitleBgActive]          = ImVec4(0.48, 0.16, 0.16, 1.00)
+    colors[clr.TitleBgCollapsed]       = ImVec4(0.00, 0.00, 0.00, 0.51)
+    colors[clr.CheckMark]              = ImVec4(0.98, 0.26, 0.26, 1.00)
+    colors[clr.SliderGrab]             = ImVec4(0.88, 0.26, 0.24, 1.00)
+    colors[clr.SliderGrabActive]       = ImVec4(0.98, 0.26, 0.26, 1.00)
+    colors[clr.Button]                 = ImVec4(0.98, 0.26, 0.26, 0.40)
+    colors[clr.ButtonHovered]          = ImVec4(0.98, 0.26, 0.26, 1.00)
+    colors[clr.ButtonActive]           = ImVec4(0.98, 0.06, 0.06, 1.00)
+    colors[clr.Header]                 = ImVec4(0.98, 0.26, 0.26, 0.31)
+    colors[clr.HeaderHovered]          = ImVec4(0.98, 0.26, 0.26, 0.80)
+    colors[clr.HeaderActive]           = ImVec4(0.98, 0.26, 0.26, 1.00)
+    colors[clr.Separator]              = colors[clr.Border]
+    colors[clr.SeparatorHovered]       = ImVec4(0.75, 0.10, 0.10, 0.78)
+    colors[clr.SeparatorActive]        = ImVec4(0.75, 0.10, 0.10, 1.00)
+    colors[clr.ResizeGrip]             = ImVec4(0.98, 0.26, 0.26, 0.25)
+    colors[clr.ResizeGripHovered]      = ImVec4(0.98, 0.26, 0.26, 0.67)
+    colors[clr.ResizeGripActive]       = ImVec4(0.98, 0.26, 0.26, 0.95)
+    colors[clr.TextSelectedBg]         = ImVec4(0.98, 0.26, 0.26, 0.35)
+    colors[clr.Text]                   = ImVec4(1.00, 1.00, 1.00, 1.00)
+    colors[clr.TextDisabled]           = ImVec4(0.50, 0.50, 0.50, 1.00)
+    colors[clr.WindowBg]               = ImVec4(0.06, 0.06, 0.06, 0.94)
+    colors[clr.ChildWindowBg]          = ImVec4(1.00, 1.00, 1.00, 0.00)
+    colors[clr.PopupBg]                = ImVec4(0.08, 0.08, 0.08, 0.94)
+    colors[clr.ComboBg]                = colors[clr.PopupBg]
+    colors[clr.Border]                 = ImVec4(0.43, 0.43, 0.50, 0.50)
+    colors[clr.BorderShadow]           = ImVec4(0.00, 0.00, 0.00, 0.00)
+    colors[clr.MenuBarBg]              = ImVec4(0.14, 0.14, 0.14, 1.00)
+    colors[clr.ScrollbarBg]            = ImVec4(0.02, 0.02, 0.02, 0.53)
+    colors[clr.ScrollbarGrab]          = ImVec4(0.31, 0.31, 0.31, 1.00)
+    colors[clr.ScrollbarGrabHovered]   = ImVec4(0.41, 0.41, 0.41, 1.00)
+    colors[clr.ScrollbarGrabActive]    = ImVec4(0.51, 0.51, 0.51, 1.00)
+    colors[clr.CloseButton]            = ImVec4(0.41, 0.41, 0.41, 0.50)
+    colors[clr.CloseButtonHovered]     = ImVec4(0.98, 0.39, 0.36, 1.00)
+    colors[clr.CloseButtonActive]      = ImVec4(0.98, 0.39, 0.36, 1.00)
+    colors[clr.PlotLines]              = ImVec4(0.61, 0.61, 0.61, 1.00)
+    colors[clr.PlotLinesHovered]       = ImVec4(1.00, 0.43, 0.35, 1.00)
+    colors[clr.PlotHistogram]          = ImVec4(0.90, 0.70, 0.00, 1.00)
+    colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
+    colors[clr.ModalWindowDarkening]   = ImVec4(0.80, 0.80, 0.80, 0.35)
+end]]
 function apply_custom_style()
     imgui.SwitchContext()
     local style = imgui.GetStyle()
@@ -602,13 +691,6 @@ function main()
     autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", '[Admin Tools]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439")
     lua_thread.create(wh)
     registerFastAnswer()
-	sampRegisterChatCommand('aafk', function()
-		if aafk then
-			WorkInBackground(false)
-		else
-			WorkInBackground(true)
-		end
-    end)
     sampRegisterChatCommand('hblist', hblist)
     sampRegisterChatCommand('getlvl', getlvl)
     sampRegisterChatCommand('punish', punish)
@@ -1467,11 +1549,11 @@ function imgui.OnDrawFrame()
                 end
 				if ipassb.v then
 					if imgui.InputText(u8 'Введите ваш пароль', ipass, imgui.InputTextFlags.Password) then cfg.other.password = u8:decode(ipass.v) inicfg.save(config, 'Admin Tools\\config.ini') end
-					if imgui.Button(u8 'Узнать пароль##1') then atext('Ваш пароль: {a1dd4e}'..cfg.other.password) end
+					if imgui.Button(u8 'Узнать пароль##1') then atext('Ваш пароль: {66FF00}'..cfg.other.password) end
 				end
 				if iapassb.v then
 					if imgui.InputText(u8 'Введите ваш админский пароль', iapass, imgui.InputTextFlags.Password) then cfg.other.adminpass = u8:decode(iapass.v) inicfg.save(config, 'Admin Tools\\config.ini') end
-					if imgui.Button(u8 'Узнать пароль##2') then atext('Ваш админский пароль: {a1dd4e}'..cfg.other.adminpass) end
+					if imgui.Button(u8 'Узнать пароль##2') then atext('Ваш админский пароль: {66FF00}'..cfg.other.adminpass) end
                 end
                 if imgui.InputText(u8 'Шрифт нижней панели##hud', hudfontb) then cfg.other.hudfont = hudfontb.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
                 if imgui.InputInt(u8 'Размер шрифта нижней панели##hud', hudsizeb, 0) then cfg.other.hudsize = hudsizeb.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
@@ -1526,6 +1608,7 @@ function imgui.OnDrawFrame()
                     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
                 end
             end
+            --imgui.ShowStyleEditor()
             imgui.EndChild()
             imgui.End()
         end
@@ -2120,6 +2203,11 @@ frakcolor = {
     ['Aztecas'] = '{01FCFF}Aztecas{ffffff}',
     ['Rifa'] = '{2A9170}Rifa{ffffff}'
 }
+function sampev.onConnectionRejected(reason)
+    temp_checker_online = {}
+    admins_online = {}
+    players_online = {}
+end
 function sampev.onServerMessage(color, text)
     punishlog(text)
     if cfg.other.chatconsole then sampfuncsLog(text) end
@@ -2534,19 +2622,19 @@ function sampev.onPlayerQuit(id, reason)
     text_notify_disconnect('{ff0000}Отключился: {ffffff}'..sampGetPlayerNickname(id)..' ['..id..']')
 	if reason == 2 or reason == 3 then table.insert(wrecon, {nick = sampGetPlayerNickname(id), time = os.time()}) end
 	for i, v in ipairs(admins_online) do
-		if v["id"] == id then
+		if tonumber(v["id"]) == id then
 			table.remove(admins_online, i)
 			break
 		end
     end
     for i, v in ipairs(players_online) do
-		if v["id"] == id then
+		if tonumber(v["id"]) == id then
 			table.remove(players_online, i)
 			break
 		end
     end
 	for i, v in ipairs(temp_checker_online) do
-		if v["id"] == id then
+		if tonumber(v["id"]) == id then
 			table.remove(temp_checker_online, i)
 			break
 		end
@@ -2591,7 +2679,7 @@ function sampev.onPlayerJoin(id, clist, isNPC, nick)
 		if v["nick"] == nick then
 			if (os.time() - v["time"]) < 5 and (os.time() - v["time"]) > 0 then
 				if cfg.other.reconw then
-					atext(('Игрок {a1dd4e}%s [%s] {ffffff}возможно клео реконнект. Время перехода: %s секунд'):format(nick, id, os.time() - v["time"]))
+					atext(('Игрок {66FF00}%s [%s] {ffffff}возможно клео реконнект. Время перехода: %s секунд'):format(nick, id, os.time() - v["time"]))
 				end
 			end
 			table.remove(wrecon, i)
@@ -3124,7 +3212,7 @@ function tr(pam)
     local idd = tonumber(pam)
     if idd ~= nil and sampIsPlayerConnected(idd) or idd == myid then
         traceid = idd
-        atext("Трейсера сменены на: {a1dd4e}"..traceid)
+        atext("Трейсера сменены на: {66FF00}"..traceid)
     else
         atext('Используйте: /tr [id]')
         traceid = '-1'
@@ -3329,7 +3417,7 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
 	            sampSendDialogResponse(id, 1, 1, nil)
 	            checkstatdone = true
 	            return false
-			elseif title == '{FFFFFF}Статистика | {ae433d}Администрирование' then
+			elseif title == '{FFFFFF}Статистика | {66FF00}Администрирование' then
 				wbfrak = text:match('.+Организация\t(.+)\nДолжность')
 				wbrang = text:match('.+Должность\t.+%[(.+)%]\nРабота')
 				wbstyle = 2
@@ -3566,7 +3654,7 @@ function banipk()
 end
 function saveposk()
     savecoords.x, savecoords.y, savecoords.z = getCharCoordinates(PLAYER_PED)
-    atext('Текущие координаты сохранены. Для телепортирования нажмите {a1dd4e}'..table.concat(rkeys.getKeysName(config_keys.goposkey.v)))
+    atext('Текущие координаты сохранены. Для телепортирования нажмите {66FF00}'..table.concat(rkeys.getKeysName(config_keys.goposkey.v)))
     cango = true
 end
 function goposk()
@@ -3582,7 +3670,7 @@ function fonl(pam)
                 fonlcheck = true
                 sampSendChat('/amembers '..num)
                 while not fonldone do wait(0) end
-                atext('Во фракции №{a1dd4e}'..num..' {ffffff}онлайн {a1dd4e}'..fonlnum..' {ffffff}человека')
+                atext('Во фракции №{66FF00}'..num..' {ffffff}онлайн {66FF00}'..fonlnum..' {ffffff}человека')
                 fonlcheck = false
                 fonldone = false
                 fonlnum = nil
@@ -3604,14 +3692,14 @@ function checkrangs(pam)
                 sampSendChat('/amembers '..num)
                 while not checkfraksdone do wait(0) end
                 if #checkf == 0 then
-                    atext('Во фракции №{a1dd4e}'..check_frak..'{ffffff} все нормально с рангами.')
+                    atext('Во фракции №{66FF00}'..check_frak..'{ffffff} все нормально с рангами.')
                 else
                     sampAddChatMessage(' ', -1)
                     for k, v in pairs(checkf) do
                         sampAddChatMessage(' '..v, -1)
                     end
                     sampAddChatMessage(' ', -1)
-                    atext('Фракция №{a1dd4e}'..check_frak)
+                    atext('Фракция №{66FF00}'..check_frak)
                 end
                 checkfraks = false
                 checkfraksdone = false
@@ -3734,9 +3822,9 @@ function cip(pam)
 			if rdata[1]["status"] == "success" and rdata[2]["status"] == "success" then
 				local distances = distance_cord(rdata[1]["lat"], rdata[1]["lon"], rdata[2]["lat"], rdata[2]["lon"])
 				if tonumber(pam) == nil then
-					sampAddChatMessage((' Страна: {a1dd4e}%s{ffffff} | Город: {a1dd4e}%s{ffffff} | ISP: {a1dd4e}%s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
-					sampAddChatMessage((' Страна: {a1dd4e}%s{ffffff} | Город:{a1dd4e} %s{ffffff} | ISP: {a1dd4e}%s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
-					sampAddChatMessage((' Расстояние: {a1dd4e}%s {ffffff}км. | Ник: {a1dd4e}%s'):format(math.floor(distances), rnick), -1)
+					sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
+					sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
+					sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s'):format(math.floor(distances), rnick), -1)
 				else
 					lua_thread.create(function()
 						sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
@@ -3952,7 +4040,7 @@ function masstp()
     lua_thread.create(function()
         masstpon = not masstpon
         smsids = {}
-        atext(masstpon and 'Телепортация начата' or 'Телепортация окончена. Всего телепортировано: {a1dd4e}'..skoktp..'{ffffff} игроков')
+        atext(masstpon and 'Телепортация начата' or 'Телепортация окончена. Всего телепортировано: {66FF00}'..skoktp..'{ffffff} игроков')
         skoktp = 0
         if not masstpon then 
             wait(1200)
@@ -3970,7 +4058,7 @@ function masstp()
             while true do wait(0)
                 if masstpon then
                     local smsx, smsy = convertGameScreenCoordsToWindowScreenCoords(242, 366)
-                    renderFontDrawText(hudfont, 'Телепортация игроков. Осталось: {a1dd4e}'..#smsids..'\n{ffffff}Всего телепортировано: {a1dd4e}'..skoktp, smsx, smsy, -1)
+                    renderFontDrawText(hudfont, 'Телепортация игроков. Осталось: {66FF00}'..#smsids..'\n{ffffff}Всего телепортировано: {66FF00}'..skoktp, smsx, smsy, -1)
                 else return end
             end
         end    
@@ -4303,7 +4391,7 @@ function getlvl(pam)
                 end
             end
         end
-        sampShowDialog(2131, '{ffffff}Игроки с уровнем: {a1dd4e}'..cid, table.concat(t, '\n'), 'x', _, 2)
+        sampShowDialog(2131, '{ffffff}Игроки с уровнем: {66FF00}'..cid, table.concat(t, '\n'), 'x', _, 2)
     else
         atext('Введите: /getlvl [уровень]')
     end
@@ -4357,8 +4445,8 @@ function admchecker()
     io.open('moonloader/config/Admin Tools/playerlist.txt', 'w'):close()
 end
 function addplayer(pam)
-    if pam:match('(%d+) (.+)%s(.+)') then
-        local id, color, text = pam:match('(%d+) (.+)%s(.+)')
+    if pam:match('(%d+) (%S+)%s(.+)') then
+        local id, color, text = pam:match('(%d+) (%S+)%s(.+)')
         if color == '-1' then color = 'ffffff' end
         if sampIsPlayerConnected(tonumber(id)) then
             table.insert(players, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = text})
@@ -4368,8 +4456,8 @@ function addplayer(pam)
             table.insert(players, {nick = id, color = color, text = text})
             atext(('Игрок %s добавлен в чекер игроков'):format(id))
         end
-    elseif pam:match("(%a+) (.+)%s(.+)") then
-        local nick, color, text = pam:match("(%a+) (.+)%s(.+)")
+    elseif pam:match("(%a+) (%S+)%s(.+)") then
+        local nick, color, text = pam:match("(%a+) (%S+)%s(.+)")
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(players, {nick = nick, color = color, text = text})
         if id ~= nil then
@@ -4399,13 +4487,13 @@ function addplayer(pam)
             atext(('Игрок %s добавлен в чекер игроков'):format(nick))
         end
     elseif #pam == 0 or not pam:match('(%a+)') or not pam:match("(%d+)") or not pam:match("(%a+) (%a+) (.+)") or not pam:match('(%d+) (%a+) (.+)') then
-        atext('Введите: /addplayer [id/nick] [color(Пример: ffffff)] [примечание]')
+        atext('Введите: /addplayer [id/nick] [color(Пример: ffffff)/-1] [примечание]')
     end
     saveData(players, 'moonloader/config/Admin Tools/playerchecker.json')
 end
 function addadm(pam)
-    if pam:match('(%d+) (.+)%s(.+)') then
-        local id, color, text = pam:match('(%d+) (.+)%s(.+)')
+    if pam:match('(%d+) (%S+)%s(.+)') then
+        local id, color, text = pam:match('(%d+) (%S+)%s(.+)')
         if color == '-1' then color = 'ffffff' end
         if sampIsPlayerConnected(tonumber(id)) then
             table.insert(admins, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = text})
@@ -4415,8 +4503,8 @@ function addadm(pam)
             table.insert(admins, {nick = id, color = color, text = text})
             atext(('Игрок %s добавлен в чекер админов'):format(id))
         end
-    elseif pam:match("(%a+) (.+)%s(.+)") then
-        local nick, color, text = pam:match("(%a+) (.+)%s(.+)")
+    elseif pam:match("(%a+) (%S+)%s(.+)") then
+        local nick, color, text = pam:match("(%a+) (%S+)%s(.+)")
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(admins, {nick = nick, color = color, text = text})
         if id ~= nil then
@@ -4446,7 +4534,7 @@ function addadm(pam)
             atext(('Игрок %s добавлен в чекер админов'):format(nick))
         end
     elseif #pam == 0 or not pam:match('(%a+)') or not pam:match("(%d+)") or not pam:match("(%a+) (%a+) (.+)") or not pam:match('(%d+) (%a+) (.+)') then
-        atext('Введите: /addadm [id/nick] [color(Пример: ffffff)] [примечание]')
+        atext('Введите: /addadm [id/nick] [color(Пример: ffffff)/-1] [примечание]')
     end
     saveData(admins, 'moonloader/config/Admin Tools/admchecker.json')
 end
@@ -4575,8 +4663,8 @@ function deladm(pam)
     saveData(admins, 'moonloader/config/Admin Tools/admchecker.json')
 end
 function addtemp(pam)
-    if pam:match('(%d+) (.+)%s(.+)') then
-        local id, color, text = pam:match('(%d+) (.+)%s(.+)')
+    if pam:match('(%d+) (%S+)%s(.+)') then
+        local id, color, text = pam:match('(%d+) (%S+)%s(.+)')
         if color == '-1' then color = 'ffffff' end
         if sampIsPlayerConnected(tonumber(id)) then
             table.insert(temp_checker, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = text})
@@ -4586,8 +4674,8 @@ function addtemp(pam)
             table.insert(temp_checker, {nick = id, color = color, text = text})
             atext(('Игрок %s добавлен в временный чекер'):format(id))
         end
-    elseif pam:match("(%a+) (.+)%s(.+)") then
-        local nick, color, text = pam:match("(%a+) (.+)%s(.+)")
+    elseif pam:match("(%a+) (%S+)%s(.+)") then
+        local nick, color, text = pam:match("(%a+) (%S+)%s(.+)")
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(temp_checker, {nick = nick, color = color, text = text})
         if id ~= nil then
@@ -4617,7 +4705,7 @@ function addtemp(pam)
             atext(('Игрок %s добавлен в временный чекер'):format(nick))
         end
     elseif #pam == 0 or not pam:match('(%a+)') or not pam:match("(%d+)") or not pam:match("(%a+) (%a+) (.+)") or not pam:match('(%d+) (%a+) (.+)') then
-        atext('Введите: /addtemp [id/nick] [color(Пример: ffffff)] [примечание]')
+        atext('Введите: /addtemp [id/nick] [color(Пример: ffffff)/-1] [примечание]')
     end
 end
 function deltemp(pam)
