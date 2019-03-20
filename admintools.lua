@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.999992')
+script_version('1.999993')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -999,7 +999,7 @@ function imgui.OnDrawFrame()
         imgui.SetNextWindowPos(imgui.ImVec2(cfg.crecon.posx, cfg.crecon.posy), imgui.ImVec2(0.5, 0.5))
         imgui.SetNextWindowSize(imgui.ImVec2(260, 285), imgui.Cond.FirstUseEver)
         imgui.Begin(u8'Слежка за игроком', _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoTitleBar)
-        imgui.CentrText(imtextnick)
+        imgui.CentrText(('%s'):format(imtextnick))
         imgui.CentrText(('ID: %s'):format(reid))
         if reafk then
             imgui.SameLine()
@@ -1007,19 +1007,19 @@ function imgui.OnDrawFrame()
         end
         imgui.Separator()
         imgui.PushStyleVar(imgui.StyleVar.ItemSpacing, imgui.ImVec2(1.0, 2.5))
-        imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Level:"); imgui.SameLine(spacing); imgui.Text(imtextlvl)
-        imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Warns:"); imgui.SameLine(spacing); imgui.Text(imtextwarn)
-        imgui.TextColored(ImVec4(255, 0, 0, 1), u8"Armour:"); imgui.SameLine(spacing); imgui.Text(imtextarm)
-        imgui.TextColored(ImVec4(255, 0, 0, 1), u8"Health:"); imgui.SameLine(spacing); imgui.Text(imtexthp)
-        imgui.TextColored(ImVec4(0, 49, 245, 1), u8"Car HP:"); imgui.SameLine(spacing); imgui.Text(imtextcarhp)
-        imgui.TextColored(ImVec4(0, 49, 245, 1), u8"Speed:"); imgui.SameLine(spacing); imgui.Text(imtextspeed)
-        imgui.TextColored(ImVec4(255, 255, 0, 1), u8"Ping:"); imgui.SameLine(spacing); imgui.Text(imtextping)
-        imgui.TextColored(ImVec4(255, 255, 0, 1), u8"Ammo:"); imgui.SameLine(spacing); imgui.Text(imtextammo)
-        imgui.TextColored(ImVec4(225, 0, 255, 1), u8"Shot:"); imgui.SameLine(spacing); imgui.Text(imtextshot)
-        imgui.TextColored(ImVec4(225, 0, 255, 1), u8"Time Shot:"); imgui.SameLine(spacing); imgui.Text(imtexttimeshot)
-        imgui.TextColored(ImVec4(0, 255, 0, 1), u8"AFK Time:"); imgui.SameLine(spacing); imgui.Text(imtextafktime)
-        imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Engine:"); imgui.SameLine(spacing); imgui.Text(imtextengine)
-        imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Pro Sport:"); imgui.SameLine(spacing); imgui.Text(imtextprosport)
+        imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Level:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtextlvl))
+        imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Warns:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtextwarn))
+        imgui.TextColored(ImVec4(255, 0, 0, 1), u8"Armour:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtextarm))
+        imgui.TextColored(ImVec4(255, 0, 0, 1), u8"Health:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtexthp))
+        imgui.TextColored(ImVec4(0, 49, 245, 1), u8"Car HP:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtextcarhp))
+        imgui.TextColored(ImVec4(0, 49, 245, 1), u8"Speed:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtextspeed))
+        imgui.TextColored(ImVec4(255, 255, 0, 1), u8"Ping:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtextping))
+        imgui.TextColored(ImVec4(255, 255, 0, 1), u8"Ammo:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtextammo))
+        imgui.TextColored(ImVec4(225, 0, 255, 1), u8"Shot:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtextshot))
+        imgui.TextColored(ImVec4(225, 0, 255, 1), u8"Time Shot:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtexttimeshot))
+        imgui.TextColored(ImVec4(0, 255, 0, 1), u8"AFK Time:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtextafktime))
+        imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Engine:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtextengine))
+        imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Pro Sport:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtextprosport))
         imgui.PopStyleVar()
         --[[imgui.SameLine()
         imgui.Text(string.format('%s', imgui.GetWindowSize().y))]]
@@ -3417,7 +3417,7 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
 	            sampSendDialogResponse(id, 1, 1, nil)
 	            checkstatdone = true
 	            return false
-			elseif title == '{FFFFFF}Статистика | {66FF00}Администрирование' then
+			elseif title == '{FFFFFF}Статистика | {ae433d}Администрирование' then
 				wbfrak = text:match('.+Организация\t(.+)\nДолжность')
 				wbrang = text:match('.+Должность\t.+%[(.+)%]\nРабота')
 				wbstyle = 2
@@ -4447,8 +4447,8 @@ function admchecker()
     io.open('moonloader/config/Admin Tools/playerlist.txt', 'w'):close()
 end
 function addplayer(pam)
-    if pam:match('(%d+) (%S+)%s(.+)') then
-        local id, color, text = pam:match('(%d+) (%S+)%s(.+)')
+    if pam:match('(%d+) (%S+) (.+)') then
+        local id, color, text = pam:match('(%d+) (%S+) (.+)')
         if color == '-1' then color = 'ffffff' end
         if sampIsPlayerConnected(tonumber(id)) then
             table.insert(players, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = text})
@@ -4458,8 +4458,8 @@ function addplayer(pam)
             table.insert(players, {nick = id, color = color, text = text})
             atext(('Игрок %s добавлен в чекер игроков'):format(id))
         end
-    elseif pam:match("(%a+) (%S+)%s(.+)") then
-        local nick, color, text = pam:match("(%a+) (%S+)%s(.+)")
+    elseif pam:match("(%a+) (%S+) (.+)") then
+        local nick, color, text = pam:match("(%a+) (%S+) (.+)")
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(players, {nick = nick, color = color, text = text})
         if id ~= nil then
@@ -4494,8 +4494,8 @@ function addplayer(pam)
     saveData(players, 'moonloader/config/Admin Tools/playerchecker.json')
 end
 function addadm(pam)
-    if pam:match('(%d+) (%S+)%s(.+)') then
-        local id, color, text = pam:match('(%d+) (%S+)%s(.+)')
+    if pam:match('(%d+) (%S+) (.+)') then
+        local id, color, text = pam:match('(%d+) (%S+) (.+)')
         if color == '-1' then color = 'ffffff' end
         if sampIsPlayerConnected(tonumber(id)) then
             table.insert(admins, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = text})
@@ -4505,8 +4505,8 @@ function addadm(pam)
             table.insert(admins, {nick = id, color = color, text = text})
             atext(('Игрок %s добавлен в чекер админов'):format(id))
         end
-    elseif pam:match("(%a+) (%S+)%s(.+)") then
-        local nick, color, text = pam:match("(%a+) (%S+)%s(.+)")
+    elseif pam:match("(%a+) (%S+) (.+)") then
+        local nick, color, text = pam:match("(%a+) (%S+) (.+)")
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(admins, {nick = nick, color = color, text = text})
         if id ~= nil then
@@ -4573,8 +4573,8 @@ function delplayer(pam)
             end
             atext(('Игрок %s удален из чекера игроков'):format(id))
         end
-    elseif pam:match('(%a+)') then
-        local nick = pam:match('(%a+)')
+    elseif pam:match('(%S+)') then
+        local nick = pam:match('(%S+)')
         local i = 1
         local k = 1
         local id = sampGetPlayerIdByNickname(nick)
@@ -4597,7 +4597,7 @@ function delplayer(pam)
                 k = k + 1
             end
         end
-    elseif #pam == 0 or not pam:match('(%a+)') or not pam:match("(%d+)") then
+    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") then
         atext('Введите: /delplayer [id/nick]')
     end
     saveData(players, 'moonloader/config/Admin Tools/playerchecker.json')
@@ -4635,8 +4635,8 @@ function deladm(pam)
             end
             atext(('Игрок %s удален из чекера игроков'):format(id))
         end
-    elseif pam:match('(%a+)') then
-        local nick = pam:match('(%a+)')
+    elseif pam:match('(%S+)') then
+        local nick = pam:match('(%S+)')
         local i = 1
         local k = 1
         local id = sampGetPlayerIdByNickname(nick)
@@ -4659,14 +4659,14 @@ function deladm(pam)
                 k = k + 1
             end
         end
-    elseif #pam == 0 or not pam:match('(%a+)') or not pam:match("(%d+)") then
+    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") then
         atext('Введите: /deladm [id/nick]')
     end
     saveData(admins, 'moonloader/config/Admin Tools/admchecker.json')
 end
 function addtemp(pam)
-    if pam:match('(%d+) (%S+)%s(.+)') then
-        local id, color, text = pam:match('(%d+) (%S+)%s(.+)')
+    if pam:match('(%d+) (%S+) (.+)') then
+        local id, color, text = pam:match('(%d+) (%S+) (.+)')
         if color == '-1' then color = 'ffffff' end
         if sampIsPlayerConnected(tonumber(id)) then
             table.insert(temp_checker, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = text})
@@ -4676,8 +4676,8 @@ function addtemp(pam)
             table.insert(temp_checker, {nick = id, color = color, text = text})
             atext(('Игрок %s добавлен в временный чекер'):format(id))
         end
-    elseif pam:match("(%a+) (%S+)%s(.+)") then
-        local nick, color, text = pam:match("(%a+) (%S+)%s(.+)")
+    elseif pam:match("(%a+) (%S+) (.+)") then
+        local nick, color, text = pam:match("(%a+) (%S+) (.+)")
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(temp_checker, {nick = nick, color = color, text = text})
         if id ~= nil then
@@ -4743,8 +4743,8 @@ function deltemp(pam)
             end
             atext(('Игрок %s удален из временного чекера'):format(id))
         end
-    elseif pam:match('(%a+)') then
-        local nick = pam:match('(%a+)')
+    elseif pam:match('(%S+)') then
+        local nick = pam:match('(%S+)')
         local i = 1
         local k = 1
         local id = sampGetPlayerIdByNickname(nick)
@@ -4767,7 +4767,7 @@ function deltemp(pam)
                 k = k + 1
             end
         end
-    elseif #pam == 0 or not pam:match('(%a+)') or not pam:match("(%d+)") then
+    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") then
         atext('Введите: /deltemp [id/nick]')
     end
 end
