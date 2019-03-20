@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.999993')
+script_version('1.999994')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -2259,8 +2259,8 @@ function sampev.onServerMessage(color, text)
         end
         return {color, text} 
     end
-    if masstpon and text:match('^ SMS: .+. Отправитель: .+%[%d+%]$') then
-        local smsid = text:match('^ SMS: .+. Отправитель: .+%[(%d+)%]$')
+    if masstpon and text:match('^ SMS: .+ Отправитель: .+%[%d+%]$') then
+        local smsid = text:match('^ SMS: .+ Отправитель: .+%[(%d+)%]$')
         if not checkIntable(smsids, smsid) then
             table.insert(smsids, smsid)
         end
