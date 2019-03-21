@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.999995')
+script_version('1.999996')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -7,7 +7,6 @@ require 'lib.sampfuncs'
 local weapons = require 'game.weapons'
 local sampev = require 'lib.samp.events'
 local encoding = require 'encoding'
-local inicfg = require 'inicfg'
 local key = require 'vkeys'
 local Matrix3X3 = require 'matrix3x3'
 local Vector3D = require 'vector3d'
@@ -53,6 +52,7 @@ local nametag = true
 local skoktp = 0
 local checkf = {}
 local ips = {}
+local ips2 = {}
 local temp_checker = {}
 local temp_checker_online = {}
 local rnick = nil
@@ -231,7 +231,7 @@ local data = {
         reconpos = false
     }
 }
-config = {
+local cfg = {
     admchecker = {
         enable = true,
         posx = screenx/2,
@@ -272,8 +272,8 @@ config = {
     other = {
 		passb = false,
 		apassb = false,
-        password = " ",
-        adminpass = " ",
+        password = "",
+        adminpass = "",
         reconw = true,
         checksize = 9,
         checkfont = 'Arial',
@@ -283,7 +283,8 @@ config = {
         hudsize = 10,
         fracstat = true,
         chatconsole = false,
-        extraignor = false
+        extraignor = false,
+        admlvl = 0
     }
 }
 function asyncHttpRequest(method, url, args, resolve, reject)
@@ -680,6 +681,16 @@ function main()
             file:close()
         end
     end
+    if not doesFileExist('moonloader/config/Admin Tools/config.json') then
+        local file = io.open('moonloader/config/Admin Tools/config.json', 'w')
+        file:close()
+    else
+        local file = io.open('moonloader/config/Admin Tools/config.json', 'r')
+        if file then
+            cfg = decodeJson(file:read('*a'))
+        end
+    end
+    saveData(cfg, 'moonloader/config/Admin Tools/config.json')
     if not doesFileExist('moonloader/config/Admin Tools/punishignor.txt') then
         local file = io.open('moonloader/config/Admin Tools/punishignor.txt', 'w')
         file:write('1\n!\ndmg')
@@ -687,7 +698,6 @@ function main()
     end
     for line in io.lines('moonloader/config/Admin Tools/punishignor.txt') do table.insert(punishignor, line) end
     DWMAPI.DwmEnableComposition(1)
-    cfg = inicfg.load(config, 'Admin Tools\\config.ini')
     repeat wait(0) until isSampAvailable()
     autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", '[Admin Tools]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439")
     lua_thread.create(wh)
@@ -717,7 +727,8 @@ function main()
 	sampRegisterChatCommand('massgun', massgun)
 	sampRegisterChatCommand('masshp', masshp)
 	sampRegisterChatCommand('massarm', massarm)
-	sampRegisterChatCommand('cip', cip)
+    sampRegisterChatCommand('cip', cip)
+    sampRegisterChatCommand('cip2', cip2)
     sampRegisterChatCommand('al', function() sampSendChat('/alogin') end)
     sampRegisterChatCommand('at_reload', function() showCursor(false); nameTagOn(); thisScript():reload() end)
     sampRegisterChatCommand('checkrangs', checkrangs)
@@ -956,7 +967,7 @@ function main()
             recon.v = false
             sampToggleCursor(false)
             mainwindow.v = true
-            inicfg.save(config, 'Admin Tools\\config.ini')
+            saveData(cfg, 'moonloader/config/Admin Tools/config.json')
         end
         imgui.Process = mainwindow.v or recon.v
     end
@@ -1130,6 +1141,14 @@ function imgui.OnDrawFrame()
             if imgui.CollapsingHeader('/getlvl', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Узнать всех игроков с определенным уровнем на сервере')
                 imgui.TextWrapped(u8 'Использование: /getlvl [уровень]')
+            end
+            if imgui.CollapsingHeader('/cip', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Сравнить IP адреса')
+                imgui.TextWrapped(u8 'Использование: /cip')
+            end
+            if imgui.CollapsingHeader('/cip2', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Альтернатива /cip')
+                imgui.TextWrapped(u8 'Использование: /cip2')
             end
             if imgui.CollapsingHeader('/fonl', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Узнать кол-во людей онлайн во фракции')
@@ -1476,19 +1495,19 @@ function imgui.OnDrawFrame()
 					local airfloat = imgui.ImFloat(cfg.cheat.airbrkspeed)
                     imgui.CentrText(u8 'AirBrake')
                     imgui.Separator()
-					if imgui.SliderFloat(u8 'Начальная скорость', airfloat, 0.05, 10, '%0.2f') then cfg.cheat.airbrkspeed = airfloat.v inicfg.save(config, 'Admin Tools\\config.ini') end
+					if imgui.SliderFloat(u8 'Начальная скорость', airfloat, 0.05, 10, '%0.2f') then cfg.cheat.airbrkspeed = airfloat.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 elseif data.imgui.cheat == 2 then
                     local godModeB = imgui.ImBool(cfg.cheat.autogm)
                     imgui.CentrText(u8 'GodMode')
                     imgui.Separator()
-                    if imgui.ToggleButton(u8 'Включить гмм##11', godModeB) then cfg.cheat.autogm = godModeB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Автоматически включать ГМ при входе в игру')
+                    if imgui.ToggleButton(u8 'Включить гмм##11', godModeB) then cfg.cheat.autogm = godModeB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автоматически включать ГМ при входе в игру')
                 elseif data.imgui.cheat == 3 then
                     local whfontb = imgui.ImBuffer(tostring(cfg.other.whfont), 256)
                     local whsizeb = imgui.ImInt(cfg.other.whsize)
                     imgui.CentrText(u8 'WallHack')
                     imgui.Separator()
-                    if imgui.InputText(u8 'Шрифт##wh', whfontb) then cfg.other.whfont = whfontb.v whfont = renderCreateFont(cfg.other.whfont, cfg.other.whsize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
-                    if imgui.InputInt(u8 'Размер шрифта##wh', whsizeb, 0) then cfg.other.whsize = whsizeb.v whfont = renderCreateFont(cfg.other.whfont, cfg.other.whsize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
+                    if imgui.InputText(u8 'Шрифт##wh', whfontb) then cfg.other.whfont = whfontb.v whfont = renderCreateFont(cfg.other.whfont, cfg.other.whsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                    if imgui.InputInt(u8 'Размер шрифта##wh', whsizeb, 0) then cfg.other.whsize = whsizeb.v whfont = renderCreateFont(cfg.other.whfont, cfg.other.whsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 end
             elseif data.imgui.menu == 3 then
                 local checksizeb = imgui.ImInt(cfg.other.checksize)
@@ -1497,7 +1516,7 @@ function imgui.OnDrawFrame()
                     local admCheckerB = imgui.ImBool(cfg.admchecker.enable)
                     imgui.CentrText(u8 'Чекер админов')
                     imgui.Separator()
-                    if imgui.ToggleButton(u8 'Включить чекер##1', admCheckerB) then cfg.admchecker.enable = admCheckerB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
+                    if imgui.ToggleButton(u8 'Включить чекер##1', admCheckerB) then cfg.admchecker.enable = admCheckerB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
                     if cfg.admchecker.enable then
                         imgui.Text(u8 'Местоположение чекера')
                         imgui.SameLine()
@@ -1507,7 +1526,7 @@ function imgui.OnDrawFrame()
                     local playerCheckerB = imgui.ImBool(cfg.playerChecker.enable)
                     imgui.CentrText(u8 'Чекер игроков')
                     imgui.Separator()
-                    if imgui.ToggleButton(u8 'Включить чекер##2', playerCheckerB) then cfg.playerChecker.enable = playerCheckerB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
+                    if imgui.ToggleButton(u8 'Включить чекер##2', playerCheckerB) then cfg.playerChecker.enable = playerCheckerB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
                     if cfg.playerChecker.enable then
                         imgui.Text(u8 'Местоположение чекера')
                         imgui.SameLine()
@@ -1517,18 +1536,18 @@ function imgui.OnDrawFrame()
 					local tempChetckerB = imgui.ImBool(cfg.tempChecker.enable)
 					imgui.CentrText(u8 'Временный чекер')
 					imgui.Separator()
-					if imgui.ToggleButton(u8 'Включить чекер##3', tempChetckerB) then cfg.tempChecker.enable = tempChetckerB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
+					if imgui.ToggleButton(u8 'Включить чекер##3', tempChetckerB) then cfg.tempChecker.enable = tempChetckerB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
 					if cfg.tempChecker.enable then
 						local tempWarningB = imgui.ImBool(cfg.tempChecker.wadd)
                         imgui.Text(u8 'Местоположение чекера')
                         imgui.SameLine()
                         if imgui.Button(u8 'Изменить##3') then data.imgui.tempcheckpos = true; mainwindow.v = false end
-						if imgui.ToggleButton(u8 'Добавлять в черер игроков по варнингу', tempWarningB) then cfg.tempChecker.wadd = tempWarningB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Добавлять в черер игроков по варнингу')
+						if imgui.ToggleButton(u8 'Добавлять в черер игроков по варнингу', tempWarningB) then cfg.tempChecker.wadd = tempWarningB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Добавлять в черер игроков по варнингу')
                     end
                 end
                 imgui.Separator()
-                if imgui.InputText(u8 'Шрифт', checkfontb) then cfg.other.checkfont = checkfontb.v checkfont = renderCreateFont(cfg.other.checkfont, cfg.other.checksize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
-                if imgui.InputInt(u8 'Размер шрифта', checksizeb, 0) then cfg.other.checksize = checksizeb.v; checkfont = renderCreateFont(cfg.other.checkfont, cfg.other.checksize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
+                if imgui.InputText(u8 'Шрифт', checkfontb) then cfg.other.checkfont = checkfontb.v checkfont = renderCreateFont(cfg.other.checkfont, cfg.other.checksize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.InputInt(u8 'Размер шрифта', checksizeb, 0) then cfg.other.checksize = checksizeb.v; checkfont = renderCreateFont(cfg.other.checkfont, cfg.other.checksize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
             elseif data.imgui.menu == 4 then
 				local sbivb = imgui.ImInt(cfg.timers.sbivtimer)
 				local csbivb = imgui.ImInt(cfg.timers.csbivtimer)
@@ -1536,10 +1555,10 @@ function imgui.OnDrawFrame()
                 local fracstatb = imgui.ImBool(cfg.other.fracstat)
 				imgui.CentrText(u8 'Настройка выдачи наказаний')
 				imgui.Separator()
-				if imgui.InputInt(u8 'Таймер сбива (/sbiv)', sbivb, 0) then cfg.timers.sbivtimer = sbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
-				if imgui.InputInt(u8 'Таймер клео сбива (/csbiv)', csbivb, 0) then cfg.timers.csbivtimer = csbivb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
-                if imgui.InputInt(u8 'Таймер +с вне гетто (/cbug)', cbugb, 0) then cfg.timers.cbugtimer = cbugb.v; inicfg.save(config, 'Admin Tools\\config.ini') end
-                if imgui.Checkbox(u8 'Проверка статистики при warn / ban', fracstatb) then cfg.other.fracstat = fracstatb.v inicfg.save(config, 'Admin Tools\\config.ini') end
+				if imgui.InputInt(u8 'Таймер сбива (/sbiv)', sbivb, 0) then cfg.timers.sbivtimer = sbivb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+				if imgui.InputInt(u8 'Таймер клео сбива (/csbiv)', csbivb, 0) then cfg.timers.csbivtimer = csbivb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.InputInt(u8 'Таймер +с вне гетто (/cbug)', cbugb, 0) then cfg.timers.cbugtimer = cbugb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.Checkbox(u8 'Проверка статистики при warn / ban', fracstatb) then cfg.other.fracstat = fracstatb.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 imgui.TextWrapped(u8 ('Игнор проверки статистики будет происходить, если причина бана равна: %s'):format(table.concat(punishignor, ', ')))
                 imgui.TextWrapped(u8 'Настроить список игнора можно по пути moonloader/config/Admin Tools/punishingor.txt')
                 if imgui.Button(u8 'Обновисть список игнона') then punishignor = {} for line in io.lines('moonloader/config/Admin Tools/punishignor.txt') do table.insert(punishignor, line) end end
@@ -1557,31 +1576,31 @@ function imgui.OnDrawFrame()
                 local hudsizeb = imgui.ImInt(cfg.other.hudsize)
 				imgui.CentrText(u8 'Остальное')
 				imgui.Separator()
-				if imgui.ToggleButton(u8 'reconw##1', reconwb) then cfg.other.reconw = reconwb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Варнинги на клео реконнект')
+				if imgui.ToggleButton(u8 'reconw##1', reconwb) then cfg.other.reconw = reconwb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Варнинги на клео реконнект')
 				imgui.Text(u8 'Местоположение рекона')
                 imgui.SameLine()
                 if imgui.Button(u8 'Изменить##3') then data.imgui.reconpos = true; mainwindow.v = false end
-                if imgui.ToggleButton(u8 'Включить замененный рекон##1', creconB) then cfg.crecon.enable = creconB.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Включить замененный рекон')
-				if imgui.ToggleButton(u8 'Автологин##11', ipassb) then cfg.other.passb = ipassb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Автологин')
-                if imgui.ToggleButton(u8 'Автоалогин##11', iapassb) then cfg.other.apassb = iapassb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Автоалогин')
-                if imgui.ToggleButton(u8 'Чатлог в консоли##11', conschat) then cfg.other.chatconsole = conschat.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Чатлог в консоли')
-                if imgui.ToggleButton(u8 'Игнор варнингов печени на ExtraWS##11', extraignorb) then cfg.other.extraignor = extraignorb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Игнор варнингов печени на ExtraWS') imgui.SameLine() imgui.TextQuestion(u8 'При переходе в рекон по варнингу будет игнорироваться варнинг на Екстру')
-                if imgui.ToggleButton(u8 'joinquit##11', joinquitb) then cfg.joinquit.enable = joinquitb.v; inicfg.save(config, 'Admin Tools\\config.ini') end; imgui.SameLine(); imgui.Text(u8 'Лог подключившися/отключивашися игроков')
+                if imgui.ToggleButton(u8 'Включить замененный рекон##1', creconB) then cfg.crecon.enable = creconB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить замененный рекон')
+				if imgui.ToggleButton(u8 'Автологин##11', ipassb) then cfg.other.passb = ipassb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автологин')
+                if imgui.ToggleButton(u8 'Автоалогин##11', iapassb) then cfg.other.apassb = iapassb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автоалогин')
+                if imgui.ToggleButton(u8 'Чатлог в консоли##11', conschat) then cfg.other.chatconsole = conschat.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Чатлог в консоли')
+                if imgui.ToggleButton(u8 'Игнор варнингов печени на ExtraWS##11', extraignorb) then cfg.other.extraignor = extraignorb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Игнор варнингов печени на ExtraWS') imgui.SameLine() imgui.TextQuestion(u8 'При переходе в рекон по варнингу будет игнорироваться варнинг на Екстру')
+                if imgui.ToggleButton(u8 'joinquit##11', joinquitb) then cfg.joinquit.enable = joinquitb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Лог подключившися/отключивашися игроков')
                 if joinquitb.v then 
                     if imgui.Button(u8'Изменить местоположения подключившихся##1') then data.imgui.joinpos = true; mainwindow.v = false end
                     imgui.SameLine()
                     if imgui.Button(u8'Изменить местоположения отключившихся##1') then data.imgui.quitpos = true; mainwindow.v = false end
                 end
 				if ipassb.v then
-					if imgui.InputText(u8 'Введите ваш пароль', ipass, imgui.InputTextFlags.Password) then cfg.other.password = u8:decode(ipass.v) inicfg.save(config, 'Admin Tools\\config.ini') end
+					if imgui.InputText(u8 'Введите ваш пароль', ipass, imgui.InputTextFlags.Password) then cfg.other.password = u8:decode(ipass.v) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
 					if imgui.Button(u8 'Узнать пароль##1') then atext('Ваш пароль: {66FF00}'..cfg.other.password) end
 				end
 				if iapassb.v then
-					if imgui.InputText(u8 'Введите ваш админский пароль', iapass, imgui.InputTextFlags.Password) then cfg.other.adminpass = u8:decode(iapass.v) inicfg.save(config, 'Admin Tools\\config.ini') end
+					if imgui.InputText(u8 'Введите ваш админский пароль', iapass, imgui.InputTextFlags.Password) then cfg.other.adminpass = u8:decode(iapass.v) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
 					if imgui.Button(u8 'Узнать пароль##2') then atext('Ваш админский пароль: {66FF00}'..cfg.other.adminpass) end
                 end
-                if imgui.InputText(u8 'Шрифт нижней панели##hud', hudfontb) then cfg.other.hudfont = hudfontb.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
-                if imgui.InputInt(u8 'Размер шрифта нижней панели##hud', hudsizeb, 0) then cfg.other.hudsize = hudsizeb.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) inicfg.save(config, 'Admin Tools\\config.ini') end
+                if imgui.InputText(u8 'Шрифт нижней панели##hud', hudfontb) then cfg.other.hudfont = hudfontb.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.InputInt(u8 'Размер шрифта нижней панели##hud', hudsizeb, 0) then cfg.other.hudsize = hudsizeb.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
             elseif data.imgui.menu == 6 then
                 imgui.CentrText(u8 'Настройка цветов')
                 imgui.Separator()
@@ -2237,6 +2256,7 @@ function sampev.onConnectionRejected(reason)
     players_online = {}
 end
 function sampev.onServerMessage(color, text)
+    if text:match('^ Вы авторизировались как модератор %d+ уровня$') then cfg.other.admlvl = tonumber(text:match('^ Вы авторизировались как модератор (%d+) уровня$')) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
     punishlog(text)
     if cfg.other.chatconsole then sampfuncsLog(text) end
 	if doesFileExist('moonloader/Admin Tools/chatlog_all.txt') then
@@ -2553,13 +2573,15 @@ function sampev.onServerMessage(color, text)
     end
     if text:match("Nik %[.+%]  R%-IP %[.+%]  L%-IP %[.+%]  IP %[(.+)%]") and color == -10270806 then
         local nick, rip, ip = text:match("Nik %[(.+)%]  R%-IP %[(.+)%]  L%-IP %[.+%]  IP %[(.+)%]")
-		ips = {{query = rip}, {query = ip}}
+        ips2 = {{query = rip}, {query = ip}}
+        ips = {rip, ip}
 		rnick = nick
 		bip = ip
     end
 	if text:match('^ Nik %[.+%]   R%-IP %[.+%]   L%-IP %[.+%]   IP %[.+%]$') then
 		local nick, rip, ip = text:match('^ Nik %[(.+)%]   R%-IP %[(.+)%]   L%-IP %[.+%]   IP %[(.+)%]$')
-		ips = {{query = rip}, {query = ip}}
+        ips2 = {{query = rip}, {query = ip}}
+        ips = {rip, ip}
 		rnick = nick
 	end
     if text:match('<Warning> .+%[%d+%]%: .+') and color == -16763905 then
@@ -2740,11 +2762,11 @@ function renders()
             local playerRenderPosY = cfg.playerChecker.posy
             local tempRenderPosY = cfg.tempChecker.posy
             local memory = require 'memory'
-            local posx, posy, posz = getCharCoordinates(PLAYER_PED)
-            local posint = getActiveInterior()
-            local hpos = ("%0.2f %0.2f %0.2f"):format(posx, posy, posz)
-            local fps = memory.getfloat(0xB7CB50, 4, false)
-            local sx, sy = getScreenResolution()
+            local hposx, hposy, hposz = getCharCoordinates(PLAYER_PED)
+            local hposint = getActiveInterior()
+            local hpos = ("%0.2f %0.2f %0.2f"):format(hposx, hposy, hposz)
+            local hfps = math.floor(memory.getfloat(0xB7CB50, 4, false))
+            local hsx, hsy = getScreenResolution()
             if cfg.joinquit.enable then
                 if notification_connect then
                     if localClock() - notification_connect.tick <= notification_connect.duration then
@@ -2775,7 +2797,7 @@ function renders()
                     end
                 end
             end
-            renderFontDrawText(hudfont, ('%s %s %s [%s %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, posint), 5, sy-20, -1)
+            renderFontDrawText(hudfont, ('%s %s %s [%s %s] [FPS: %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, hposint, hfps), 5, hsy-20, -1)
             if cfg.admchecker.enable then
                 renderFontDrawText(checkfont, "{00ff00}Админы онлайн ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY-#admins_online*15, -1)
                 for k, v in ipairs(admins_online) do
@@ -3255,47 +3277,47 @@ function wh()
             if not nameTag then
                 if not isPauseMenuActive() then
                     nametagCoords = {}
-                    for i = 0, sampGetMaxPlayerId(true) do
-                        if sampIsPlayerConnected(i) then
-                            local result, cped = sampGetCharHandleBySampPlayerId(i)
+                    for wi = 0, sampGetMaxPlayerId(true) do
+                        if sampIsPlayerConnected(wi) then
+                            local result, cped = sampGetCharHandleBySampPlayerId(wi)
                             if result then
                                 if doesCharExist(cped) and isCharOnScreen(cped) then
-                                    local color = ("%06X"):format(bit.band(sampGetPlayerColor(i), 0xFFFFFF))
+                                    local wcolor = ("%06X"):format(bit.band(sampGetPlayerColor(wi), 0xFFFFFF))
                                     cpos1X, cpos1Y, cpos1Z = getBodyPartCoordinates(6, cped)
-                                    local cpedx, cpedy, cpedz = getCharCoordinates(cped)
-                                    local nick = sampGetPlayerNickname(i)
-                                    local screencoordx, screencoordy = convert3DCoordsToScreen(cpedx, cpedy, cpedz)
-                                    local headposx, headposy = convert3DCoordsToScreen(cpos1X, cpos1Y, cpos1Z)
-                                    local isAfk = sampIsPlayerPaused(i)
-                                    local cpedHealth = sampGetPlayerHealth(i)
-                                    local cpedArmor = sampGetPlayerArmor(i)
-                                    local cpedlvl = sampGetPlayerScore(i)
-                                    local posy = headposy - 40
-                                    local posx = headposx - 60
-                                    local sdsd = posy
+                                    local wcpedx, cpedy, cpedz = getCharCoordinates(cped)
+                                    local wnick = sampGetPlayerNickname(wi)
+                                    local wscreencoordx, wscreencoordy = convert3DCoordsToScreen(cpedx, cpedy, cpedz)
+                                    local wheadposx, wheadposy = convert3DCoordsToScreen(cpos1X, cpos1Y, cpos1Z)
+                                    local wisAfk = sampIsPlayerPaused(wi)
+                                    local wcpedHealth = sampGetPlayerHealth(wi)
+                                    local wcpedArmor = sampGetPlayerArmor(wi)
+                                    local wcpedlvl = sampGetPlayerScore(wi)
+                                    local wposy = wheadposy - 40
+                                    local wposx = wheadposx - 60
+                                    local wsdsd = wposy
                                     for _, v in ipairs(nametagCoords) do
-                                        if v["pos_y"] > posy-22.5 and v["pos_y"] < posy+22.5 and v["pos_x"] > posx-50 and v["pos_x"] < posx+50 then
-                                            posy = v["pos_y"] - 22.5
+                                        if v["pos_y"] > wposy-22.5 and v["pos_y"] < wposy+22.5 and v["pos_x"] > wposx-50 and v["pos_x"] < wposx+50 then
+                                            wposy = v["pos_y"] - 22.5
                                         end
                                     end
                                     nametagCoords[#nametagCoords+1] = {
-                                        pos_y = posy,
-                                        pos_x = posx
+                                        pos_y = wposy,
+                                        pos_x = wposx
                                     }
-                                    renderFontDrawText(whfont, string.format('{%s}%s [%s] %s', color, nick, i, isAfk and '{cccccc}[AFK]' or ''), posx, posy, -1)
-                                    local hp2 = cpedHealth
-                                    if cpedHealth > 100 then cpedHealth = 100 end
-                                    if cpedArmor > 100 then cpedArmor = 100 end
-                                    renderDrawBoxWithBorder(posx+1, posy+15, math.floor(100 / 2) + 1, 5, 0x80000000, 1, 0xFF000000)
-                                    renderDrawBox(posx, posy+15, math.floor(cpedHealth / 2) + 1, 5, 0xAACC0000)
+                                    renderFontDrawText(whfont, string.format('{%s}%s [%s] %s', wcolor, wnick, wi, wisAfk and '{cccccc}[AFK]' or ''), wposx, wposy, -1)
+                                    local hp2 = wcpedHealth
+                                    if wcpedHealth > 100 then wcpedHealth = 100 end
+                                    if wcpedArmor > 100 then wcpedArmor = 100 end
+                                    renderDrawBoxWithBorder(wposx+1, wposy+15, math.floor(100 / 2) + 1, 5, 0x80000000, 1, 0xFF000000)
+                                    renderDrawBox(wposx, wposy+15, math.floor(wcpedHealth / 2) + 1, 5, 0xAACC0000)
                                     --renderFontDrawText(font2, 'HP: ' .. tostring(hp2), 1, resY - 11, 0xFFFFFFFF)
-                                    renderFontDrawText(whhpfont, cpedHealth, posx+60, posy+12.5, 0xFFFF0000)
-                                    renderFontDrawText(whfont, 'LVL: '..cpedlvl, posx+85, posy+14.5, -1)
-                                    if cpedArmor ~= 0 then
-                                        renderDrawBoxWithBorder(posx, posy+25, math.floor(100 / 2) + 1, 5, 0x80000000, 1, 0xFF000000)
-                                        renderDrawBox(posx, posy+25, math.floor(cpedArmor / 2) + 1, 5, 0xAAAAAAAA)
+                                    renderFontDrawText(whhpfont, wcpedHealth, wposx+60, wposy+12.5, 0xFFFF0000)
+                                    renderFontDrawText(whfont, 'LVL: '..wcpedlvl, wposx+85, wposy+14.5, -1)
+                                    if wcpedArmor ~= 0 then
+                                        renderDrawBoxWithBorder(wposx, wposy+25, math.floor(100 / 2) + 1, 5, 0x80000000, 1, 0xFF000000)
+                                        renderDrawBox(wposx, wposy+25, math.floor(wcpedArmor / 2) + 1, 5, 0xAAAAAAAA)
                                         --renderFontDrawText(font, 'Armor: '..cpedArmor, posx, posy+25, -1)
-                                        renderFontDrawText(whhpfont, cpedArmor, posx+60, posy+22.5, -1)
+                                        renderFontDrawText(whhpfont, wcpedArmor, wposx+60, wposy+22.5, -1)
                                     end
                                 end
                             end
@@ -3841,26 +3863,27 @@ function distance_cord(lat1, lon1, lat2, lon2)
 	local d = 6378 * c
 	return d
 end
-function cip(pam)
-	if #ips == 2 then
-		local jsonips = encodeJson(ips)
+function cip2(pam)
+    local rdata = {}
+	if #ips2 == 2 then
+		local jsonips = encodeJson(ips2)
 		atext('Идет проверка IP адресов. Ожидайте..')
 		asyncHttpRequest("POST", "http://ip-api.com/batch?fields=25305&lang=ru", { data = jsonips },
 		function(response)
 			local rdata = decodeJson(u8:decode(response.text))
 			if rdata[1]["status"] == "success" and rdata[2]["status"] == "success" then
-				local distances = distance_cord(rdata[1]["lat"], rdata[1]["lon"], rdata[2]["lat"], rdata[2]["lon"])
+				local distances2 = distance_cord(rdata[1]["lat"], rdata[1]["lon"], rdata[2]["lat"], rdata[2]["lon"])
 				if tonumber(pam) == nil then
 					sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
 					sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
-					sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s'):format(math.floor(distances), rnick), -1)
+					sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s'):format(math.floor(distances2), rnick), -1)
 				else
 					lua_thread.create(function()
 						sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
 						wait(1200)
 						sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
 						wait(1200)
-						sampSendChat(('/a Расстояние: %s км. | Ник: %s'):format(math.floor(distances), rnick), -1)
+						sampSendChat(('/a Расстояние: %s км. | Ник: %s'):format(math.floor(distances2), rnick), -1)
 					end)
 				end
 			end
@@ -3871,7 +3894,59 @@ function cip(pam)
 		)
 	else
 		atext('Не найдено IP адресов для сравнения')
-	end
+    end
+    local rdata = {}
+end
+function cip()
+    lua_thread.create(function()
+        local rdata = {}
+        if #ips == 2 then
+            atext('Идет проверка IP адресов. Ожидайте..')
+            for k, v in pairs(ips) do
+                asyncHttpRequest('GET', "http://extreme-ip-lookup.com/json/"..v, _,
+                function (responce)
+                    print(responce.text)
+                    local info = decodeJson(u8:decode(responce.text))
+                    table.insert(rdata, {country = info.country, city = info.city, isp = info.isp, query = info.query, lat = info.lat, lon = info.lon, status = info.status})
+                end)
+            end
+            while #rdata ~= 2 do wait(0) end
+            if rdata[1]["status"] == "success" and rdata[2]["status"] == "success" then
+                if rdata[1]['query'] ~= ips[1] then
+                    local distances1 = distance_cord(rdata[2]["lat"], rdata[2]["lon"], rdata[1]["lat"], rdata[1]["lon"])
+                    if tonumber(pam) == nil then
+                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
+                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
+                        sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s'):format(math.floor(distances1), rnick), -1)
+                    else
+                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(rdata[1]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
+                        wait(1200)
+                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(rdata[2]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
+                        wait(1200)
+                        sampSendChat(('/a Расстояние: %s км. | Ник: %s'):format(math.floor(distances1), rnick), -1)
+                    end
+                else
+                    local distances1 = distance_cord(rdata[2]["lat"], rdata[2]["lon"], rdata[1]["lat"], rdata[1]["lon"])
+                    if tonumber(pam) == nil then
+                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
+                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(rdata[1]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
+                        sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s'):format(math.floor(distances1), rnick), -1)
+                    else
+                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
+                        wait(1200)
+                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
+                        wait(1200)
+                        sampSendChat(('/a Расстояние: %s км. | Ник: %s'):format(math.floor(distances1), rnick), -1)
+                    end
+                end
+            else
+                atext('Произошла ошибка проверки IP адресов')
+            end
+        else
+            atext('Не найдено IP адресов для сравнения')
+        end
+    end)
+    local rdata = {}
 end
 function massgun(pam)
 	lua_thread.create(function()
