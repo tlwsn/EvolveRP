@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.999994')
+script_version('1.999995')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -38,6 +38,7 @@ local mpwinner = imgui.ImBuffer(256)
 local wrecon = {}
 local punishignor = {}
 local nop = 0x90
+local cursorenb = false
 local u8 = encoding.UTF8
 local airspeed = nil
 local reid = '-1'
@@ -691,6 +692,14 @@ function main()
     autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", '[Admin Tools]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439")
     lua_thread.create(wh)
     registerFastAnswer()
+    sampRegisterChatCommand('aafk', function()
+		if aafk then
+            WorkInBackground(false)
+		else
+			WorkInBackground(true)
+        end
+        atext(tostring(aafk))
+    end)
     sampRegisterChatCommand('hblist', hblist)
     sampRegisterChatCommand('getlvl', getlvl)
     sampRegisterChatCommand('punish', punish)
@@ -981,9 +990,10 @@ function rkeys.onHotKey(id, keys)
     end
 end
 function imgui.OnDrawFrame()
+    local btn_size = imgui.ImVec2(-0.1, 0)
 	local ir, ig, ib, ia = rainbow(1, 1)
 	--imgui.PushStyleColor(imgui.Col.Border, imgui.ImVec4(ir, ig, ib, ia))
-	--
+    --
     if recon.v then
 		local style = imgui.GetStyle()
 		local colors = style.Colors
@@ -1026,6 +1036,21 @@ function imgui.OnDrawFrame()
         imgui.End()
         --imgui.PopStyleColor()
         imgui.PopStyleColor()
+        --[[local rbtn_size = imgui.ImVec2(150, 33)
+        imgui.SetNextWindowPos(imgui.ImVec2(20, cfg.crecon.posy), imgui.ImVec2(0.5, 0.5))
+        imgui.SetNextWindowSize(imgui.ImVec2(150, 308), imgui.Cond.FirstUseEver)
+        imgui.Begin('##1112312321321321321312',_, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoTitleBar)
+        if imgui.Button(u8 'Change', btn_size) then sampSendClickTextdraw(2165) end
+        if imgui.Button(u8 'Check »', btn_size) then end
+        if imgui.Button(u8 'Drop »', btn_size) then end
+        if imgui.Button(u8 'Kick »', btn_size) then end
+        if imgui.Button(u8 'Warn', btn_size) then sampSendClickTextdraw(2169) end
+        if imgui.Button(u8 'Ban »', btn_size) then end
+        if imgui.Button(u8 'Stats »', btn_size) then end
+        if imgui.Button(u8 'Refresh', btn_size) then sampSendClickTextdraw(2172) end
+        if imgui.Button(u8 'Exit', btn_size) then sampSendClickTextdraw(2173) end
+        if imgui.IsKeyDown(0x04) then imgui.ShowCursor = not imgui.ShowCursor end
+        imgui.End()]]
     end
     if mainwindow.v then
         imgui.ShowCursor = true
@@ -1706,11 +1731,14 @@ function onHotKey(id, keys)
     end)
 end
 function getFrak(frak)
-    if frak:match('.+ Gang') then
-        frak = frak:match('(.+) Gang')
+    if frak == nil then return nil
+    else
+        if frak:match('.+ Gang') then
+            frak = frak:match('(.+) Gang')
+        end
+        if frak == 'Russian Mafia' then frak = 'RM' end
+        return frak
     end
-	if frak == 'Russian Mafia' then frak = 'RM' end
-    return frak
 end
 function getRank(frak, rang)
     local trangs = {}
@@ -2611,6 +2639,7 @@ function sampev.onShowTextDraw(id, textdraw)
         if id == 2162 then return false end
         if id == 2158 then return false end
         if id == 2159 then return false end
+        --for i = 2160, 2191 do if id == i then return false end end
     end
 end
 function sampev.onTextDrawHide(id)
