@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.999996')
+script_version('1.999997')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -579,6 +579,7 @@ function registerFastAnswer()
     end
 end
 function autoupdate(json_url, prefix, url)
+    lua_thread.create(function()
     local dlstatus = require('moonloader').download_status
     local json = getWorkingDirectory() .. '\\'..thisScript().name..'-version.json'
     if doesFileExist(json) then os.remove(json) end
@@ -632,6 +633,7 @@ function autoupdate(json_url, prefix, url)
       end
     )
     while update ~= false do wait(100) end
+    end)
 end
 function split(str, delim, plain)
     local lines, pos, plain = {}, 1, not (plain == false) --[[ delimiter is plain text by default ]]
@@ -3283,7 +3285,7 @@ function wh()
                             if result then
                                 if doesCharExist(cped) and isCharOnScreen(cped) then
                                     local wcolor = ("%06X"):format(bit.band(sampGetPlayerColor(wi), 0xFFFFFF))
-                                    cpos1X, cpos1Y, cpos1Z = getBodyPartCoordinates(6, cped)
+                                    local cpos1X, cpos1Y, cpos1Z = getBodyPartCoordinates(6, cped)
                                     local wcpedx, cpedy, cpedz = getCharCoordinates(cped)
                                     local wnick = sampGetPlayerNickname(wi)
                                     local wscreencoordx, wscreencoordy = convert3DCoordsToScreen(cpedx, cpedy, cpedz)
@@ -3311,13 +3313,13 @@ function wh()
                                     renderDrawBoxWithBorder(wposx+1, wposy+15, math.floor(100 / 2) + 1, 5, 0x80000000, 1, 0xFF000000)
                                     renderDrawBox(wposx, wposy+15, math.floor(wcpedHealth / 2) + 1, 5, 0xAACC0000)
                                     --renderFontDrawText(font2, 'HP: ' .. tostring(hp2), 1, resY - 11, 0xFFFFFFFF)
-                                    renderFontDrawText(whhpfont, wcpedHealth, wposx+60, wposy+12.5, 0xFFFF0000)
+                                    renderFontDrawText(whhpfont, ('%s'):format(wcpedHealth), wposx+60, wposy+12.5, 0xFFFF0000)
                                     renderFontDrawText(whfont, 'LVL: '..wcpedlvl, wposx+85, wposy+14.5, -1)
                                     if wcpedArmor ~= 0 then
                                         renderDrawBoxWithBorder(wposx, wposy+25, math.floor(100 / 2) + 1, 5, 0x80000000, 1, 0xFF000000)
                                         renderDrawBox(wposx, wposy+25, math.floor(wcpedArmor / 2) + 1, 5, 0xAAAAAAAA)
                                         --renderFontDrawText(font, 'Armor: '..cpedArmor, posx, posy+25, -1)
-                                        renderFontDrawText(whhpfont, wcpedArmor, wposx+60, wposy+22.5, -1)
+                                        renderFontDrawText(whhpfont, ('%s'):format(wcpedArmor), wposx+60, wposy+22.5, -1)
                                     end
                                 end
                             end
@@ -3901,13 +3903,22 @@ function cip()
     lua_thread.create(function()
         local rdata = {}
         if #ips == 2 then
+            local dlstatus = require('moonloader').download_status
+	        local fpath = getWorkingDirectory() .. '\\'..thisScript().name..'-cip.json'
             atext('Идет проверка IP адресов. Ожидайте..')
-            for k, v in pairs(ips) do
-                asyncHttpRequest('GET', "http://extreme-ip-lookup.com/json/"..v, _,
-                function (responce)
-                    print(responce.text)
-                    local info = decodeJson(u8:decode(responce.text))
-                    table.insert(rdata, {country = info.country, city = info.city, isp = info.isp, query = info.query, lat = info.lat, lon = info.lon, status = info.status})
+            for ik, iv in pairs(ips) do
+                downloadUrlToFile('http://extreme-ip-lookup.com/json/'..iv, fpath, function(id, status, p1, p2)
+                    lua_thread.create(function()
+                        if status == dlstatus.STATUS_ENDDOWNLOADDATA then
+                            local f = io.open(fpath, 'r')
+                            if f then
+                                local info = decodeJson(f:read('*a'))
+                                f:close()
+                                os.remove(fpath)
+                                table.insert(rdata, {country = info.country, city = info.city, isp = info.isp, query = info.query, lat = info.lat, lon = info.lon, status = info.status})
+                            end
+                        end
+                    end)
                 end)
             end
             while #rdata ~= 2 do wait(0) end
@@ -3921,7 +3932,7 @@ function cip()
                     else
                         sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(rdata[1]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
                         wait(1200)
-                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(rdata[2]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
+                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
                         wait(1200)
                         sampSendChat(('/a Расстояние: %s км. | Ник: %s'):format(math.floor(distances1), rnick), -1)
                     end
@@ -3929,7 +3940,7 @@ function cip()
                     local distances1 = distance_cord(rdata[2]["lat"], rdata[2]["lon"], rdata[1]["lat"], rdata[1]["lon"])
                     if tonumber(pam) == nil then
                         sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
-                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(rdata[1]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
+                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
                         sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s'):format(math.floor(distances1), rnick), -1)
                     else
                         sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
@@ -3946,7 +3957,6 @@ function cip()
             atext('Не найдено IP адресов для сравнения')
         end
     end)
-    local rdata = {}
 end
 function massgun(pam)
 	lua_thread.create(function()
