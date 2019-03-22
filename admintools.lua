@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.999997')
+script_version('1.999998')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -36,6 +36,7 @@ local mpsponsors = imgui.ImBuffer(256)
 local mpwinner = imgui.ImBuffer(256)
 local wrecon = {}
 local punishignor = {}
+local telegid = nil
 local nop = 0x90
 local cursorenb = false
 local u8 = encoding.UTF8
@@ -554,10 +555,10 @@ function sampGetStreamedPlayers()
 			if result then
 				if doesCharExist(sped) then
 					table.insert(t, i)
-				end
+                end
 			end
 		end
-	end
+    end
 	return t
 end
 function registerFastAnswer()
@@ -2257,7 +2258,15 @@ function sampev.onConnectionRejected(reason)
     admins_online = {}
     players_online = {}
 end
+function sampev.onSetPlayerPos(pos)
+    if aafk and telegid then  asyncHttpRequest("POST", 'https://api.telegram.org/bot893731440:AAF3TO6rbo_ON_pz-38aG02GM4dMlpeEDo8/sendMessage?chat_id='..telegid..'&text='..u8('ВНИМАНИЕ! ТЕБЯ ТПХНУЛИ!'), _, function (response) print(response.text) end, function (err) atext(err) end) end
+end
+function sampev.onSendSpawn()
+    if aafk and telegid then asyncHttpRequest("POST", 'https://api.telegram.org/bot893731440:AAF3TO6rbo_ON_pz-38aG02GM4dMlpeEDo8/sendMessage?chat_id='..telegid..'&text='..u8("SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!"), _, function (response) print(response.text) end, function (err) atext(err) end) end
+end
 function sampev.onServerMessage(color, text)
+    local mynick = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
+    if text:find(mynick) and aafk and telegid then asyncHttpRequest("POST", 'https://api.telegram.org/bot893731440:AAF3TO6rbo_ON_pz-38aG02GM4dMlpeEDo8/sendMessage?chat_id='..telegid..'&text='..u8(text), _, function (response) print(response.text) end, function (err) atext(err) end) end
     if text:match('^ Вы авторизировались как модератор %d+ уровня$') then cfg.other.admlvl = tonumber(text:match('^ Вы авторизировались как модератор (%d+) уровня$')) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
     punishlog(text)
     if cfg.other.chatconsole then sampfuncsLog(text) end
@@ -2282,6 +2291,7 @@ function sampev.onServerMessage(color, text)
         return {color, text} 
     end
     if text:match('^ <ADM%-CHAT> .+: .+') then
+        if aafk and telegid then asyncHttpRequest("POST", 'https://api.telegram.org/bot893731440:AAF3TO6rbo_ON_pz-38aG02GM4dMlpeEDo8/sendMessage?chat_id='..telegid..'&text='..u8(text), _, function (response) print(response.text) end, function (err) atext(err) end) end
         local color = '0x'..config_colors.admchat.color..'FF'
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
         for i = 0, 1000 do
@@ -2727,7 +2737,15 @@ function sampev.onBulletSync(playerid, data)
 	end
 end
 function sampev.onPlayerJoin(id, clist, isNPC, nick)
+    local redadm = {'Maxim_Kudryavtsev', 'Jeysen_Prado', 'Ioan_Grozny', 'Tellarion_Foldring', 'Salvatore_Giordano', 'Dwayne_Eagle', 'Sergo_Cross', 'Ziggi_Shmiggi', 'Tobey_Marshall', 'Alex_Extra', 'Maks_Wirense', 'Brain_Hernandez', 'Leonid_Litvinenko'}
     text_notify_connect('{00ff00}Подключился: {ffffff}'..nick..' ['..id..']')
+    if aafk and telegid then
+        for k, v in pairs(redadm) do
+            if nick == v then
+                asyncHttpRequest("POST", 'https://api.telegram.org/bot893731440:AAF3TO6rbo_ON_pz-38aG02GM4dMlpeEDo8/sendMessage?chat_id='..telegid..'&text='..u8("ВНИМАНИЕ! НА СЕРВЕР ЗАШЕЛ: "..nick..' ['..id..']'), _, function (response) print(response.text) end, function (err) atext(err) end)
+            end
+        end
+    end
 	for i, v in ipairs(wrecon) do
 		if v["nick"] == nick then
 			if (os.time() - v["time"]) < 5 and (os.time() - v["time"]) > 0 then
@@ -3899,7 +3917,7 @@ function cip2(pam)
     end
     local rdata = {}
 end
-function cip()
+function cip(pam)
     lua_thread.create(function()
         local rdata = {}
         if #ips == 2 then
