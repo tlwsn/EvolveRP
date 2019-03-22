@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.999998')
+script_version('1.999999')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -285,7 +285,8 @@ local cfg = {
         fracstat = true,
         chatconsole = false,
         extraignor = false,
-        admlvl = 0
+        admlvl = 0,
+        telegid = 0
     }
 }
 function asyncHttpRequest(method, url, args, resolve, reject)
@@ -691,9 +692,11 @@ function main()
         local file = io.open('moonloader/config/Admin Tools/config.json', 'r')
         if file then
             cfg = decodeJson(file:read('*a'))
+            if cfg.other.telegid == nil then cfg.other.telegid = 0 end
         end
     end
     saveData(cfg, 'moonloader/config/Admin Tools/config.json')
+    if cfg.other.telegid ~= 0 then telegid = cfg.other.telegid end
     if not doesFileExist('moonloader/config/Admin Tools/punishignor.txt') then
         local file = io.open('moonloader/config/Admin Tools/punishignor.txt', 'w')
         file:write('1\n!\ndmg')
@@ -898,6 +901,7 @@ function main()
     lua_thread.create(renders)
     lua_thread.create(main_funcs)
     lua_thread.create(check_keys_fast)
+    lua_thread.create(warningsKey)
     while true do wait(0)
         if wasKeyPressed(key.VK_F12) and not sampIsChatInputActive() and not isSampfuncsConsoleActive() and not sampIsDialogActive() then swork = not swork 
             if not swork then
@@ -909,7 +913,6 @@ function main()
         if #tkills > 50 then
             table.remove(tkills, 1)
         end
-        warningsKey()
         local oTime = os.time()
         if not isPauseMenuActive() then
 			for i = 1, BulletSync.maxLines do
@@ -2265,6 +2268,8 @@ function sampev.onSendSpawn()
     if aafk and telegid then asyncHttpRequest("POST", 'https://api.telegram.org/bot893731440:AAF3TO6rbo_ON_pz-38aG02GM4dMlpeEDo8/sendMessage?chat_id='..telegid..'&text='..u8("SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!"), _, function (response) print(response.text) end, function (err) atext(err) end) end
 end
 function sampev.onServerMessage(color, text)
+    local redadm = {'Maxim_Kudryavtsev', 'Jeysen_Prado', 'Ioan_Grozny', 'Tellarion_Foldring', 'Salvatore_Giordano', 'Dwayne_Eagle', 'Sergo_Cross', 'Ziggi_Shmiggi', 'Tobey_Marshall', 'Alex_Extra', 'Maks_Wirense', 'Brain_Hernandez', 'Leonid_Litvinenko'}
+    for k, v in pairs(redadm) do if aafk and telegid then if text:find(v) then asyncHttpRequest("POST", 'https://api.telegram.org/bot893731440:AAF3TO6rbo_ON_pz-38aG02GM4dMlpeEDo8/sendMessage?chat_id='..telegid..'&text='..u8(text), _, function (response) print(response.text) end, function (err) atext(err) end) end end end
     local mynick = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
     if text:find(mynick) and aafk and telegid then asyncHttpRequest("POST", 'https://api.telegram.org/bot893731440:AAF3TO6rbo_ON_pz-38aG02GM4dMlpeEDo8/sendMessage?chat_id='..telegid..'&text='..u8(text), _, function (response) print(response.text) end, function (err) atext(err) end) end
     if text:match('^ Вы авторизировались как модератор %d+ уровня$') then cfg.other.admlvl = tonumber(text:match('^ Вы авторизировались как модератор (%d+) уровня$')) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
@@ -3274,7 +3279,7 @@ function check_keys_fast()
     end
 end
 function onReceiveRpc(id, bs) --перехватываем все входящие рпс
-    if id == 91 and swork then --делаем проверку на нужный нам, в данном случае это RPC_SetVehicleVelocity
+    if id == 91 and swork and isKeyDown(key.VK_LMENU) then --делаем проверку на нужный нам, в данном случае это RPC_SetVehicleVelocity
         return false -- блокируем рпс
     end
 end
@@ -3434,38 +3439,40 @@ function getBodyPartCoordinates(id, handle)
     return vec[0], vec[1], vec[2]
 end
 function warningsKey()
-    local wtext, wprefix, wcolor, wpcolor = sampGetChatString(99)
-    if wcolor == 4294967295 and wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[%d+%] - .+') and not wtext:find('ExtraWS') then
-        cwid = wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[(%d+)%] - .+')
-    end
-    if wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[%d+%] - .+') and wcolor == 4294967295 and wtext:find('ExtraWS') then
-        if not cfg.other.extraignor then
+    while true do wait(0)
+        local wtext, wprefix, wcolor, wpcolor = sampGetChatString(99)
+        if wcolor == 4294967295 and wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[%d+%] - .+') and not wtext:find('ExtraWS') then
             cwid = wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[(%d+)%] - .+')
         end
-    end
-    if wcolor == 4294911012 and wtext:match('<Warning> {.+}.+%[%d+%]% .+') and not wtext:match("<Warning> {.+}.+%[%d+%] возможно попал сквозь текстуру в {.+}.+%[%d+%] из .+ %(model: %d+%)") then
-        cwid = wtext:match('<Warning> {.+}.+%[(%d+)%]% .+')
-    end
-    if wtext:match("<Warning> {.+}.+%[%d+%] возможно попал сквозь текстуру в {.+}.+%[%d+%] из .+ %(model: %d+%)") then
-        cwid = wtext:match("<Warning> {.+}.+%[(%d+)%] возможно попал сквозь текстуру в {.+}.+%[%d+%] из .+ %(model: %d+%)")
-    end
-	if wtext:match('^<Warning> {.+}.+%[%d+%] {FFFFFF}.+') then
-		cwid = wtext:match('^<Warning> {.+}.+%[(%d+)%] {FFFFFF}.+')
-	end
-	if wtext:match('^Warning:{.+} .+%[%d+%] .+') and not wtext:match('^Warning:{.+} .+%[%d+%] возможно попал сквозь текстуру в{.+} .+%[%d+%] из: .+ %(texture: %d+%)') then
-		cwid = wtext:match('^Warning:{.+} .+%[(%d+)%] .+')
-	end
-	if wtext:match('^Warning:{.+} .+%[%d+%] возможно попал сквозь текстуру в{.+} .+%[%d+%] из: .+ %(texture: %d+%)') then
-		cwid = wtext:match('^Warning:{.+} .+%[(%d+)%] возможно попал сквозь текстуру в{.+} .+%[%d+%] из: .+ %(texture: %d+%)')
-    end
-    if wcolor == 16722731 and wtext:match('^%[mkrn wrn%]:%{.+%} .+%[%d+%].+') and not wtext:match('^%[mkrn wrn%]:%{.+%} .+%[%d+%] возможно дамажит%/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+') and not wtext:match('^%[mkrn wrn%]:%{.+%} .+%[%d+%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+, texture: %d+ %[.+%]') then
-        cwid = wtext:match('^%[mkrn wrn%]:%{.+%} .+%[(%d+)%].+')
-    end
-    if wcolor == 16722731 and wtext:match('^%[mkrn wrn%]:%{.+%} .+%[%d+%] возможно дамажит%/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+') then
-        cwid = wtext:match('^%[mkrn wrn%]:%{.+%} .+%[(%d+)%] возможно дамажит/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+')
-    end
-    if wcolor == 16722731 and wtext:match('^%[mkrn wrn%]:%{.+%} .+%[%d+%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+, texture: %d+ %[.+%]') then
-        cwid = wtext:match('^%[mkrn wrn%]:%{.+%} .+%[(%d+)%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+, texture: %d+ %[.+%]')
+        if wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[%d+%] - .+') and wcolor == 4294967295 and wtext:find('ExtraWS') then
+            if not cfg.other.extraignor then
+                cwid = wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[(%d+)%] - .+')
+            end
+        end
+        if wcolor == 4294911012 and wtext:match('<Warning> {.+}.+%[%d+%]% .+') and not wtext:match("<Warning> {.+}.+%[%d+%] возможно попал сквозь текстуру в {.+}.+%[%d+%] из .+ %(model: %d+%)") then
+            cwid = wtext:match('<Warning> {.+}.+%[(%d+)%]% .+')
+        end
+        if wtext:match("<Warning> {.+}.+%[%d+%] возможно попал сквозь текстуру в {.+}.+%[%d+%] из .+ %(model: %d+%)") then
+            cwid = wtext:match("<Warning> {.+}.+%[(%d+)%] возможно попал сквозь текстуру в {.+}.+%[%d+%] из .+ %(model: %d+%)")
+        end
+        if wtext:match('^<Warning> {.+}.+%[%d+%] {FFFFFF}.+') then
+            cwid = wtext:match('^<Warning> {.+}.+%[(%d+)%] {FFFFFF}.+')
+        end
+        if wtext:match('^Warning:{.+} .+%[%d+%] .+') and not wtext:match('^Warning:{.+} .+%[%d+%] возможно попал сквозь текстуру в{.+} .+%[%d+%] из: .+ %(texture: %d+%)') then
+            cwid = wtext:match('^Warning:{.+} .+%[(%d+)%] .+')
+        end
+        if wtext:match('^Warning:{.+} .+%[%d+%] возможно попал сквозь текстуру в{.+} .+%[%d+%] из: .+ %(texture: %d+%)') then
+            cwid = wtext:match('^Warning:{.+} .+%[(%d+)%] возможно попал сквозь текстуру в{.+} .+%[%d+%] из: .+ %(texture: %d+%)')
+        end
+        if wtext:match('%[mkrn wrn%]:%{%S+%} .+%[%d+%] .+') and not wtext:match('%[mkrn wrn%]:%{.+%} .+%[%d+%] возможно дамажит%/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+') and not wtext:match('%[mkrn wrn%]:%{.+%} .+%[%d+%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+, texture: %d+ %[.+%]') then
+            cwid = wtext:match('%[mkrn wrn%]:%{%S+%} .+%[(%d+)%] .+')
+        end
+        if wtext:match('%[mkrn wrn%]:%{.+%} .+%[%d+%] возможно дамажит%/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+') then
+            cwid = wtext:match('%[mkrn wrn%]%:%{.+%} .+%[(%d+)%] возможно дамажит/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+')
+        end
+        if wtext:match('%[mkrn wrn%]:%{.+%} .+%[%d+%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+, texture: %d+ %[.+%]') then
+            cwid = wtext:match('%[mkrn wrn%]%:%{.+%} .+%[(%d+)%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+, texture: %d+ %[.+%]')
+        end
     end
 end
 function gun(pam)
