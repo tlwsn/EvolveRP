@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1')
+script_version('1.1')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -899,6 +899,12 @@ function main()
     lua_thread.create(main_funcs)
     lua_thread.create(check_keys_fast)
     while true do wait(0)
+        if sampGetGamestate() ~= 3 then
+            admins_online = {}
+            players_online = {}
+            temp_checker_online = {}
+        end
+        if swork and sampGetGamestate() == 3 then nameTagOff() end
         if wasKeyPressed(key.VK_F12) and not sampIsChatInputActive() and not isSampfuncsConsoleActive() and not sampIsDialogActive() then swork = not swork 
             if not swork then
                 nameTagOn()
@@ -2649,10 +2655,10 @@ function sampev.onServerMessage(color, text)
     return { color, text }
 end
 function sampev.onTextDrawSetString(id, text)
-    if id == 2163 then
+    if id == 2165 then
         imtextlvl, imtextwarn, imtextarm, imtexthp, imtextcarhp, imtextspeed, imtextping, imtextammo, imtextshot, imtexttimeshot, imtextafktime, imtextengine, imtextprosport = text:match('~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)')
     end
-    if id == 2164 then
+    if id == 2166 then
         if text:match('~w~.+') then
             imtextnick = text:match('~w~(.+)~n~ID:')
             reafk = true
@@ -2666,13 +2672,13 @@ function sampev.onTextDrawSetString(id, text)
     end
 end
 function sampev.onShowTextDraw(id, textdraw)
-    if id == 2163 then reconstate = true end
+    if id == 2165 then reconstate = true end
     if cfg.crecon.enable then
-        if id == 2163 then recon.v = true return false end
+        if id == 2165 then recon.v = true return false end
+        if id == 2166 then return false end
+        if id == 2160 then return false end
+        if id == 2161 then return false end
         if id == 2164 then return false end
-        if id == 2162 then return false end
-        if id == 2158 then return false end
-        if id == 2159 then return false end
         --for i = 2160, 2191 do if id == i then return false end end
     end
 end
@@ -3274,7 +3280,7 @@ function check_keys_fast()
     end
 end
 function onReceiveRpc(id, bs) --перехватываем все входящие рпс
-    if id == 91 and swork then --делаем проверку на нужный нам, в данном случае это RPC_SetVehicleVelocity
+    if id == 91 and swork and isKeyDown(key.VK_LMENU) then --делаем проверку на нужный нам, в данном случае это RPC_SetVehicleVelocity
         return false -- блокируем рпс
     end
 end
@@ -3925,7 +3931,7 @@ function cip(pam)
 	        local fpath = getWorkingDirectory() .. '\\'..thisScript().name..'-cip.json'
             atext('Идет проверка IP адресов. Ожидайте..')
             for ik, iv in pairs(ips) do
-                downloadUrlToFile('http://extreme-ip-lookup.com/json/'..iv, fpath, function(id, status, p1, p2)
+                downloadUrlToFile('http://free.ipwhois.io/json/'..iv..'?lang=ru', fpath, function(id, status, p1, p2)
                     lua_thread.create(function()
                         if status == dlstatus.STATUS_ENDDOWNLOADDATA then
                             local f = io.open(fpath, 'r')
@@ -3933,37 +3939,37 @@ function cip(pam)
                                 local info = decodeJson(f:read('*a'))
                                 f:close()
                                 os.remove(fpath)
-                                table.insert(rdata, {country = info.country, city = info.city, isp = info.isp, query = info.query, lat = info.lat, lon = info.lon, status = info.status})
+                                table.insert(rdata, {country = info.country, city = info.city, isp = info.isp, query = info.ip, lat = info.latitude, lon = info.longitude, status = info.success})
                             end
                         end
                     end)
                 end)
             end
             while #rdata ~= 2 do wait(0) end
-            if rdata[1]["status"] == "success" and rdata[2]["status"] == "success" then
+            if rdata[1]["status"] and rdata[2]["status"] then
                 if rdata[1]['query'] ~= ips[1] then
                     local distances1 = distance_cord(rdata[2]["lat"], rdata[2]["lon"], rdata[1]["lat"], rdata[1]["lon"])
                     if tonumber(pam) == nil then
-                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
-                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
+                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(u8:decode(rdata[2]["country"]), u8:decode(rdata[2]["city"]), u8:decode(rdata[2]["isp"]), u8:decode(rdata[2]["query"])), -1)
+                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(u8:decode(rdata[1]["country"]), u8:decode(rdata[1]["city"]), u8:decode(rdata[1]["isp"]), u8:decode(rdata[1]["query"])), -1)
                         sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s'):format(math.floor(distances1), rnick), -1)
                     else
-                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(rdata[1]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
+                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(u8:decode(rdata[2]["country"]), u8:decode(rdata[2]["city"]), u8:decode(rdata[2]["isp"]), u8:decode(rdata[2]["query"])), -1)
                         wait(1200)
-                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
+                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(u8:decode(rdata[1]["country"]), u8:decode(rdata[1]["city"]), u8:decode(rdata[1]["isp"]), u8:decode(rdata[1]["query"])), -1)
                         wait(1200)
                         sampSendChat(('/a Расстояние: %s км. | Ник: %s'):format(math.floor(distances1), rnick), -1)
                     end
                 else
                     local distances1 = distance_cord(rdata[2]["lat"], rdata[2]["lon"], rdata[1]["lat"], rdata[1]["lon"])
                     if tonumber(pam) == nil then
-                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
-                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
+                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(u8:decode(rdata[1]["country"]), u8:decode(rdata[1]["city"]), u8:decode(rdata[1]["isp"]), u8:decode(rdata[1]["query"])), -1)
+                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(u8:decode(rdata[2]["country"]), u8:decode(rdata[2]["city"]), u8:decode(rdata[2]["isp"]), u8:decode(rdata[2]["query"])), -1)
                         sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s'):format(math.floor(distances1), rnick), -1)
                     else
-                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
+                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(u8:decode(rdata[1]["country"]), u8:decode(rdata[1]["city"]), u8:decode(rdata[1]["isp"]), u8:decode(rdata[1]["query"])), -1)
                         wait(1200)
-                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
+                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(u8:decode(rdata[2]["country"]), u8:decode(rdata[2]["city"]), u8:decode(rdata[2]["isp"]), u8:decode(rdata[2]["query"])), -1)
                         wait(1200)
                         sampSendChat(('/a Расстояние: %s км. | Ник: %s'):format(math.floor(distances1), rnick), -1)
                     end
