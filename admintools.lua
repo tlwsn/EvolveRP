@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.9999992')
+script_version('1.9999993')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -84,6 +84,13 @@ local config_colors = {
 local tEditData = {
 	id = -1,
 	inputActive = false
+}
+local bulletTypes = {
+    [0] = 0xFF0000FF,
+    [1] = 0xffff0000,
+    [2] = 0xFF0000FF,
+    [3] = 0xFF0000FF,
+    [4] = 0xFF0000FF
 }
 local frakrang = {
     Mayor = {
@@ -926,8 +933,8 @@ function main()
 					local sx, sy, sz = calcScreenCoors(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
 					local fx, fy, fz = calcScreenCoors(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)
 					if sz > 1 and fz > 1 then
-						renderDrawLine(sx, sy, fx, fy, 1, BulletSync[i].tType == 0 and 0xFF0000FF or 0xffff0000)
-                        renderDrawPolygon(fx, fy-1, 3, 3, 4.0, 10, BulletSync[i].tType == 0 and 0xFF0000FF or 0xffff0000)
+						renderDrawLine(sx, sy, fx, fy, 1, bulletTypes[BulletSync[i].tType])
+                        renderDrawPolygon(fx, fy-1, 3, 3, 4.0, 10, bulletTypes[BulletSync[i].tType])
 					end
 				end
 			end
@@ -2727,7 +2734,7 @@ function sampev.onPlayerDeathNotification(killerId, killedId, reason)
     table.insert(tkills, ('{'..("%06X"):format(bit.band(sampGetPlayerColor(killerId), 0xFFFFFF))..'}%s[%s]\t{'..("%06X"):format(bit.band(sampGetPlayerColor(killedId), 0xFFFFFF))..'}%s[%s]\t{ffffff}%s'):format(sampGetPlayerNickname(killerId),killerId, sampGetPlayerNickname(killedId),killedId, sampGetDeathReason(reason)))
 end
 function sampev.onTogglePlayerControllable(bool)
-    return false
+    if swork then return false end
 end
 function sampev.onBulletSync(playerid, data)
 	if tonumber(playerid) == tonumber(traceid) then
