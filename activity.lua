@@ -3,8 +3,8 @@
 ]]
 script_name("Activity checker") 
 script_author('Edward_Franklin')
-script_version("1.28")
-script_version_number(12854)
+script_version("1.29")
+script_version_number(12855)
 script_properties('work-in-pause')
 script_url("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua")
 --------------------------------------------------------------------
@@ -51,12 +51,13 @@ local sInfo = {
   lvlAdmin = 0,
   isALogin = false
 }
-local DEBUG_MODE = true
+local DEBUG_MODE = false
 local dayName = {u8"Понедельник", u8"Вторник", u8"Среда", u8"Четверг", u8"Пятница", u8"Суббота", u8"Воскресенье"}
 local nick = ""
 local playerid = -1
 --------------------------------------------------------------------
 function main()
+    apply_custom_style()
     if not isSampfuncsLoaded() or not isSampLoaded() then return end
     while not isSampAvailable() do wait(100) end
     sampRegisterChatCommand("gip", cmd_gip)
@@ -126,6 +127,57 @@ function calculateOnline()
     end  
   end)
 end
+function imgui.TextColoredRGB(text)
+  local style = imgui.GetStyle()
+  local colors = style.Colors
+  local ImVec4 = imgui.ImVec4
+
+  local explode_argb = function(argb)
+      local a = bit.band(bit.rshift(argb, 24), 0xFF)
+      local r = bit.band(bit.rshift(argb, 16), 0xFF)
+      local g = bit.band(bit.rshift(argb, 8), 0xFF)
+      local b = bit.band(argb, 0xFF)
+      return a, r, g, b
+  end
+
+  local getcolor = function(color)
+      if color:sub(1, 6):upper() == 'SSSSSS' then
+          local r, g, b = colors[1].x, colors[1].y, colors[1].z
+          local a = tonumber(color:sub(7, 8), 16) or colors[1].w * 255
+          return ImVec4(r, g, b, a / 255)
+      end
+      local color = type(color) == 'string' and tonumber(color, 16) or color
+      if type(color) ~= 'number' then return end
+      local r, g, b, a = explode_argb(color)
+      return imgui.ImColor(r, g, b, a):GetVec4()
+  end
+
+  local render_text = function(text_)
+      for w in text_:gmatch('[^\r\n]+') do
+          local text, colors_, m = {}, {}, 1
+          w = w:gsub('{(......)}', '{%1FF}')
+          while w:find('{........}') do
+              local n, k = w:find('{........}')
+              local color = getcolor(w:sub(n + 1, k - 1))
+              if color then
+                  text[#text], text[#text + 1] = w:sub(m, n - 1), w:sub(k + 1, #w)
+                  colors_[#colors_ + 1] = color
+                  m = n
+              end
+              w = w:sub(1, n - 1) .. w:sub(k + 1, #w)
+          end
+          if text[0] then
+              for i = 0, #text do
+                  imgui.TextColored(colors_[i] or colors[1], u8(text[i]))
+                  imgui.SameLine(nil, 0)
+              end
+              imgui.NewLine()
+          else imgui.Text(u8(w)) end
+      end
+  end
+
+  render_text(text)
+end
 
 function apply_custom_style()
   imgui.SwitchContext()
@@ -133,62 +185,61 @@ function apply_custom_style()
   local colors = style.Colors
   local clr = imgui.Col
   local ImVec4 = imgui.ImVec4
-  local ImVec2 = imgui.ImVec2
 
-  style.WindowPadding = ImVec2(15, 15)
-  style.WindowRounding = 5.0
-  style.FramePadding = ImVec2(5, 5)
-  style.FrameRounding = 4.0
-  style.ItemSpacing = ImVec2(12, 8)
-  style.ItemInnerSpacing = ImVec2(8, 6)
-  style.IndentSpacing = 25.0
-  style.ScrollbarSize = 15.0
-  style.ScrollbarRounding = 9.0
-  style.GrabMinSize = 5.0
-  style.GrabRounding = 3.0
+  style.WindowRounding = 2.0
+  style.WindowTitleAlign = imgui.ImVec2(0.5, 0.84)
+  style.ChildWindowRounding = 2.0
+  style.FrameRounding = 2.0
+  style.ItemSpacing = imgui.ImVec2(5.0, 4.0)
+  style.ScrollbarSize = 13.0
+  style.ScrollbarRounding = 0
+  style.GrabMinSize = 8.0
+  style.GrabRounding = 1.0
 
-  colors[clr.Text] = ImVec4(0.80, 0.80, 0.83, 1.00)
-  colors[clr.TextDisabled] = ImVec4(0.24, 0.23, 0.29, 1.00)
-  colors[clr.WindowBg] = ImVec4(0.06, 0.05, 0.07, 1.00)
-  colors[clr.ChildWindowBg] = ImVec4(0.07, 0.07, 0.09, 1.00)
-  colors[clr.PopupBg] = ImVec4(0.07, 0.07, 0.09, 1.00)
-  colors[clr.Border] = ImVec4(0.80, 0.80, 0.83, 0.88)
-  colors[clr.BorderShadow] = ImVec4(0.92, 0.91, 0.88, 0.00)
-  colors[clr.FrameBg] = ImVec4(0.10, 0.09, 0.12, 1.00)
-  colors[clr.FrameBgHovered] = ImVec4(0.24, 0.23, 0.29, 1.00)
-  colors[clr.FrameBgActive] = ImVec4(0.56, 0.56, 0.58, 1.00)
-  colors[clr.TitleBg] = ImVec4(0.10, 0.09, 0.12, 1.00)
-  colors[clr.TitleBgCollapsed] = ImVec4(1.00, 0.98, 0.95, 0.75)
-  colors[clr.TitleBgActive] = ImVec4(0.07, 0.07, 0.09, 1.00)
-  colors[clr.MenuBarBg] = ImVec4(0.10, 0.09, 0.12, 1.00)
-  colors[clr.ScrollbarBg] = ImVec4(0.10, 0.09, 0.12, 1.00)
-  colors[clr.ScrollbarGrab] = ImVec4(0.80, 0.80, 0.83, 0.31)
-  colors[clr.ScrollbarGrabHovered] = ImVec4(0.56, 0.56, 0.58, 1.00)
-  colors[clr.ScrollbarGrabActive] = ImVec4(0.06, 0.05, 0.07, 1.00)
-  colors[clr.ComboBg] = ImVec4(0.19, 0.18, 0.21, 1.00)
-  colors[clr.CheckMark] = ImVec4(0.80, 0.80, 0.83, 0.31)
-  colors[clr.SliderGrab] = ImVec4(0.80, 0.80, 0.83, 0.31)
-  colors[clr.SliderGrabActive] = ImVec4(0.06, 0.05, 0.07, 1.00)
-  colors[clr.Button] = ImVec4(0.10, 0.09, 0.12, 1.00)
-  colors[clr.ButtonHovered] = ImVec4(0.24, 0.23, 0.29, 1.00)
-  colors[clr.ButtonActive] = ImVec4(0.56, 0.56, 0.58, 1.00)
-  colors[clr.Header] = ImVec4(0.10, 0.09, 0.12, 1.00)
-  colors[clr.HeaderHovered] = ImVec4(0.56, 0.56, 0.58, 1.00)
-  colors[clr.HeaderActive] = ImVec4(0.06, 0.05, 0.07, 1.00)
-  colors[clr.ResizeGrip] = ImVec4(0.00, 0.00, 0.00, 0.00)
-  colors[clr.ResizeGripHovered] = ImVec4(0.56, 0.56, 0.58, 1.00)
-  colors[clr.ResizeGripActive] = ImVec4(0.06, 0.05, 0.07, 1.00)
-  colors[clr.CloseButton] = ImVec4(0.40, 0.39, 0.38, 0.16)
-  colors[clr.CloseButtonHovered] = ImVec4(0.40, 0.39, 0.38, 0.39)
-  colors[clr.CloseButtonActive] = ImVec4(0.40, 0.39, 0.38, 1.00)
-  colors[clr.PlotLines] = ImVec4(0.40, 0.39, 0.38, 0.63)
-  colors[clr.PlotLinesHovered] = ImVec4(0.25, 1.00, 0.00, 1.00)
-  colors[clr.PlotHistogram] = ImVec4(0.40, 0.39, 0.38, 0.63)
-  colors[clr.PlotHistogramHovered] = ImVec4(0.25, 1.00, 0.00, 1.00)
-  colors[clr.TextSelectedBg] = ImVec4(0.25, 1.00, 0.00, 0.43)
-  colors[clr.ModalWindowDarkening] = ImVec4(1.00, 0.98, 0.95, 0.73)
+  colors[clr.FrameBg]                = ImVec4(0.48, 0.16, 0.16, 0.54)
+  colors[clr.FrameBgHovered]         = ImVec4(0.98, 0.26, 0.26, 0.40)
+  colors[clr.FrameBgActive]          = ImVec4(0.98, 0.26, 0.26, 0.67)
+  colors[clr.TitleBg]                = ImVec4(0.04, 0.04, 0.04, 1.00)
+  colors[clr.TitleBgActive]          = ImVec4(0.48, 0.16, 0.16, 1.00)
+  colors[clr.TitleBgCollapsed]       = ImVec4(0.00, 0.00, 0.00, 0.51)
+  colors[clr.CheckMark]              = ImVec4(0.98, 0.26, 0.26, 1.00)
+  colors[clr.SliderGrab]             = ImVec4(0.88, 0.26, 0.24, 1.00)
+  colors[clr.SliderGrabActive]       = ImVec4(0.98, 0.26, 0.26, 1.00)
+  colors[clr.Button]                 = ImVec4(0.98, 0.26, 0.26, 0.40)
+  colors[clr.ButtonHovered]          = ImVec4(0.98, 0.26, 0.26, 1.00)
+  colors[clr.ButtonActive]           = ImVec4(0.98, 0.06, 0.06, 1.00)
+  colors[clr.Header]                 = ImVec4(0.98, 0.26, 0.26, 0.31)
+  colors[clr.HeaderHovered]          = ImVec4(0.98, 0.26, 0.26, 0.80)
+  colors[clr.HeaderActive]           = ImVec4(0.98, 0.26, 0.26, 1.00)
+  colors[clr.Separator]              = colors[clr.Border]
+  colors[clr.SeparatorHovered]       = ImVec4(0.75, 0.10, 0.10, 0.78)
+  colors[clr.SeparatorActive]        = ImVec4(0.75, 0.10, 0.10, 1.00)
+  colors[clr.ResizeGrip]             = ImVec4(0.98, 0.26, 0.26, 0.25)
+  colors[clr.ResizeGripHovered]      = ImVec4(0.98, 0.26, 0.26, 0.67)
+  colors[clr.ResizeGripActive]       = ImVec4(0.98, 0.26, 0.26, 0.95)
+  colors[clr.TextSelectedBg]         = ImVec4(0.98, 0.26, 0.26, 0.35)
+  colors[clr.Text]                   = ImVec4(1.00, 1.00, 1.00, 1.00)
+  colors[clr.TextDisabled]           = ImVec4(0.50, 0.50, 0.50, 1.00)
+  colors[clr.WindowBg]               = ImVec4(0.06, 0.06, 0.06, 0.94)
+  colors[clr.ChildWindowBg]          = ImVec4(1.00, 1.00, 1.00, 0.00)
+  colors[clr.PopupBg]                = ImVec4(0.08, 0.08, 0.08, 0.94)
+  colors[clr.ComboBg]                = colors[clr.PopupBg]
+  colors[clr.Border]                 = ImVec4(0.43, 0.43, 0.50, 0.50)
+  colors[clr.BorderShadow]           = ImVec4(0.00, 0.00, 0.00, 0.00)
+  colors[clr.MenuBarBg]              = ImVec4(0.14, 0.14, 0.14, 1.00)
+  colors[clr.ScrollbarBg]            = ImVec4(0.02, 0.02, 0.02, 0.53)
+  colors[clr.ScrollbarGrab]          = ImVec4(0.31, 0.31, 0.31, 1.00)
+  colors[clr.ScrollbarGrabHovered]   = ImVec4(0.41, 0.41, 0.41, 1.00)
+  colors[clr.ScrollbarGrabActive]    = ImVec4(0.51, 0.51, 0.51, 1.00)
+  colors[clr.CloseButton]            = ImVec4(0.41, 0.41, 0.41, 0.50)
+  colors[clr.CloseButtonHovered]     = ImVec4(0.98, 0.39, 0.36, 1.00)
+  colors[clr.CloseButtonActive]      = ImVec4(0.98, 0.39, 0.36, 1.00)
+  colors[clr.PlotLines]              = ImVec4(0.61, 0.61, 0.61, 1.00)
+  colors[clr.PlotLinesHovered]       = ImVec4(1.00, 0.43, 0.35, 1.00)
+  colors[clr.PlotHistogram]          = ImVec4(0.90, 0.70, 0.00, 1.00)
+  colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
+  colors[clr.ModalWindowDarkening]   = ImVec4(0.80, 0.80, 0.80, 0.35)
 end
-
 function imgui.OnDrawFrame()
   if mainwindow.v then
     imgui.ShowCursor = true
@@ -200,7 +251,7 @@ function imgui.OnDrawFrame()
     imgui.Begin('Activity Helper', mainwindow, imgui.WindowFlags.NoResize)
     ---------
     imgui.Text(u8"Ник:"); imgui.SameLine(spacing); imgui.Text(('%s[%d]'):format(nick, playerid))
-    imgui.Text(u8"Авторизация в ALogin:"); imgui.SameLine(spacing); imgui.TextColored(ImVec4(0, 49, 245, 1), string.format('%s', sInfo.isALogin == true and u8"Авторизирован" or u8"Отсутствует"))
+    imgui.Text(u8"Авторизация в ALogin:"); imgui.SameLine(spacing); imgui.TextColoredRGB(string.format('%s', sInfo.isALogin == true and "{00bf80}Авторизирован" or "{ec3737}Отсутствует"))
     if sInfo.isALogin == true then
       imgui.Text(u8"Уровень модератора:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(sInfo.lvlAdmin))
     end
@@ -234,7 +285,7 @@ function imgui.OnDrawFrame()
       local daynumber = dateToWeekNumber(os.date("%d.%m.%y"))
       if daynumber == 0 then daynumber = 7 end
       for key, value in ipairs(pInfo.weeks) do
-        --[[local colour = ""
+        local colour = ""
         if daynumber > 0 then
           if daynumber < key then colour = "ec3737"
           elseif daynumber == key then colour = "FFFFFF"
@@ -242,8 +293,8 @@ function imgui.OnDrawFrame()
         else
           if daynumber == 0 and key == 7 then colour = "FFFFFF"
           else colour = "00BF80" end
-        end]]
-        imgui.Text(dayName[key]); imgui.SameLine(spacing); imgui.TextColored(ImVec4(0, 49, 245, 1), ('%s'):format(daynumber == key and secToTime(pInfo.info.dayOnline) or secToTime(value)))
+        end
+        imgui.Text(dayName[key]); imgui.SameLine(spacing); imgui.TextColoredRGB(('{%s}%s'):format(colour,daynumber == key and secToTime(pInfo.info.dayOnline) or secToTime(value)))
       end
       imgui.End()
     end
@@ -253,7 +304,7 @@ function imgui.OnDrawFrame()
       imgui.Begin(u8 'Статистика наказаний', punishments, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize)
       local i = 1
       for key, value in pairs(pInfo.punish) do
-        imgui.Text(key); imgui.SameLine(spacing); imgui.Text(value)
+        imgui.Text(('%s'):format(key)); imgui.SameLine(spacing); imgui.Text(('%s'):format(value))
         i = i + 1
       end
       imgui.End()
@@ -364,7 +415,6 @@ end
 function atext(text)
   sampAddChatMessage("Activity Helper | {FFFFFF}"..text, 0x954F4F)
 end
-
 ------------------------ HLAM ------------------------
 --[[
 function getLocalPlayerId()

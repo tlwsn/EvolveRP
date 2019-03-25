@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.9999991')
+script_version('1.9999992')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -903,6 +903,12 @@ function main()
     lua_thread.create(check_keys_fast)
     lua_thread.create(warningsKey)
     while true do wait(0)
+        if sampGetGamestate() ~= 3 then
+            admins_online = {}
+            players_online = {}
+            temp_checker_online = {}
+        end
+        if swork and sampGetGamestate() == 3 then nameTagOff() end
         if wasKeyPressed(key.VK_F12) and not sampIsChatInputActive() and not isSampfuncsConsoleActive() and not sampIsDialogActive() then swork = not swork 
             if not swork then
                 nameTagOn()
