@@ -3,8 +3,8 @@
 ]]
 script_name("Activity checker") 
 script_author('Edward_Franklin')
-script_version("1.27")
-script_version_number(12744)
+script_version("1.28")
+script_version_number(12854)
 script_properties('work-in-pause')
 script_url("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua")
 --------------------------------------------------------------------
