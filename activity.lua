@@ -128,7 +128,7 @@ function calculateOnline()
     end  
   end)
 end
-
+--[[
 function autoupdate(json_url)
   lua_thread.create(function()
     local dlstatus = require('moonloader').download_status
@@ -185,7 +185,7 @@ function autoupdate(json_url)
   while update ~= false do wait(100) end
   end)
 end
-
+]]
 function saveconfig()
   if pInfo.info.dayOnline > 0 then
     inicfg.save(pInfo, "activity-checker");
