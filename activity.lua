@@ -2,9 +2,9 @@
   Осталось: Сделать возможность изменять онлайн и ответы;
 ]]
 script_name("Activity checker") 
-script_author('Edward_Franklin')
-script_version("1.29")
-script_version_number(12855)
+script_authors({ 'Edward_Franklin', 'Thomas_Lawsom' })
+script_version("1.30")
+script_version_number(12363)
 script_properties('work-in-pause')
 script_url("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua")
 --------------------------------------------------------------------
@@ -60,6 +60,7 @@ function main()
     apply_custom_style()
     if not isSampfuncsLoaded() or not isSampLoaded() then return end
     while not isSampAvailable() do wait(100) end
+    autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json")
     sampRegisterChatCommand("gip", cmd_gip)
     sampRegisterChatCommand('activitydebug', function()
       DEBUG_MODE = not DEBUG_MODE
@@ -94,7 +95,7 @@ function main()
       pInfo.info.dayAFK = 0
     end
     if sampGetGamestate() == 3 then
-      sInfo.isALogin = true
+      sampSendChat("/a")
     end
     --------------------=========----------------------
     while not sampIsLocalPlayerSpawned() do wait(0) end
@@ -120,13 +121,77 @@ function calculateOnline()
         pInfo.info.dayOnline = pInfo.info.dayOnline + 1
         pInfo.info.weekOnline = pInfo.info.weekOnline + 1
         pInfo.info.dayAFK = pInfo.info.dayAFK + (os.time() - sInfo.updateAFK - 1)
-        if updatecount >= 10 then inicfg.save(pInfo, "activity-checker"); updatecount = 0 end
+        if updatecount >= 10 then saveconfig() updatecount = 0 end
         updatecount = updatecount + 1
       end
       sInfo.updateAFK = os.time()
     end  
   end)
 end
+
+function autoupdate(json_url)
+  lua_thread.create(function()
+    local dlstatus = require('moonloader').download_status
+    local json = getWorkingDirectory() .. '\\'..thisScript().name..'-version.json'
+    if doesFileExist(json) then os.remove(json) end
+    downloadUrlToFile(json_url, json, function(id, status, p1, p2)
+      if status == dlstatus.STATUSEX_ENDDOWNLOAD then
+        if doesFileExist(json) then
+          local f = io.open(json, 'r')
+          if f then
+            local info = decodeJson(f:read('*a'))
+            updatelink = info.activitylink
+            updateversion = info.activityversion
+            f:close()
+            os.remove(json)
+            if updateversion > thisScript().version then
+              lua_thread.create(function()
+                local dlstatus = require('moonloader').download_status
+                local color = -1
+                atext('Обнаружено обновление. Пытаюсь обновиться c '..thisScript().version..' на '..updateversion)
+                wait(250)
+                downloadUrlToFile(updatelink, thisScript().path,
+                  function(id3, status1, p13, p23)
+                    if status1 == dlstatus.STATUS_DOWNLOADINGDATA then
+                      print(string.format('Загружено %d из %d.', p13, p23))
+                    elseif status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
+                      print('Загрузка обновления завершена.')
+                      atext('Обновление завершено!')
+                      goupdatestatus = true
+                      lua_thread.create(function() wait(500) thisScript():reload() end)
+                    end
+                    if status1 == dlstatus.STATUSEX_ENDDOWNLOAD then
+                      if goupdatestatus == nil then
+                          atext('Обновление прошло неудачно. Запускаю устаревшую версию..')
+                        update = false
+                      end
+                    end
+                  end
+                )
+                end, prefix
+              )
+            else
+              update = false
+              print('v'..thisScript().version..': Обновление не требуется.')
+            end
+          end
+        else 
+          atext('Не могу установить обновление')
+          update = false
+        end
+      end
+    end
+  )
+  while update ~= false do wait(100) end
+  end)
+end
+
+function saveconfig()
+  if pInfo.info.dayOnline > 0 then
+    inicfg.save(pInfo, "activity-checker");
+  end
+end
+
 function imgui.TextColoredRGB(text)
   local style = imgui.GetStyle()
   local colors = style.Colors
@@ -329,7 +394,7 @@ end
 ------------------------ HOOKS ------------------------
 function onScriptTerminate(script, quitGame)
   if script == thisScript() then
-    inicfg.save(pInfo, "activity-checker")
+    saveconfig()
   end
 end
 
@@ -368,6 +433,9 @@ function sampevents.onServerMessage(color, text)
   if text:match("Ответ от "..nick) then
     pInfo.info.dayPM = pInfo.info.dayPM + 1
     pInfo.info.weekPM = pInfo.info.weekPM + 1
+  end
+  if text:match("Введите: /a \[текст\]") and sInfo.isAlogin == false then -- Проверка на админку при перезагрузке скрипита в игре
+    sInfo.isAlogin = true
   end
   if text:match("Время online за текущий день") then
     sampAddChatMessage(string.format(" Время online за неделю - %s (Без учета АФК) | Ответов: %d", secToTime(pInfo.info.weekOnline), pInfo.info.weekPM), 0xCCCCCC)
