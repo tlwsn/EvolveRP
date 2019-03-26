@@ -434,7 +434,7 @@ function sampevents.onServerMessage(color, text)
     pInfo.info.dayPM = pInfo.info.dayPM + 1
     pInfo.info.weekPM = pInfo.info.weekPM + 1
   end
-  if text:match("Введите: /a \[текст\]") and sInfo.isAlogin == false then -- Проверка на админку при перезагрузке скрипита в игре
+  if text:match("Введите: %(/a%)dmin") and sInfo.isAlogin == false then -- Проверка на админку при перезагрузке скрипита в игре
     sInfo.isAlogin = true
   end
   if text:match("Время online за текущий день") then
