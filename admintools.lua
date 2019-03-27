@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.9999993')
+script_version('1.9999994')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -70,6 +70,8 @@ local config_keys = {
     goposkey = {v = {key.VK_J}},
 	tpmetka = {v = {key.VK_K}},
     cwarningkey = {v = {key.VK_R}},
+    punaccept = {v = {key.VK_Y}},
+    pundeny = {v = {key.VK_N}},
     airbrkkey = {v = key.VK_RSHIFT}
 }
 local config_colors = {
@@ -293,7 +295,8 @@ local cfg = {
         chatconsole = false,
         extraignor = false,
         admlvl = 0,
-        telegid = 0
+        telegid = 0,
+        autoupdate = true
     }
 }
 function asyncHttpRequest(method, url, args, resolve, reject)
@@ -337,95 +340,6 @@ end
 function atext(text)
     sampAddChatMessage(string.format(' [Admin Tools] {ffffff}%s', text), 0x66FF00)
 end
---[[function apply_custom_style()
-    imgui.SwitchContext()
-    local style = imgui.GetStyle()
-    local colors = style.Colors
-    local clr = imgui.Col
-    local ImVec4 = imgui.ImVec4
-    --[[style.WindowTitleAlign = imgui.ImVec2(0.5, 0.5)
-    style.ChildWindowRounding = 2.0
-    style.FrameRounding = 2.0
-    style.ItemSpacing = imgui.ImVec2(5.0, 4.0)
-    style.ScrollbarSize = 13.0
-    style.ScrollbarRounding = 0
-    style.GrabMinSize = 8.0
-    style.GrabRounding = 1.0
-    colors[clr.WindowBg]               = ImVec4(0.00, 0.00, 0.00, 0.9)
-    colors[clr.FrameBg]                = ImVec4(0.11, 0.79, 0.07, 0.37)
-    colors[clr.FrameBgHovered]         = ImVec4(0.11, 0.79, 0.07, 0.51)
-    colors[clr.FrameBgActive]          = ImVec4(0.11, 0.79, 0.07, 0.76)
-    colors[clr.TitleBg]                = ImVec4(0.07, 0.07, 0.08, 0.83)
-    colors[clr.TitleBgActive]          = ImVec4(0.07, 0.07, 0.08, 1.00)
-    colors[clr.TitleBgCollapsed]       = ImVec4(0.07, 0.07, 0.08, 0.42)
-    colors[clr.ScrollbarBg]            = ImVec4(0.00, 0.00, 0.00, 0.15)
-    colors[clr.ScrollbarGrab]          = ImVec4(0.11, 0.79, 0.07, 0.79)
-    colors[clr.ScrollbarGrabHovered]   = ImVec4(0.11, 0.79, 0.07, 1.00)
-    colors[clr.ScrollbarGrabActive]    = ImVec4(0.11, 0.79, 0.07, 0.40)
-    colors[clr.Button]                 = ImVec4(0.11, 0.79, 0.07, 0.37)
-    colors[clr.ButtonHovered]          = ImVec4(0.11, 0.79, 0.07, 0.51)
-    colors[clr.ButtonActive]           = ImVec4(0.11, 0.79, 0.07, 0.76)
-    colors[clr.Header]                 = ImVec4(0.11, 0.79, 0.07, 0.37)
-    colors[clr.HeaderHovered]          = ImVec4(0.11, 0.79, 0.07, 0.51)
-    colors[clr.HeaderActive]           = ImVec4(0.11, 0.79, 0.07, 0.76)
-    colors[clr.ResizeGrip] = ImVec4(0.00, 0.00, 0.00, 0.00)
-    colors[clr.CloseButton]            = ImVec4(0.11, 0.79, 0.07, 0.37)
-    colors[clr.CloseButtonHovered]     = ImVec4(0.11, 0.79, 0.07, 0.51)
-    colors[clr.CloseButtonActive]      = ImVec4(0.11, 0.79, 0.07, 0.76) тут было ] ]
-    style.WindowRounding = 2.0
-    style.WindowTitleAlign = imgui.ImVec2(0.5, 0.5)
-    style.ChildWindowRounding = 2.0
-    style.FrameRounding = 2.0
-    style.ItemSpacing = imgui.ImVec2(5.0, 4.0)
-    style.ScrollbarSize = 13.0
-    style.ScrollbarRounding = 0
-    style.GrabMinSize = 8.0
-    style.GrabRounding = 1.0
-
-    colors[clr.FrameBg]                = ImVec4(0.48, 0.16, 0.16, 0.54)
-    colors[clr.FrameBgHovered]         = ImVec4(0.98, 0.26, 0.26, 0.40)
-    colors[clr.FrameBgActive]          = ImVec4(0.98, 0.26, 0.26, 0.67)
-    colors[clr.TitleBg]                = ImVec4(0.04, 0.04, 0.04, 1.00)
-    colors[clr.TitleBgActive]          = ImVec4(0.48, 0.16, 0.16, 1.00)
-    colors[clr.TitleBgCollapsed]       = ImVec4(0.00, 0.00, 0.00, 0.51)
-    colors[clr.CheckMark]              = ImVec4(0.98, 0.26, 0.26, 1.00)
-    colors[clr.SliderGrab]             = ImVec4(0.88, 0.26, 0.24, 1.00)
-    colors[clr.SliderGrabActive]       = ImVec4(0.98, 0.26, 0.26, 1.00)
-    colors[clr.Button]                 = ImVec4(0.98, 0.26, 0.26, 0.40)
-    colors[clr.ButtonHovered]          = ImVec4(0.98, 0.26, 0.26, 1.00)
-    colors[clr.ButtonActive]           = ImVec4(0.98, 0.06, 0.06, 1.00)
-    colors[clr.Header]                 = ImVec4(0.98, 0.26, 0.26, 0.31)
-    colors[clr.HeaderHovered]          = ImVec4(0.98, 0.26, 0.26, 0.80)
-    colors[clr.HeaderActive]           = ImVec4(0.98, 0.26, 0.26, 1.00)
-    colors[clr.Separator]              = colors[clr.Border]
-    colors[clr.SeparatorHovered]       = ImVec4(0.75, 0.10, 0.10, 0.78)
-    colors[clr.SeparatorActive]        = ImVec4(0.75, 0.10, 0.10, 1.00)
-    colors[clr.ResizeGrip]             = ImVec4(0.98, 0.26, 0.26, 0.25)
-    colors[clr.ResizeGripHovered]      = ImVec4(0.98, 0.26, 0.26, 0.67)
-    colors[clr.ResizeGripActive]       = ImVec4(0.98, 0.26, 0.26, 0.95)
-    colors[clr.TextSelectedBg]         = ImVec4(0.98, 0.26, 0.26, 0.35)
-    colors[clr.Text]                   = ImVec4(1.00, 1.00, 1.00, 1.00)
-    colors[clr.TextDisabled]           = ImVec4(0.50, 0.50, 0.50, 1.00)
-    colors[clr.WindowBg]               = ImVec4(0.06, 0.06, 0.06, 0.94)
-    colors[clr.ChildWindowBg]          = ImVec4(1.00, 1.00, 1.00, 0.00)
-    colors[clr.PopupBg]                = ImVec4(0.08, 0.08, 0.08, 0.94)
-    colors[clr.ComboBg]                = colors[clr.PopupBg]
-    colors[clr.Border]                 = ImVec4(0.43, 0.43, 0.50, 0.50)
-    colors[clr.BorderShadow]           = ImVec4(0.00, 0.00, 0.00, 0.00)
-    colors[clr.MenuBarBg]              = ImVec4(0.14, 0.14, 0.14, 1.00)
-    colors[clr.ScrollbarBg]            = ImVec4(0.02, 0.02, 0.02, 0.53)
-    colors[clr.ScrollbarGrab]          = ImVec4(0.31, 0.31, 0.31, 1.00)
-    colors[clr.ScrollbarGrabHovered]   = ImVec4(0.41, 0.41, 0.41, 1.00)
-    colors[clr.ScrollbarGrabActive]    = ImVec4(0.51, 0.51, 0.51, 1.00)
-    colors[clr.CloseButton]            = ImVec4(0.41, 0.41, 0.41, 0.50)
-    colors[clr.CloseButtonHovered]     = ImVec4(0.98, 0.39, 0.36, 1.00)
-    colors[clr.CloseButtonActive]      = ImVec4(0.98, 0.39, 0.36, 1.00)
-    colors[clr.PlotLines]              = ImVec4(0.61, 0.61, 0.61, 1.00)
-    colors[clr.PlotLinesHovered]       = ImVec4(1.00, 0.43, 0.35, 1.00)
-    colors[clr.PlotHistogram]          = ImVec4(0.90, 0.70, 0.00, 1.00)
-    colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
-    colors[clr.ModalWindowDarkening]   = ImVec4(0.80, 0.80, 0.80, 0.35)
-end]]
 function apply_custom_style()
     imgui.SwitchContext()
     local style = imgui.GetStyle()
@@ -700,6 +614,7 @@ function main()
         if file then
             cfg = decodeJson(file:read('*a'))
             if cfg.other.telegid == nil then cfg.other.telegid = 0 end
+            if cfg.other.autoupdate == nil then cfg.other.autoupdate = true end
         end
     end
     saveData(cfg, 'moonloader/config/Admin Tools/config.json')
@@ -712,7 +627,7 @@ function main()
     for line in io.lines('moonloader/config/Admin Tools/punishignor.txt') do table.insert(punishignor, line) end
     DWMAPI.DwmEnableComposition(1)
     repeat wait(0) until isSampAvailable()
-    autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", '[Admin Tools]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439")
+    if cfg.other.autoupdate then autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", '[Admin Tools]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439") end
     lua_thread.create(wh)
     registerFastAnswer()
     sampRegisterChatCommand('aafk', function()
@@ -754,7 +669,7 @@ function main()
 	sampRegisterChatCommand('cheat', cheat)
     sampRegisterChatCommand('gs', gs)
     sampRegisterChatCommand('ags', ags)
-    sampRegisterChatCommand('wl', wl)
+    sampRegisterChatCommand('wlog', wl)
     sampRegisterChatCommand('gun', gun)
     sampRegisterChatCommand('ban', ban)
     sampRegisterChatCommand('warn', warn)
@@ -777,17 +692,21 @@ function main()
             config_keys = decodeJson(fa:read('*a'))
 			if config_keys == nil then
 				config_keys = {
-				    banipkey = {v = {190}},
-				    warningkey = {v = {key.VK_Z}},
-				    reportkey = {v = {key.VK_X}},
-				    saveposkey = {v = {key.VK_M}},
-				    goposkey = {v = {key.VK_J}},
-					tpmetka = {v = {key.VK_K}},
+                    banipkey = {v = {190}},
+                    warningkey = {v = {key.VK_Z}},
+                    reportkey = {v = {key.VK_X}},
+                    saveposkey = {v = {key.VK_M}},
+                    goposkey = {v = {key.VK_J}},
+                    tpmetka = {v = {key.VK_K}},
                     cwarningkey = {v = {key.VK_R}},
-                    airbrkkey = {v = key.VK_RSHIFT}
-				}
+                    punaccept = {v = {key.VK_Y}},
+                    pundeny = {v = {key.VK_N}},
+                    airbrkkey = {v = key.VK_RSHIFT},
+                }
 			end
-			if config_keys.cwarningkey == nil then config_keys.cwarningkey = {v = {key.VK_R}} end
+            if config_keys.cwarningkey == nil then config_keys.cwarningkey = {v = {key.VK_R}} end
+            if config_keys.punaccept == nil then config_keys.punaccept = {v = {key.VK_Y}} end
+            if config_keys.pundeny == nil then config_keys.pundeny = {v = {key.VK_N}} end
             if config_keys.airbrkkey == nil then config_keys.airbrkkey = {v = key.VK_RSHIFT} end
         end
     end
@@ -875,7 +794,9 @@ function main()
     saveposbind = rkeys.registerHotKey(config_keys.saveposkey.v, true, saveposk)
     goposbind = rkeys.registerHotKey(config_keys.goposkey.v, true, goposk)
 	tpmetkabind = rkeys.registerHotKey(config_keys.tpmetka.v, true, tpmetkak)
-	cwarningbind = rkeys.registerHotKey(config_keys.cwarningkey.v, true, cwarningk)
+    cwarningbind = rkeys.registerHotKey(config_keys.cwarningkey.v, true, cwarningk)
+    punacceptbind = rkeys.registerHotKey(config_keys.punaccept.v, true, punaccept)
+    pundenybind = rkeys.registerHotKey(config_keys.pundeny.v, true, pundeny)
 	addEventHandler("onWindowMessage", function (msg, wparam, lparam)
         if msg == wm.WM_KEYDOWN or msg == wm.WM_SYSKEYDOWN then
             if tEditData.id > -1 then
@@ -909,6 +830,7 @@ function main()
     lua_thread.create(main_funcs)
     lua_thread.create(check_keys_fast)
     lua_thread.create(warningsKey)
+    lua_thread.create(admchat)
     while true do wait(0)
         if sampGetGamestate() ~= 3 then
             admins_online = {}
@@ -916,7 +838,7 @@ function main()
             temp_checker_online = {}
         end
         if swork and sampGetGamestate() == 3 then nameTagOff() end
-        if wasKeyPressed(key.VK_F12) and not sampIsChatInputActive() and not isSampfuncsConsoleActive() and not sampIsDialogActive() then swork = not swork 
+        if wasKeyPressed(key.VK_F12) then swork = not swork 
             if not swork then
                 nameTagOn()
             else
@@ -1208,9 +1130,9 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Описание: Открыть диалог с ID оружий')
                 imgui.TextWrapped(u8 'Использование: /guns')
             end
-            if imgui.CollapsingHeader('/wl', btn_size) then
+            if imgui.CollapsingHeader('/wlog', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Сокращение команды /warnlog')
-                imgui.TextWrapped(u8 'Использование: /wl [id/nick]')
+                imgui.TextWrapped(u8 'Использование: /wlog [id/nick]')
             end
             if imgui.CollapsingHeader('/blog', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Сокращение команды /banlog')
@@ -1472,7 +1394,7 @@ function imgui.OnDrawFrame()
 				if imgui.Selectable(u8 '  Временный чекер', data.imgui.checker == 3) then data.imgui.checker = 3 end
             end
             if imgui.Selectable(u8 'Настройка выдачи наказаний', data.imgui.menu == 4) then data.imgui.menu = 4 end
-            if imgui.Selectable(u8 'Насройка цветов', data.imgui.menu == 6) then data.imgui.menu = 6 end
+            if imgui.Selectable(u8 'Настройка цветов', data.imgui.menu == 6) then data.imgui.menu = 6 end
 			if imgui.Selectable(u8 'Остальные настройки', data.imgui.menu == 5) then data.imgui.menu = 5 end
             imgui.EndChild()
             imgui.SameLine()
@@ -1508,12 +1430,18 @@ function imgui.OnDrawFrame()
 					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                 end
                 imgui.SameLine(); imgui.Text(u8 'Клавиша телепорта на сохраненные координаты')
+                if imgui.HotKey('##metkatp', config_keys.tpmetka, tLastKeys, 100) then
+                    rkeys.changeHotKey(tpmetkabind, config_keys.tpmetka.v)
+					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
+                end
+                imgui.SameLine(); imgui.Text(u8 'Клавиша телепорта на метку')
             elseif data.imgui.menu == 2 then
                 if data.imgui.cheat == 1 then
 					local airfloat = imgui.ImFloat(cfg.cheat.airbrkspeed)
                     imgui.CentrText(u8 'AirBrake')
                     imgui.Separator()
-					if imgui.SliderFloat(u8 'Начальная скорость', airfloat, 0.05, 10, '%0.2f') then cfg.cheat.airbrkspeed = airfloat.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                    if imgui.SliderFloat(u8 'Начальная скорость', airfloat, 0.05, 10, '%0.2f') then cfg.cheat.airbrkspeed = airfloat.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                    imgui.TextWrapped(u8 'Начальная скорость - это та скорость, которая будет всегда при включении AirBrake. Саму скорость можно изменить во время полета клавишами пробел(увеличить скорость) или левый шифт(уменьшить скокрость)')
                 elseif data.imgui.cheat == 2 then
                     local godModeB = imgui.ImBool(cfg.cheat.autogm)
                     imgui.CentrText(u8 'GodMode')
@@ -1572,7 +1500,17 @@ function imgui.OnDrawFrame()
                 local cbugb = imgui.ImInt(cfg.timers.cbugtimer)
                 local fracstatb = imgui.ImBool(cfg.other.fracstat)
 				imgui.CentrText(u8 'Настройка выдачи наказаний')
-				imgui.Separator()
+                imgui.Separator()
+                if imgui.HotKey('##punaccept', config_keys.punaccept, tLastKeys, 100) then
+                    rkeys.changeHotKey(punacceptbind, config_keys.punaccept.v)
+					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
+                end
+                imgui.SameLine(); imgui.Text(u8 'Клавиша выдачи наказания по просьбе в /a')
+                if imgui.HotKey('##pundeny', config_keys.pundeny, tLastKeys, 100) then
+                    rkeys.changeHotKey(pundenybind, config_keys.pundeny.v)
+					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
+                end
+                imgui.SameLine(); imgui.Text(u8 'Клавиша отмены выдачи наказания по просьбе в /a')
 				if imgui.InputInt(u8 'Таймер сбива (/sbiv)', sbivb, 0) then cfg.timers.sbivtimer = sbivb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
 				if imgui.InputInt(u8 'Таймер клео сбива (/csbiv)', csbivb, 0) then cfg.timers.csbivtimer = csbivb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 if imgui.InputInt(u8 'Таймер +с вне гетто (/cbug)', cbugb, 0) then cfg.timers.cbugtimer = cbugb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
@@ -1588,6 +1526,7 @@ function imgui.OnDrawFrame()
                 local conschat = imgui.ImBool(cfg.other.chatconsole)
                 local extraignorb = imgui.ImBool(cfg.other.extraignor)
                 local joinquitb = imgui.ImBool(cfg.joinquit.enable)
+                local autoupdateb = imgui.ImBool(cfg.other.autoupdate)
 				local ipass = imgui.ImBuffer(tostring(cfg.other.password), 256)
                 local iapass = imgui.ImBuffer(tostring(cfg.other.adminpass), 256)
                 local hudfontb = imgui.ImBuffer(tostring(cfg.other.hudfont), 256)
@@ -1595,15 +1534,18 @@ function imgui.OnDrawFrame()
 				imgui.CentrText(u8 'Остальное')
 				imgui.Separator()
 				if imgui.ToggleButton(u8 'reconw##1', reconwb) then cfg.other.reconw = reconwb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Варнинги на клео реконнект')
-				imgui.Text(u8 'Местоположение рекона')
-                imgui.SameLine()
-                if imgui.Button(u8 'Изменить##3') then data.imgui.reconpos = true; mainwindow.v = false end
                 if imgui.ToggleButton(u8 'Включить замененный рекон##1', creconB) then cfg.crecon.enable = creconB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить замененный рекон')
 				if imgui.ToggleButton(u8 'Автологин##11', ipassb) then cfg.other.passb = ipassb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автологин')
                 if imgui.ToggleButton(u8 'Автоалогин##11', iapassb) then cfg.other.apassb = iapassb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автоалогин')
                 if imgui.ToggleButton(u8 'Чатлог в консоли##11', conschat) then cfg.other.chatconsole = conschat.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Чатлог в консоли')
                 if imgui.ToggleButton(u8 'Игнор варнингов печени на ExtraWS##11', extraignorb) then cfg.other.extraignor = extraignorb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Игнор варнингов печени на ExtraWS') imgui.SameLine() imgui.TextQuestion(u8 'При переходе в рекон по варнингу будет игнорироваться варнинг на Екстру')
                 if imgui.ToggleButton(u8 'joinquit##11', joinquitb) then cfg.joinquit.enable = joinquitb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Лог подключившися/отключивашися игроков')
+                if imgui.ToggleButton(u8 'autoupd##11', autoupdateb) then cfg.other.autoupdate = autoupdateb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автообновление скрипта')
+                if creconB.v then
+                    imgui.Text(u8 'Местоположение рекона')
+                    imgui.SameLine()
+                    if imgui.Button(u8 'Изменить##3') then data.imgui.reconpos = true; mainwindow.v = false end
+                end
                 if joinquitb.v then 
                     if imgui.Button(u8'Изменить местоположения подключившихся##1') then data.imgui.joinpos = true; mainwindow.v = false end
                     imgui.SameLine()
@@ -1692,7 +1634,8 @@ function imgui.OnDrawFrame()
 							rkeys.unRegisterHotKey(tLastKeys.v)
 						end
 						rkeys.registerHotKey(v.v, true, onHotKey)
-					end
+                    end
+                    saveData(tBindList, "moonloader/config/Admin Tools/binder.json")
 				end
 				imgui.SameLine()
 				if tEditData.id ~= k then
@@ -2286,6 +2229,13 @@ function sampev.onServerMessage(color, text)
     if text:find(mynick) and aafk and telegid then asyncHttpRequest("POST", 'https://api.telegram.org/bot893731440:AAF3TO6rbo_ON_pz-38aG02GM4dMlpeEDo8/sendMessage?chat_id='..telegid..'&text='..u8(text), _, function (response) print(response.text) end, function (err) atext(err) end) end
     if text:match('^ Вы авторизировались как модератор %d+ уровня$') then cfg.other.admlvl = tonumber(text:match('^ Вы авторизировались как модератор (%d+) уровня$')) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
     punishlog(text)
+    if cfg.other.admlvl > 1 and color == 10270806 then
+        if text:find(sampGetPlayerNickname(punkey.warn.id)) or wtext:find(sampGetPlayerNickname(punkey.ban.id)) or wtext:find(sampGetPlayerNickname(punkey.prison.id)) then
+            if not text:find(mynick) then
+                atext('Команду выполнил другой администратор')
+            end
+        end
+    end
     if cfg.other.chatconsole then sampfuncsLog(text) end
 	if doesFileExist('moonloader/Admin Tools/chatlog_all.txt') then
 		local file = io.open('moonloader/Admin Tools/chatlog_all.txt', 'a')
@@ -2677,9 +2627,8 @@ function sampev.onTextDrawSetString(id, text)
             imtextnick = text:match('(.+)~n~ID:')
             reafk = false
         end
-
         reid = text:match('.+~n~ID%: (%d+)')
-        traceid = reid
+        traceid = tonumber(reid)
     end
 end
 function sampev.onShowTextDraw(id, textdraw)
@@ -2834,7 +2783,7 @@ function renders()
                     end
                 end
             end
-            renderFontDrawText(hudfont, ('%s %s %s [%s %s] [FPS: %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, hposint, hfps), 5, hsy-20, -1)
+            renderFontDrawText(hudfont, ('%s %s %s [%s %s] [FPS: %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, hposint, hfps), 1, hsy-cfg.other.hudsize-9, -1)
             if cfg.admchecker.enable then
                 renderFontDrawText(checkfont, "{00ff00}Админы онлайн ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY-#admins_online*15, -1)
                 for k, v in ipairs(admins_online) do
@@ -2878,256 +2827,7 @@ function sampGetPlayerIdByNickname(nick)
     if tostring(nick) == sampGetPlayerNickname(myid) then return myid end
     for i = 0, 1000 do if sampIsPlayerConnected(i) and sampGetPlayerNickname(i) == tostring(nick) then return i end end
 end
---[[function addadm(pam)
-    local pId = tonumber(pam)
-    if pId ~= nil then
-        if sampIsPlayerConnected(pId) then
-            local nick = sampGetPlayerNickname(pId)
-            table.insert(admins_online, {nick = nick, id = pId})
-            table.insert(admins, nick)
-            atext('Игрок '..nick..' ['..pId..'] добавлен в чекер админов')
-            local open = io.open("moonloader/config/Admin Tools/adminlist.txt", 'a')
-            open:write('\n'..nick)
-            open:close()
-        else
-            table.insert(admins, pId)
-            atext('Игрок '..pId..' добавлен в чекер админов')
-            local open = io.open("moonloader/config/Admin Tools/adminlist.txt", 'a')
-            open:write('\n'..pId)
-            open:close()
-        end
-    elseif pId == nil and #pam ~= 0 then
-        if sampGetPlayerIdByNickname(tostring(pam)) ~= nil then
-            local bpId = sampGetPlayerIdByNickname(tostring(pam))
-            table.insert(admins_online, {nick = pam, id = bpId})
-            atext('Игрок '..pam..' ['..bpId..'] добавлен в чекер админов')
-        else
-            atext('Игрок '..pam..' добавлен в чекер админов')
-        end
-        table.insert(admins, pam)
-        local open = io.open("moonloader/config/Admin Tools/adminlist.txt", 'a')
-        open:write('\n'..pam)
-        open:close()
-    elseif #pam == 0 then
-        atext('Введите /addadm [id/nick]')
-    end
-end
---function addplayer(pam)
-    local pId = tonumber(pam)
-    if pId ~= nil then
-        if sampIsPlayerConnected(pId) then
-            local nick = sampGetPlayerNickname(pId)
-            table.insert(players_online, {nick = nick, id = pId})
-            table.insert(players, nick)
-            atext('Игрок '..nick..' ['..pId..'] добавлен в чекер игроков')
-            local open = io.open("moonloader/config/Admin Tools/playerlist.txt", 'a')
-            open:write('\n'..nick)
-            open:close()
-        else
-            table.insert(players, pId)
-            atext('Игрок '..pId..' добавлен в чекер игроков')
-            local open = io.open("moonloader/config/Admin Tools/playerlist.txt", 'a')
-            open:write('\n'..pId)
-            open:close()
-        end
-    elseif pId == nil and #pam ~= 0 then
-        if sampGetPlayerIdByNickname(tostring(pam)) ~= nil then
-            local bpId = sampGetPlayerIdByNickname(tostring(pam))
-            table.insert(players_online, {nick = pam, id = bpId})
-            atext('Игрок '..pam..' ['..bpId..'] добавлен в чекер игроков')
-        else
-            atext('Игрок '..pam..' добавлен в чекер игроков')
-        end
-        table.insert(players, pam)
-        local open = io.open("moonloader/config/Admin Tools/playerlist.txt", 'a')
-        open:write('\n'..pam)
-        open:close()
-    elseif #pam == 0 then
-        atext('Введите /addplayer [id/nick]')
-    end
-end
-function delplayer(pam)
-    lua_thread.create(function()
-        local pId = tonumber(pam)
-        if pId ~= nil then
-            if sampIsPlayerConnected(pId) then
-                local nick = sampGetPlayerNickname(pId)
-                local i = 1
-                while i <= #players do
-                    if players[i] == nick then
-                        table.remove(players, i)
-                    else
-                        i = i + 1
-                    end
-                end
-                atext('Игрок '..nick..' ['..pId..'] удален из чекера игроков')
-                local oi = 1
-                while oi <= #players_online do
-                    if players_online[oi].nick == nick then
-                        table.remove(players_online, oi)
-                    else
-                        oi = oi + 1
-                    end
-                end
-                local open = io.open("moonloader/config/Admin Tools/playerlist.txt", "w")
-                for k, v in pairs(players) do
-                    open:write('\n'..v)
-                end
-                open:close()
-                open = nil
-            else
-                local i = 1
-                while i <= #players do
-                    if players[i] == pId then
-                        table.remove(players, i)
-                    else
-                        i = i + 1
-                    end
-                end
-                atext('Игрок '..pId..' удален из чекера игроков')
-                local open = io.open("moonloader/config/Admin Tools/playerlist.txt", "w")
-                for k, v in pairs(players) do
-                    open:write('\n'..v)
-                end
-                open:close()
-                open = nil
-            end
-        elseif pId == nil and #pam ~= 0 then
-            if sampGetPlayerIdByNickname(tostring(pam)) ~= nil then
-                local bpId = sampGetPlayerIdByNickname(tostring(pam))
-                local i = 1
-                while i <= #players do
-                    if players[i] == tostring(pam) then
-                        table.remove(players, i)
-                    else
-                        i = i + 1
-                    end
-                end
-                local oi = 1
-                while oi <= #players_online do
-                    if players_online[oi].nick == tostring(pam) then
-                        table.remove(players_online, oi)
-                    else
-                        oi = oi + 1
-                    end
-                end
-                local open = io.open("moonloader/config/Admin Tools/playerlist.txt", "w")
-                for k, v in pairs(players) do
-                    open:write('\n'..v)
-                end
-                open:close()
-                open = nil
-                atext('Игрок '..pam..' ['..bpId..'] удален из чекера игроков')
-            else
-                local i = 1
-                while i <= #players do
-                    if players[i] == tostring(pam) then
-                        table.remove(players, i)
-                    else
-                        i = i + 1
-                    end
-                end
-                local open = io.open("moonloader/config/Admin Tools/playerlist.txt", "w")
-                for k, v in pairs(players) do
-                    open:write('\n'..v)
-                end
-                open:close()
-                open = nil
-            end
-        end
-    end)
-end
-function deladm(pam)
-    lua_thread.create(function()
-        local pId = tonumber(pam)
-        if pId ~= nil then
-            if sampIsPlayerConnected(pId) then
-                local nick = sampGetPlayerNickname(pId)
-                local i = 1
-                while i <= #admins do
-                    if admins[i] == nick then
-                        table.remove(admins, i)
-                    else
-                        i = i + 1
-                    end
-                end
-                atext('Игрок '..nick..' ['..pId..'] удален из чекера админов')
-                local oi = 1
-                while oi <= #admins_online do
-                    if admins_online[oi].nick == nick then
-                        table.remove(admins_online, oi)
-                    else
-                        oi = oi + 1
-                    end
-                end
-                local open = io.open("moonloader/config/Admin Tools/adminlist.txt", "w")
-                for k, v in pairs(admins) do
-                    open:write('\n'..v)
-                end
-                open:close()
-                open = nil
-            else
-                local i = 1
-                while i <= #admins do
-                    if admins[i] == pId then
-                        table.remove(admins, i)
-                    else
-                        i = i + 1
-                    end
-                end
-                atext('Игрок '..pId..' удален из чекера админов')
-                local open = io.open("moonloader/config/Admin Tools/adminlist.txt", "w")
-                for k, v in pairs(admins) do
-                    open:write('\n'..v)
-                end
-                open:close()
-                open = nil
-            end
-        elseif pId == nil and #pam ~= 0 then
-            if sampGetPlayerIdByNickname(tostring(pam)) ~= nil then
-                local bpId = sampGetPlayerIdByNickname(tostring(pam))
-                local i = 1
-                while i <= #admins do
-                    if admins[i] == tostring(pam) then
-                        table.remove(admins, i)
-                    else
-                        i = i + 1
-                    end
-                end
-                local oi = 1
-                while oi <= #admins_online do
-                    if admins_online[oi].nick == tostring(pam) then
-                        table.remove(admins_online, oi)
-                    else
-                        oi = oi + 1
-                    end
-                end
-                local open = io.open("moonloader/config/Admin Tools/adminlist.txt", "w")
-                for k, v in pairs(admins) do
-                    open:write('\n'..v)
-                end
-                open:close()
-                open = nil
-                atext('Игрок '..pam..' ['..bpId..'] удален из чекера админов')
-            else
-                local i = 1
-                while i <= #admins do
-                    if admins[i] == tostring(pam) then
-                        table.remove(admins, i)
-                    else
-                        i = i + 1
-                    end
-                end
-                local open = io.open("moonloader/config/Admin Tools/adminlist.txt", "w")
-                for k, v in pairs(admins) do
-                    open:write('\n'..v)
-                end
-                open:close()
-                open = nil
-            end
-        end
-    end)
-end]]
+
 function check_keystrokes() -- inv
     while true do wait(0)
         if swork then
@@ -3296,14 +2996,26 @@ function onReceiveRpc(id, bs) --перехватываем все входящие рпс
     end
 end
 function tr(pam)
-    local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     local idd = tonumber(pam)
-    if idd ~= nil and sampIsPlayerConnected(idd) or idd == myid then
-        traceid = idd
-        atext("Трейсера сменены на: {66FF00}"..traceid)
+    if idd ~= nil then
+        if idd == -1 then
+            atext('Трейсера отключены')
+            traceid = -1
+        else
+            if sampIsPlayerConnected(idd) then
+                if idd == traceid then
+                    atext(('Трейсера для %s [%s] отключены'):format(sampGetPlayerNickname(idd), idd))
+                    traceid = -1
+                else
+                    atext(('Трейсера переключены на %s [%s]'):format(sampGetPlayerNickname(idd), idd))
+                    traceid = idd
+                end
+            else
+                atext('Игрок оффлайн')
+            end
+        end
     else
-        atext('Используйте: /tr [id]')
-        traceid = '-1'
+        atext('Введите: /tr [id/-1]')
     end
 end
 function wh()
@@ -3660,7 +3372,7 @@ function wl(pam)
             sampSendChat('/warnlog '..pam)
         end
     else
-        atext('Введите /wl [id/nick]')
+        atext('Введите /wlog [id/nick]')
     end
 end
 function gs(pam)
@@ -3957,6 +3669,7 @@ function cip(pam)
                         end
                     end)
                 end)
+                wait(200)
             end
             while #rdata ~= 2 do wait(0) end
             if rdata[1]["status"] and rdata[2]["status"] then
@@ -4037,100 +3750,6 @@ function massarm(pam)
 		end
 	end)
 end
---[[function addtemp(pam)
-    local pId = tonumber(pam)
-    if pId ~= nil then
-        if sampIsPlayerConnected(pId) then
-            local nick = sampGetPlayerNickname(pId)
-            table.insert(temp_checker_online, {nick = nick, id = pId})
-            table.insert(temp_checker, nick)
-            atext('Игрок '..nick..' ['..pId..'] добавлен в временный чекер')
-        else
-            table.insert(temp_checker, pId)
-            atext('Игрок '..pId..' добавлен в временный чекер')
-        end
-    elseif pId == nil and #pam ~= 0 then
-        if sampGetPlayerIdByNickname(tostring(pam)) ~= nil then
-            local bpId = sampGetPlayerIdByNickname(tostring(pam))
-            table.insert(temp_checker, {nick = pam, id = bpId})
-			table.insert(temp_checker_online, {nick = nick, id = pId})
-            atext('Игрок '..pam..' ['..bpId..'] добавлен в временный чекер')
-        else
-            atext('Игрок '..pam..' добавлен в временный чекер')
-        end
-        table.insert(temp_checker, pam)
-    elseif #pam == 0 then
-        atext('Введите /addtemp [id/nick]')
-    end
-end
-function deltemp(pam)
-    lua_thread.create(function()
-        local pId = tonumber(pam)
-        if pId ~= nil then
-            if sampIsPlayerConnected(pId) then
-                local nick = sampGetPlayerNickname(pId)
-                local i = 1
-                while i <= #temp_checker do
-                    if temp_checker[i] == nick then
-                        table.remove(temp_checker, i)
-                    else
-                        i = i + 1
-                    end
-                end
-                atext('Игрок '..nick..' ['..pId..'] удален из временного чекера')
-                local oi = 1
-                while oi <= #temp_checker_online do
-                    if temp_checker_online[oi].nick == nick then
-                        table.remove(temp_checker_online, oi)
-                    else
-                        oi = oi + 1
-                    end
-                end
-            else
-                local i = 1
-                while i <= #temp_checker do
-                    if temp_checker[i] == pId then
-                        table.remove(temp_checker, i)
-                    else
-                        i = i + 1
-                    end
-                end
-				atext('Игрок '..pId.. 'удален из временного чекера')
-            end
-        elseif pId == nil and #pam ~= 0 then
-            if sampGetPlayerIdByNickname(tostring(pam)) ~= nil then
-                local bpId = sampGetPlayerIdByNickname(tostring(pam))
-                local i = 1
-                while i <= #temp_checker do
-                    if temp_checker[i] == tostring(pam) then
-                        table.remove(temp_checker, i)
-                    else
-                        i = i + 1
-                    end
-                end
-                local oi = 1
-                while oi <= #temp_checker_online do
-                    if temp_checker_online[oi].nick == tostring(pam) then
-                        table.remove(temp_checker_online, oi)
-                    else
-                        oi = oi + 1
-                    end
-                end
-				atext('Игрок '..pam..' ['..bpId..'] удален из временного чекера')
-            else
-                local i = 1
-                while i <= #temp_checker do
-                    if temp_checker[i] == tostring(pam) then
-                        table.remove(temp_checker, i)
-                    else
-                        i = i + 1
-                    end
-                end
-				atext('Игрок '..pam.. 'удален из временного чекера')
-            end
-        end
-    end)
-end]]
 function givehb(pam)
     lua_thread.create(function()
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
@@ -4609,8 +4228,8 @@ function addplayer(pam)
             table.insert(players, {nick = id, color = color, text = text})
             atext(('Игрок %s добавлен в чекер игроков'):format(id))
         end
-    elseif pam:match("(%a+) (%S+) (.+)") then
-        local nick, color, text = pam:match("(%a+) (%S+) (.+)")
+    elseif pam:match("(%S+) (%S+)%s(.+)") then
+        local nick, color, text = pam:match("(%S+) (%S+) (.+)")
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(players, {nick = nick, color = color, text = text})
         if id ~= nil then
@@ -4639,7 +4258,7 @@ function addplayer(pam)
         else
             atext(('Игрок %s добавлен в чекер игроков'):format(nick))
         end
-    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") or not pam:match("(%a+) (%S+) (.+)") or not pam:match('(%d+) (%S+) (.+)') then
+    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") or not pam:match("(%S+) (%S+) (.+)") or not pam:match('(%d+) (%S+) (.+)') then
         atext('Введите: /addplayer [id/nick] [color(Пример: ffffff)/-1] [примечание]')
     end
     saveData(players, 'moonloader/config/Admin Tools/playerchecker.json')
@@ -4656,8 +4275,8 @@ function addadm(pam)
             table.insert(admins, {nick = id, color = color, text = text})
             atext(('Игрок %s добавлен в чекер админов'):format(id))
         end
-    elseif pam:match("(%a+) (%S+) (.+)") then
-        local nick, color, text = pam:match("(%a+) (%S+) (.+)")
+    elseif pam:match("(%S+) (%S+) (.+)") then
+        local nick, color, text = pam:match("(%S+) (%S+) (.+)")
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(admins, {nick = nick, color = color, text = text})
         if id ~= nil then
@@ -4686,7 +4305,7 @@ function addadm(pam)
         else
             atext(('Игрок %s добавлен в чекер админов'):format(nick))
         end
-    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") or not pam:match("(%a+) (%S+) (.+)") or not pam:match('(%d+) (%S+) (.+)') then
+    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") or not pam:match("(%S+) (%S+) (.+)") or not pam:match('(%d+) (%S+) (.+)') then
         atext('Введите: /addadm [id/nick] [color(Пример: ffffff)/-1] [примечание]')
     end
     saveData(admins, 'moonloader/config/Admin Tools/admchecker.json')
@@ -4827,8 +4446,8 @@ function addtemp(pam)
             table.insert(temp_checker, {nick = id, color = color, text = text})
             atext(('Игрок %s добавлен в временный чекер'):format(id))
         end
-    elseif pam:match("(%a+) (%S+) (.+)") then
-        local nick, color, text = pam:match("(%a+) (%S+) (.+)")
+    elseif pam:match("(%S+) (%S+) (.+)") then
+        local nick, color, text = pam:match("(%S+) (%S+) (.+)")
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(temp_checker, {nick = nick, color = color, text = text})
         if id ~= nil then
@@ -4857,7 +4476,7 @@ function addtemp(pam)
         else
             atext(('Игрок %s добавлен в временный чекер'):format(nick))
         end
-    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") or not pam:match("(%a+) (%S+) (.+)") or not pam:match('(%d+) (%S+) (.+)') then
+    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") or not pam:match("(%S+) (%S+) (.+)") or not pam:match('(%d+) (%S+) (.+)') then
         atext('Введите: /addtemp [id/nick] [color(Пример: ffffff)/-1] [примечание]')
     end
 end
@@ -4920,5 +4539,120 @@ function deltemp(pam)
         end
     elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") then
         atext('Введите: /deltemp [id/nick]')
+    end
+end
+local punkey = {
+    warn = {
+        id = nil,
+        day = nil,
+        reason = nil,
+        admin = nil
+    },
+    ban = {
+        id = nil,
+        reason = nil,
+        admin = nil
+    },
+    prison = {
+        id = nil,
+        day = nil,
+        reason = nil,
+        admin = nil
+    },
+    re = {
+        id = nil,
+        nick = nil
+    }
+}
+function admchat()
+    while true do wait(0)
+        local wtext, wprefix, wcolor, wpcolor = sampGetChatString(99)
+        local mynick = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
+        if wcolor == 4294967040 and wtext:match('^ <ADM%-CHAT> .+ %[%d+%]: .+') then
+            local nick, id, text = wtext:match('<ADM%-CHAT> (.+) %[(%d+)%]: (.+)')
+            if cfg.other.admlvl > 1 and nick ~= mynick then
+                if text:match('/re %d+') then
+                    if sampIsPlayerConnected(tonumber(text:match('/re (%d+)'))) then
+                        punkey.re.id = text:match('/re (%d+)')
+                        punkey.re.nick = nick
+                        atext(('Администратор %s [%s] просит зайти в слежку за игроком %s [%s]'):format(nick, id, sampGetPlayerNickname(punkey.re.id), punkey.re.id))
+                        atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения и {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                    end
+                end
+                if text:match('/warn %d+ %d+ .+') then
+                    if sampIsPlayerConnected(tonumber(text:match('/warn (%d+) %d+ .+'))) then
+                        punkey.warn.id, punkey.warn.day, punkey.warn.reason = text:match('/warn (%d+) (%d+) (.+)')
+                        punkey.warn.admin = nick
+                        atext(("Администратор %s [%s] хочет заварнить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.warn.id), punkey.warn.id, punkey.warn.reason))
+                        atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения и {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                    end
+                end
+                if text:match('/ban %d+ .+') then
+                    if sampIsPlayerConnected(tonumber(text:match('/ban (%d+) .+'))) then
+                        punkey.ban.id, punkey.ban.reason = text:match('/ban (%d+) (.+)')
+                        punkey.ban.admin = nick
+                        atext(("Администратор %s [%s] хочет забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.ban.id), punkey.ban.id, punkey.ban.reason))
+                        atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения и {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                    end
+                end
+                if text:match('/prison %d+ %d+ .+') then
+                    if sampIsPlayerConnected(tonumber(text:match('/prison (%d+) %d+ .+'))) then
+                        punkey.prison.id, punkey.prison.day, punkey.prison.reason = text:match('/prison (%d+) (%d+) (.+)')
+                        punkey.prison.admin = nick
+                        atext(("Администратор %s [%s] хочет посадить в присон игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.prison.id), punkey.prison.id, punkey.prison.reason))
+                        atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения и {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                    end
+                end
+            end
+        end
+    end
+end
+function punaccept()
+    if punkey.re.id then
+        sampSendChat(('/re %s'):format(punkey.re.id))
+        punkey.re.id, punkey.re.nick = nil, nil
+    end
+    if punkey.prison.id then
+        local admnick, admfam = punkey.prison.admin:match('(.+)_(.+)')
+        sampSendChat(('/prison %s %s %s • %s.%s'):format(punkey.prison.id, punkey.prison.day, punkey.prison.reason, admnick:sub(1,1), admfam))
+        punkey.prison.id, punkey.prison.day, punkey.prison.reason, punkey.prison.admin = nil, nil, nil, nil
+    end
+    if punkey.warn.id then
+        local admnick, admfam = punkey.warn.admin:match('(.+)_(.+)')
+        warn(('%s %s %s • %s.%s'):format(punkey.warn.id, punkey.warn.day, punkey.warn.reason, admnick:sub(1,1), admfam))
+        punkey.warn.id, punkey.warn.day, punkey.warn.reason, punkey.warn.admin = nil, nil, nil, nil
+    end
+    if punkey.ban.id then
+        local admnick, admfam = punkey.ban.admin:match('(.+)_(.+)')
+        ban(('%s %s • %s.%s'):format(punkey.ban.id, punkey.ban.reason, admnick:sub(1,1), admfam))
+        punkey.ban.id, punkey.ban.reason, punkey.ban.admin = nil, nil, nil
+    end
+end
+function pundeny()
+    if punkey.re.id or punkey.warn.id or punkey.ban.id or punkey.prison.id then
+        punkey = {
+            warn = {
+                id = nil,
+                day = nil,
+                reason = nil,
+                admin = nil
+            },
+            ban = {
+                id = nil,
+                reason = nil,
+                admin = nil
+            },
+            prison = {
+                id = nil,
+                day = nil,
+                reason = nil,
+                admin = nil
+            },
+            re = {
+                id = nil,
+                nick = nil
+            }
+        }
+        atext('Выдача наказаний отменена')
     end
 end
