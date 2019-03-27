@@ -1,10 +1,7 @@
---[[
-  Îñòàëîñü: Ñäåëàòü âîçìîæíîñòü èçìåíÿòü îíëàéí è îòâåòû;
-]]
 script_name("Activity checker") 
-script_authors({ 'Edward_Franklin', 'Thomas_Lawsom' })
+script_authors({ 'Edward_Franklin', 'Thomas_Lawson' })
 script_version("1.30")
-script_version_number(12363)
+script_version_number(13063)
 script_properties('work-in-pause')
 script_url("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua")
 --------------------------------------------------------------------
@@ -14,8 +11,6 @@ local sampevents = require "lib.samp.events"
 local encoding = require 'encoding'
 encoding.default = 'CP1251'
 local imgui = require 'imgui'
-imgui.HotKey = require('imgui_addons').HotKey
-imgui.ToggleButton = require('imgui_addons').ToggleButton
 local u8 = encoding.UTF8
 --------------------------------------------------------------------
 local mainwindow = imgui.ImBool(false)
@@ -52,7 +47,7 @@ local sInfo = {
   isALogin = false
 }
 local DEBUG_MODE = false
-local dayName = {u8"Ïîíåäåëüíèê", u8"Âòîðíèê", u8"Ñðåäà", u8"×åòâåðã", u8"Ïÿòíèöà", u8"Ñóááîòà", u8"Âîñêðåñåíüå"}
+local dayName = {u8"ÐŸÐ¾Ð½ÐµÐ´ÐµÐ»ÑŒÐ½Ð¸Ðº", u8"Ð’Ñ‚Ð¾Ñ€Ð½Ð¸Ðº", u8"Ð¡Ñ€ÐµÐ´Ð°", u8"Ð§ÐµÑ‚Ð²ÐµÑ€Ð³", u8"ÐŸÑÑ‚Ð½Ð¸Ñ†Ð°", u8"Ð¡ÑƒÐ±Ð±Ð¾Ñ‚Ð°", u8"Ð’Ð¾ÑÐºÑ€ÐµÑÐµÐ½ÑŒÐµ"}
 local nick = ""
 local playerid = -1
 --------------------------------------------------------------------
@@ -64,24 +59,24 @@ function main()
     sampRegisterChatCommand("gip", cmd_gip)
     sampRegisterChatCommand('activitydebug', function()
       DEBUG_MODE = not DEBUG_MODE
-      atext(("Debug mode %s"):format(DEBUG_MODE and "âêëþ÷åí" or "îòêëþ÷åí"))
+      atext(("Debug mode %s"):format(DEBUG_MODE and "Ð²ÐºÐ»ÑŽÑ‡ÐµÐ½" or "Ð¾Ñ‚ÐºÐ»ÑŽÑ‡ÐµÐ½"))
     end)
     sampRegisterChatCommand('activity', function() mainwindow.v = not mainwindow.v end)
     --------------------=========----------------------
     if not doesDirectoryExist("moonloader\\config") then
       createDirectory("moonloader\\config")
     end
-    if DEBUG_MODE == true then atext(("Ñêðèïò óñïåøíî çàãðóæåí. Âåðñèÿ: %s. Íîìåð ñáîðêè: %s"):format(thisScript().version, thisScript().version_num)) end
+    if DEBUG_MODE == true then atext(("Ð¡ÐºÑ€Ð¸Ð¿Ñ‚ ÑƒÑÐ¿ÐµÑˆÐ½Ð¾ Ð·Ð°Ð³Ñ€ÑƒÐ¶ÐµÐ½. Ð’ÐµÑ€ÑÐ¸Ñ: %s. ÐÐ¾Ð¼ÐµÑ€ ÑÐ±Ð¾Ñ€ÐºÐ¸: %s"):format(thisScript().version, thisScript().version_num)) end
     local day = os.date("%d.%m.%y")
     if pInfo.info.thisWeek == 0 then pInfo.info.thisWeek = os.date("%W") end
     if pInfo.info.day ~= day and tonumber(os.date("%H")) > 4 then
       local weeknum = dateToWeekNumber(pInfo.info.day)
       if weeknum == 0 then weeknum = 7 end
       pInfo.weeks[weeknum] = pInfo.info.dayOnline
-      atext(string.format("Íà÷àëñÿ íîâûé äåíü. Èòîãè ïðåäûäóùåãî äíÿ (%s): %s", pInfo.info.day, secToTime(pInfo.info.dayOnline)))
+      atext(string.format("ÐÐ°Ñ‡Ð°Ð»ÑÑ Ð½Ð¾Ð²Ñ‹Ð¹ Ð´ÐµÐ½ÑŒ. Ð˜Ñ‚Ð¾Ð³Ð¸ Ð¿Ñ€ÐµÐ´Ñ‹Ð´ÑƒÑ‰ÐµÐ³Ð¾ Ð´Ð½Ñ (%s): %s", pInfo.info.day, secToTime(pInfo.info.dayOnline)))
       -----------------
       if tonumber(pInfo.info.thisWeek) ~= tonumber(os.date("%W")) then
-        atext("Íà÷àëàñü íîâàÿ íåäåëÿ. Èòîãè ïðåäûäóùåé íåäåëè: "..secToTime(pInfo.info.weekOnline))
+        atext("ÐÐ°Ñ‡Ð°Ð»Ð°ÑÑŒ Ð½Ð¾Ð²Ð°Ñ Ð½ÐµÐ´ÐµÐ»Ñ. Ð˜Ñ‚Ð¾Ð³Ð¸ Ð¿Ñ€ÐµÐ´Ñ‹Ð´ÑƒÑ‰ÐµÐ¹ Ð½ÐµÐ´ÐµÐ»Ð¸: "..secToTime(pInfo.info.weekOnline))
         for key in pairs(pInfo) do
           for k in pairs(pInfo[key]) do
             pInfo[key][k] = 0
@@ -128,7 +123,7 @@ function calculateOnline()
     end  
   end)
 end
---[[
+
 function autoupdate(json_url)
   lua_thread.create(function()
     local dlstatus = require('moonloader').download_status
@@ -148,21 +143,21 @@ function autoupdate(json_url)
               lua_thread.create(function()
                 local dlstatus = require('moonloader').download_status
                 local color = -1
-                atext('Îáíàðóæåíî îáíîâëåíèå. Ïûòàþñü îáíîâèòüñÿ c '..thisScript().version..' íà '..updateversion)
+                atext('ÐžÐ±Ð½Ð°Ñ€ÑƒÐ¶ÐµÐ½Ð¾ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ðµ. ÐŸÑ‹Ñ‚Ð°ÑŽÑÑŒ Ð¾Ð±Ð½Ð¾Ð²Ð¸Ñ‚ÑŒÑÑ c '..thisScript().version..' Ð½Ð° '..updateversion)
                 wait(250)
                 downloadUrlToFile(updatelink, thisScript().path,
                   function(id3, status1, p13, p23)
                     if status1 == dlstatus.STATUS_DOWNLOADINGDATA then
-                      print(string.format('Çàãðóæåíî %d èç %d.', p13, p23))
+                      print(string.format('Ð—Ð°Ð³Ñ€ÑƒÐ¶ÐµÐ½Ð¾ %d Ð¸Ð· %d.', p13, p23))
                     elseif status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
-                      print('Çàãðóçêà îáíîâëåíèÿ çàâåðøåíà.')
-                      atext('Îáíîâëåíèå çàâåðøåíî!')
+                      print('Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ñ Ð·Ð°Ð²ÐµÑ€ÑˆÐµÐ½Ð°.')
+                      atext('ÐžÐ±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ðµ Ð·Ð°Ð²ÐµÑ€ÑˆÐµÐ½Ð¾!')
                       goupdatestatus = true
                       lua_thread.create(function() wait(500) thisScript():reload() end)
                     end
                     if status1 == dlstatus.STATUSEX_ENDDOWNLOAD then
                       if goupdatestatus == nil then
-                          atext('Îáíîâëåíèå ïðîøëî íåóäà÷íî. Çàïóñêàþ óñòàðåâøóþ âåðñèþ..')
+                          atext('ÐžÐ±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ðµ Ð¿Ñ€Ð¾ÑˆÐ»Ð¾ Ð½ÐµÑƒÐ´Ð°Ñ‡Ð½Ð¾. Ð—Ð°Ð¿ÑƒÑÐºÐ°ÑŽ ÑƒÑÑ‚Ð°Ñ€ÐµÐ²ÑˆÑƒÑŽ Ð²ÐµÑ€ÑÐ¸ÑŽ..')
                         update = false
                       end
                     end
@@ -172,11 +167,11 @@ function autoupdate(json_url)
               )
             else
               update = false
-              print('v'..thisScript().version..': Îáíîâëåíèå íå òðåáóåòñÿ.')
+              print('v'..thisScript().version..': ÐžÐ±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ðµ Ð½Ðµ Ñ‚Ñ€ÐµÐ±ÑƒÐµÑ‚ÑÑ.')
             end
           end
         else 
-          atext('Íå ìîãó óñòàíîâèòü îáíîâëåíèå')
+          atext('ÐÐµ Ð¼Ð¾Ð³Ñƒ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ðµ')
           update = false
         end
       end
@@ -185,7 +180,7 @@ function autoupdate(json_url)
   while update ~= false do wait(100) end
   end)
 end
-]]
+
 function saveconfig()
   if pInfo.info.dayOnline > 0 then
     inicfg.save(pInfo, "activity-checker");
@@ -315,38 +310,38 @@ function imgui.OnDrawFrame()
     imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
     imgui.Begin('Activity Helper', mainwindow, imgui.WindowFlags.NoResize)
     ---------
-    imgui.Text(u8"Íèê:"); imgui.SameLine(spacing); imgui.Text(('%s[%d]'):format(nick, playerid))
-    imgui.Text(u8"Àâòîðèçàöèÿ â ALogin:"); imgui.SameLine(spacing); imgui.TextColoredRGB(string.format('%s', sInfo.isALogin == true and "{00bf80}Àâòîðèçèðîâàí" or "{ec3737}Îòñóòñòâóåò"))
+    imgui.Text(u8"ÐÐ¸Ðº:"); imgui.SameLine(spacing); imgui.Text(('%s[%d]'):format(nick, playerid))
+    imgui.Text(u8"ÐÐ²Ñ‚Ð¾Ñ€Ð¸Ð·Ð°Ñ†Ð¸Ñ Ð² ALogin:"); imgui.SameLine(spacing); imgui.TextColoredRGB(string.format('%s', sInfo.isALogin == true and "{00bf80}ÐÐ²Ñ‚Ð¾Ñ€Ð¸Ð·Ð¸Ñ€Ð¾Ð²Ð°Ð½" or "{ec3737}ÐžÑ‚ÑÑƒÑ‚ÑÑ‚Ð²ÑƒÐµÑ‚"))
     if sInfo.isALogin == true then
-      imgui.Text(u8"Óðîâåíü ìîäåðàòîðà:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(sInfo.lvlAdmin))
+      imgui.Text(u8"Ð£Ñ€Ð¾Ð²ÐµÐ½ÑŒ Ð¼Ð¾Ð´ÐµÑ€Ð°Ñ‚Ð¾Ñ€Ð°:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(sInfo.lvlAdmin))
     end
-    imgui.Text(u8"Âðåìÿ àâòîðèçàöèè:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(sInfo.authTime))
+    imgui.Text(u8"Ð’Ñ€ÐµÐ¼Ñ Ð°Ð²Ñ‚Ð¾Ñ€Ð¸Ð·Ð°Ñ†Ð¸Ð¸:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(sInfo.authTime))
     imgui.Separator()
-    imgui.Text(u8"Îòûãðàíî çà ñåãîäíÿ:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(secToTime(pInfo.info.dayOnline)))
-    imgui.Text(u8"AFK çà ñåãîäíÿ:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(secToTime(pInfo.info.dayAFK)))
-    imgui.Text(u8"Îòâåòîâ çà ñåãîäíÿ:"); imgui.SameLine(spacing); imgui.Text(('%d'):format(pInfo.info.dayPM))
+    imgui.Text(u8"ÐžÑ‚Ñ‹Ð³Ñ€Ð°Ð½Ð¾ Ð·Ð° ÑÐµÐ³Ð¾Ð´Ð½Ñ:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(secToTime(pInfo.info.dayOnline)))
+    imgui.Text(u8"AFK Ð·Ð° ÑÐµÐ³Ð¾Ð´Ð½Ñ:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(secToTime(pInfo.info.dayAFK)))
+    imgui.Text(u8"ÐžÑ‚Ð²ÐµÑ‚Ð¾Ð² Ð·Ð° ÑÐµÐ³Ð¾Ð´Ð½Ñ:"); imgui.SameLine(spacing); imgui.Text(('%d'):format(pInfo.info.dayPM))
     imgui.Separator()
-    imgui.Text(u8"Îòûãðàíî çà íåäåëþ:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(secToTime(pInfo.info.weekOnline)))
-    imgui.Text(u8"Îòâåòîâ çà íåäåëþ:"); imgui.SameLine(spacing); imgui.Text(('%d'):format(pInfo.info.weekPM))
+    imgui.Text(u8"ÐžÑ‚Ñ‹Ð³Ñ€Ð°Ð½Ð¾ Ð·Ð° Ð½ÐµÐ´ÐµÐ»ÑŽ:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(secToTime(pInfo.info.weekOnline)))
+    imgui.Text(u8"ÐžÑ‚Ð²ÐµÑ‚Ð¾Ð² Ð·Ð° Ð½ÐµÐ´ÐµÐ»ÑŽ:"); imgui.SameLine(spacing); imgui.Text(('%d'):format(pInfo.info.weekPM))
     imgui.Separator()
-    if imgui.Button(u8 'Ñòàòèñòèêà ïî äíÿì', btn_size) then weekonline.v = not weekonline.v end
-    if imgui.Button(u8 'Ñòàòèñòèêà íàêàçàíèé', btn_size) then punishments.v = not punishments.v end
-    if imgui.Button(u8 'Ïåðåçàãðóçèòü ñêðèïò', btn_size) then
-      atext("Ïåðåçàãðóæàåìñÿ...")
+    if imgui.Button(u8 'Ð¡Ñ‚Ð°Ñ‚Ð¸ÑÑ‚Ð¸ÐºÐ° Ð¿Ð¾ Ð´Ð½ÑÐ¼', btn_size) then weekonline.v = not weekonline.v end
+    if imgui.Button(u8 'Ð¡Ñ‚Ð°Ñ‚Ð¸ÑÑ‚Ð¸ÐºÐ° Ð½Ð°ÐºÐ°Ð·Ð°Ð½Ð¸Ð¹', btn_size) then punishments.v = not punishments.v end
+    if imgui.Button(u8 'ÐŸÐµÑ€ÐµÐ·Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚ÑŒ ÑÐºÑ€Ð¸Ð¿Ñ‚', btn_size) then
+      atext("ÐŸÐµÑ€ÐµÐ·Ð°Ð³Ñ€ÑƒÐ¶Ð°ÐµÐ¼ÑÑ...")
       showCursor(false)
       thisScript():reload()
     end
-    if imgui.Button(u8 'Ñîîáùèòü îá îøèáêå', btn_size) then
-      atext("Ñâÿçü ñ ðàçðàáî÷èêîì:")
+    if imgui.Button(u8 'Ð¡Ð¾Ð¾Ð±Ñ‰Ð¸Ñ‚ÑŒ Ð¾Ð± Ð¾ÑˆÐ¸Ð±ÐºÐµ', btn_size) then
+      atext("Ð¡Ð²ÑÐ·ÑŒ Ñ Ñ€Ð°Ð·Ñ€Ð°Ð±Ð¾Ñ‡Ð¸ÐºÐ¾Ð¼:")
       atext("VK - https://vk.com/the_redx | Discord - redx#0763")
     end
-    --imgui.PopStyleColor() -- êðàøèò
+    --imgui.PopStyleColor() -- ÐºÑ€Ð°ÑˆÐ¸Ñ‚
     imgui.End()
     ----------------------
     if weekonline.v then
       imgui.SetNextWindowSize(imgui.ImVec2(325, 300), imgui.Cond.FirstUseEver)
       imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-      imgui.Begin(u8 'Ñòàòèñòèêà ïî äíÿì', weekonline, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize)
+      imgui.Begin(u8 'Ð¡Ñ‚Ð°Ñ‚Ð¸ÑÑ‚Ð¸ÐºÐ° Ð¿Ð¾ Ð´Ð½ÑÐ¼', weekonline, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize)
       local daynumber = dateToWeekNumber(os.date("%d.%m.%y"))
       if daynumber == 0 then daynumber = 7 end
       for key, value in ipairs(pInfo.weeks) do
@@ -366,7 +361,7 @@ function imgui.OnDrawFrame()
     if punishments.v then
       imgui.SetNextWindowSize(imgui.ImVec2(325, 300), imgui.Cond.FirstUseEver)
       imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-      imgui.Begin(u8 'Ñòàòèñòèêà íàêàçàíèé', punishments, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize)
+      imgui.Begin(u8 'Ð¡Ñ‚Ð°Ñ‚Ð¸ÑÑ‚Ð¸ÐºÐ° Ð½Ð°ÐºÐ°Ð·Ð°Ð½Ð¸Ð¹', punishments, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize)
       local i = 1
       for key, value in pairs(pInfo.punish) do
         imgui.Text(('%s'):format(key)); imgui.SameLine(spacing); imgui.Text(('%s'):format(value))
@@ -380,7 +375,7 @@ end
 ------------------------ CMD'S ------------------------
 function cmd_gip(params)
   if #params == 0 then
-    sampAddChatMessage("Ââåäèòå /gip [playerid / nick]", -1)
+    sampAddChatMessage("Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ /gip [playerid / nick]", -1)
     return
   end
   local paramid = tonumber(params)
@@ -400,45 +395,45 @@ end
 
 function sampevents.onServerMessage(color, text)
   if text:match(nick) then
-    if text:match("OffBan") or text:match("çàáàíèë (.+) Ïðè÷èíà") or text:match("SBan") or text:match("IOffBan") then
+    if text:match("OffBan") or text:match("Ð·Ð°Ð±Ð°Ð½Ð¸Ð» (.+) ÐŸÑ€Ð¸Ñ‡Ð¸Ð½Ð°") or text:match("SBan") or text:match("IOffBan") then
       pInfo.punish.ban = pInfo.punish.ban + 1
     end
-    if text:match("âûäàë warn") or text:match("ïîëó÷èë ïðåäóïðåæäåíèå äî") then
+    if text:match("Ð²Ñ‹Ð´Ð°Ð» warn") or text:match("Ð¿Ð¾Ð»ÑƒÑ‡Ð¸Ð» Ð¿Ñ€ÐµÐ´ÑƒÐ¿Ñ€ÐµÐ¶Ð´ÐµÐ½Ð¸Ðµ Ð´Ð¾") then
       pInfo.punish.warn = pInfo.punish.warn + 1
     end
-    if text:match("êèêíóë .+ Ïðè÷èíà") then
+    if text:match("ÐºÐ¸ÐºÐ½ÑƒÐ» .+ ÐŸÑ€Ð¸Ñ‡Ð¸Ð½Ð°") then
       pInfo.punish.kick = pInfo.punish.kick + 1
     end
-    if text:match("ïîìåñòèë â ÄåÌîðãàí") or text:match("ïîñàæåí â prison") then
+    if text:match("Ð¿Ð¾Ð¼ÐµÑÑ‚Ð¸Ð» Ð² Ð”ÐµÐœÐ¾Ñ€Ð³Ð°Ð½") or text:match("Ð¿Ð¾ÑÐ°Ð¶ÐµÐ½ Ð² prison") then
       pInfo.punish.prison = pInfo.punish.prison + 1
     end
-    if text:match("çàáëîêèðîâàë ÷àò èãðîêà") or text:match("OffMute") then
+    if text:match("Ð·Ð°Ð±Ð»Ð¾ÐºÐ¸Ñ€Ð¾Ð²Ð°Ð» Ñ‡Ð°Ñ‚ Ð¸Ð³Ñ€Ð¾ÐºÐ°") or text:match("OffMute") then
       pInfo.punish.mute = pInfo.punish.mute + 1
     end
-    if text:match("çàáàíèë IP") then
+    if text:match("Ð·Ð°Ð±Ð°Ð½Ð¸Ð» IP") then
       pInfo.punish.banip = pInfo.punish.banip + 1
     end
-    if text:match("âûäàë çàòû÷êó íà ðåïîðò") then
+    if text:match("Ð²Ñ‹Ð´Ð°Ð» Ð·Ð°Ñ‚Ñ‹Ñ‡ÐºÑƒ Ð½Ð° Ñ€ÐµÐ¿Ð¾Ñ€Ñ‚") then
       pInfo.punish.rmute = pInfo.punish.rmute + 1
     end
   end
-  if text:match("Âû ïîñàäèëè .+ â òþðüìó") then
+  if text:match("Ð’Ñ‹ Ð¿Ð¾ÑÐ°Ð´Ð¸Ð»Ð¸ .+ Ð² Ñ‚ÑŽÑ€ÑŒÐ¼Ñƒ") then
   	pInfo.punish.jail = pInfo.punish.jail + 1
   end
-  if text:match("Âû àâòîðèçèðîâàëèñü êàê ìîäåðàòîð .+ óðîâíÿ") then
-    sInfo.lvlAdmin = tonumber(text:match("Âû àâòîðèçèðîâàëèñü êàê ìîäåðàòîð (.+) óðîâíÿ"))
+  if text:match("Ð’Ñ‹ Ð°Ð²Ñ‚Ð¾Ñ€Ð¸Ð·Ð¸Ñ€Ð¾Ð²Ð°Ð»Ð¸ÑÑŒ ÐºÐ°Ðº Ð¼Ð¾Ð´ÐµÑ€Ð°Ñ‚Ð¾Ñ€ .+ ÑƒÑ€Ð¾Ð²Ð½Ñ") then
+    sInfo.lvlAdmin = tonumber(text:match("Ð’Ñ‹ Ð°Ð²Ñ‚Ð¾Ñ€Ð¸Ð·Ð¸Ñ€Ð¾Ð²Ð°Ð»Ð¸ÑÑŒ ÐºÐ°Ðº Ð¼Ð¾Ð´ÐµÑ€Ð°Ñ‚Ð¾Ñ€ (.+) ÑƒÑ€Ð¾Ð²Ð½Ñ"))
     sInfo.isALogin = true
     sInfo.sessionStart = os.time()
   end
-  if text:match("Îòâåò îò "..nick) then
+  if text:match("ÐžÑ‚Ð²ÐµÑ‚ Ð¾Ñ‚ "..nick) then
     pInfo.info.dayPM = pInfo.info.dayPM + 1
     pInfo.info.weekPM = pInfo.info.weekPM + 1
   end
-  if text:match("Ââåäèòå: %(/a%)dmin") and sInfo.isAlogin == false then -- Ïðîâåðêà íà àäìèíêó ïðè ïåðåçàãðóçêå ñêðèïèòà â èãðå
+  if text:match("Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ: %(/a%)dmin") and sInfo.isAlogin == false then -- ÐŸÑ€Ð¾Ð²ÐµÑ€ÐºÐ° Ð½Ð° Ð°Ð´Ð¼Ð¸Ð½ÐºÑƒ Ð¿Ñ€Ð¸ Ð¿ÐµÑ€ÐµÐ·Ð°Ð³Ñ€ÑƒÐ·ÐºÐµ ÑÐºÑ€Ð¸Ð¿Ð¸Ñ‚Ð° Ð² Ð¸Ð³Ñ€Ðµ
     sInfo.isAlogin = true
   end
-  if text:match("Âðåìÿ online çà òåêóùèé äåíü") then
-    sampAddChatMessage(string.format(" Âðåìÿ online çà íåäåëþ - %s (Áåç ó÷åòà ÀÔÊ) | Îòâåòîâ: %d", secToTime(pInfo.info.weekOnline), pInfo.info.weekPM), 0xCCCCCC)
+  if text:match("Ð’Ñ€ÐµÐ¼Ñ online Ð·Ð° Ñ‚ÐµÐºÑƒÑ‰Ð¸Ð¹ Ð´ÐµÐ½ÑŒ") then
+    sampAddChatMessage(string.format(" Ð’Ñ€ÐµÐ¼Ñ online Ð·Ð° Ð½ÐµÐ´ÐµÐ»ÑŽ - %s (Ð‘ÐµÐ· ÑƒÑ‡ÐµÑ‚Ð° ÐÐ¤Ðš) | ÐžÑ‚Ð²ÐµÑ‚Ð¾Ð²: %d", secToTime(pInfo.info.weekOnline), pInfo.info.weekPM), 0xCCCCCC)
   end
 end
 
@@ -459,13 +454,13 @@ function dateToWeekNumber(date) -- Start on Sunday(0)
   local y = year - a
   local m = month + 12 * a - 2
   return math.floor((day + y + math.floor(y / 4) - math.floor(y / 100) + math.floor(y / 400) + (31 * m) / 12) % 7)
-  -- Îòâåò ìîæåò áûòü íåïðàâèëüíûé ò.ê. ôóíêöèÿ äåëàëàñü â 2 íî÷è ïî ôîðìóëå èç Âèêèïåäèè
+  -- ÐžÑ‚Ð²ÐµÑ‚ Ð¼Ð¾Ð¶ÐµÑ‚ Ð±Ñ‹Ñ‚ÑŒ Ð½ÐµÐ¿Ñ€Ð°Ð²Ð¸Ð»ÑŒÐ½Ñ‹Ð¹ Ñ‚.Ðº. Ñ„ÑƒÐ½ÐºÑ†Ð¸Ñ Ð´ÐµÐ»Ð°Ð»Ð°ÑÑŒ Ð² 2 Ð½Ð¾Ñ‡Ð¸ Ð¿Ð¾ Ñ„Ð¾Ñ€Ð¼ÑƒÐ»Ðµ Ð¸Ð· Ð’Ð¸ÐºÐ¸Ð¿ÐµÐ´Ð¸Ð¸
 end
 
 function secToTime(sec)
   local hour, minute, second = sec / 3600, math.floor(sec / 60), sec % 60
   return string.format("%02d:%02d:%02d", math.floor(hour) ,  minute - (math.floor(hour) * 60), second)
-  -- Äîäåëàòü äèíàìè÷åñêîå èçìåíåíèå äàò
+  -- Ð”Ð¾Ð´ÐµÐ»Ð°Ñ‚ÑŒ Ð´Ð¸Ð½Ð°Ð¼Ð¸Ñ‡ÐµÑÐºÐ¾Ðµ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ Ð´Ð°Ñ‚
 end
 
 function string.split(inputstr, sep)
@@ -531,23 +526,23 @@ function ARGBtoRGB(color)
 end
 
 function checkActivity()
-  local zstring = "{ffffff}˜˜˜˜˜˜˜˜\t{FFFFFF}˜˜˜˜˜˜˜˜\n"
-  zstring = zstring.."˜˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜ ˜˜ ˜˜˜˜ ˜˜˜˜˜˜\n"
-  zstring = zstring.."˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜\n"
-  zstring = zstring..string.format("˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜\t%s ˜˜˜˜˜˜ ˜˜˜˜˜\n", sInfo.sessionStart == 0 and "-" or (os.time() - sInfo.sessionStart))
-  zstring = zstring..string.format("˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜˜\t%s\n", sInfo.authTime)
-  zstring = zstring..string.format("˜˜˜˜˜˜˜˜˜˜˜ ˜ ALogin\t%s\n", sInfo.isALogin and "˜˜˜˜˜˜˜˜˜˜˜˜˜" or "˜˜˜˜˜˜˜˜˜˜˜")
+  local zstring = "{ffffff}ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\t{FFFFFF}ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\n"
+  zstring = zstring.."ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\n"
+  zstring = zstring.."ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\n"
+  zstring = zstring..string.format("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\t%s ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½\n", sInfo.sessionStart == 0 and "-" or (os.time() - sInfo.sessionStart))
+  zstring = zstring..string.format("ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\t%s\n", sInfo.authTime)
+  zstring = zstring..string.format("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ALogin\t%s\n", sInfo.isALogin and "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" or "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½")
   if sInfo.isALogin then
-    zstring = zstring..string.format("˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜\t%s\n", sInfo.lvlAdmin)
+    zstring = zstring..string.format("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\t%s\n", sInfo.lvlAdmin)
   end  
-  zstring = zstring..string.format("˜˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜˜\t%s\n", secToTime(pInfo.info.dayOnline))
-  zstring = zstring..string.format("AFK ˜˜ ˜˜˜˜˜˜˜\t%s\n", sInfo.sessionStart == 0 and secToTime(pInfo.info.dayAFK) or secToTime(pInfo.info.dayAFK + (os.time() - sInfo.sessionStart - sInfo.onlineTime)))
-  zstring = zstring..string.format("˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜˜\t%d\n", pInfo.info.dayPM)
-  zstring = zstring..string.format("˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜\t%d\n", pInfo.info.weekPM)
-  zstring = zstring..string.format("˜˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜\t%s\n", secToTime(pInfo.info.weekOnline))
+  zstring = zstring..string.format("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\t%s\n", secToTime(pInfo.info.dayOnline))
+  zstring = zstring..string.format("AFK ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\t%s\n", sInfo.sessionStart == 0 and secToTime(pInfo.info.dayAFK) or secToTime(pInfo.info.dayAFK + (os.time() - sInfo.sessionStart - sInfo.onlineTime)))
+  zstring = zstring..string.format("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\t%d\n", pInfo.info.dayPM)
+  zstring = zstring..string.format("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\t%d\n", pInfo.info.weekPM)
+  zstring = zstring..string.format("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\t%s\n", secToTime(pInfo.info.weekOnline))
   -------
   lua_thread.create(function()
-    sampShowDialog(827453, string.format("{FFFFFF}˜˜˜˜˜˜˜˜˜˜ | {954F4F}%s", nick), zstring, "˜˜˜˜˜˜˜", "˜˜˜˜˜˜˜", DIALOG_STYLE_TABLIST_HEADERS)
+    sampShowDialog(827453, string.format("{FFFFFF}ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ | {954F4F}%s", nick), zstring, "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½", "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½", DIALOG_STYLE_TABLIST_HEADERS)
     while sampIsDialogActive(827453) do wait(50) end
     local _, button, list, _ = sampHasDialogRespond(827453)
     if button == 1 and list == 0 then
@@ -559,14 +554,14 @@ function checkActivity()
 end
 
 function checkPunishments()
-  local zstring = "{FFFFFF}˜˜˜˜˜˜˜˜˜\t{FFFFFF}˜˜˜˜˜˜˜˜˜˜\n"
+  local zstring = "{FFFFFF}ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\t{FFFFFF}ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\n"
   local i = 1
   for key, value in pairs(pInfo.punish) do
     zstring = zstring..string.format("%s\t%s\n", key, value)
     i = i + 1
   end
   lua_thread.create(function()
-    sampShowDialog(835163, string.format("{FFFFFF}˜˜˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜ | {954F4F}%s", nick), zstring, "˜˜˜˜˜˜˜", "˜˜˜˜˜", DIALOG_STYLE_TABLIST_HEADERS)
+    sampShowDialog(835163, string.format("{FFFFFF}ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ | {954F4F}%s", nick), zstring, "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½", "ï¿½ï¿½ï¿½ï¿½ï¿½", DIALOG_STYLE_TABLIST_HEADERS)
     while sampIsDialogActive(835163) do wait(50) end
     local _, button, _, _ = sampHasDialogRespond(835163)
     if button == 0 then
@@ -578,7 +573,7 @@ end
 function checkWeek()
   local daynumber = dateToWeekNumber(os.date("%d.%m.%y"))
   local i = 1
-  local zstring = "{FFFFFF}˜˜˜˜\t{FFFFFF}˜˜˜˜˜˜\n"
+  local zstring = "{FFFFFF}ï¿½ï¿½ï¿½ï¿½\t{FFFFFF}ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\n"
   for key, value in pairs(pInfo.weeks) do
     local colour = ""
     if daynumber > 0 then
@@ -593,7 +588,7 @@ function checkWeek()
     i = i + 1
   end
   lua_thread.create(function()
-    sampShowDialog(837763, string.format("{FFFFFF}˜˜˜˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜ ˜˜˜˜˜˜ | {954F4F}%s", nick), zstring, "˜˜˜˜˜˜˜", "˜˜˜˜˜", DIALOG_STYLE_TABLIST_HEADERS)
+    sampShowDialog(837763, string.format("{FFFFFF}ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ | {954F4F}%s", nick), zstring, "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½", "ï¿½ï¿½ï¿½ï¿½ï¿½", DIALOG_STYLE_TABLIST_HEADERS)
     while sampIsDialogActive(837763) do wait(50) end
     local _, button, _, _ = sampHasDialogRespond(837763)
     if button == 0 then
