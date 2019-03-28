@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.9999996')
+script_version('1.9999997')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -616,8 +616,8 @@ function autoupdate(json_url, prefix, url)
             local f = io.open(json, 'r')
             if f then
               local info = decodeJson(f:read('*a'))
-              updatelink = info.updateurl
-              updateversion = info.latest
+              updatelink = info.admintools.url
+              updateversion = info.admintools.version
               f:close()
               os.remove(json)
               if updateversion > thisScript().version then
@@ -981,7 +981,6 @@ function main()
         if #tkills > 50 then
             table.remove(tkills, 1)
         end
-        if #tkilllist > 5 then table.remove(tkilllist, 1) end
         local oTime = os.time()
         if not isPauseMenuActive() then
 			for i = 1, BulletSync.maxLines do
@@ -2878,6 +2877,7 @@ function sampev.onPlayerDeathNotification(killerId, killedId, reason)
     end)
     table.insert(tkills, ('{'..("%06X"):format(bit.band(sampGetPlayerColor(killerId), 0xFFFFFF))..'}%s[%s]\t{'..("%06X"):format(bit.band(sampGetPlayerColor(killedId), 0xFFFFFF))..'}%s[%s]\t{ffffff}%s'):format(sampGetPlayerNickname(killerId),killerId, sampGetPlayerNickname(killedId),killedId, sampGetDeathReason(reason)))
     table.insert(tkilllist, {killer = ('{%s}%s [%s]'):format(killercolor, sampGetPlayerNickname(killerId), killerId), killed = ('{%s} %s [%s]'):format(killedcolor, sampGetPlayerNickname(killedId), killedId), reason = reason})
+    if #tkilllist > 5 then table.remove(tkilllist, 1) end
 end
 function sampev.onTogglePlayerControllable(bool)
     if swork then return false end
@@ -4837,7 +4837,7 @@ function admchat()
         local wtext, wprefix, wcolor, wpcolor = sampGetChatString(99)
         local mynick = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
         if wcolor == 4294967040 and wtext:match('^ <ADM%-CHAT> .+ %[%d+%]: .+') then
-            local nick, id, text = wtext:match('<ADM%-CHAT> (.+) %[(%d+)%]: (.+)')
+            local nick, id, text = wtext:match('^ <ADM%-CHAT> (.+) %[(%d+)%]: (.+)')
             if cfg.other.admlvl > 1 and nick ~= mynick then
                 if text:match('re %d+') then
                     if sampIsPlayerConnected(tonumber(text:match('re (%d+)'))) then
@@ -4982,15 +4982,17 @@ function veh(pam)
 end
 function ml(pam)
     if pam:match("^(%d+) (%d+)") then
+        local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
         local id, frak = pam:match("^(%d+) (%d+)")
-        if sampIsPlayerConnected(tonumber(id)) then
+        if sampIsPlayerConnected(tonumber(id)) or tonumber(id) == myid then
             sampSendChat(('/makeleader %s %s'):format(id, frak))
         else
             atext('Игрок оффлайн')
         end
     elseif pam:match("^(%d+)") then
         local id = pam:match("^(%d+)")
-        if sampIsPlayerConnected(tonumber(id)) then
+        local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
+        if sampIsPlayerConnected(tonumber(id)) or tonumber(id) == myid then
             lua_thread.create(function()
                 sampShowDialog(23145,("{ffffff}Выдача лидерки игроку: {66FF00}%s [%s]"):format(sampGetPlayerNickname(tonumber(id)), id),'LSPD\nFBI\nSFA\nLCN\nYakuza\nMayor\nSFN\nSFPD\nInstructors\nBallas\nVagos\nRM\nGrove\nLSN\nAztec\nRifa\nLVA\nLVN\nLVPD\nHospital\nMongols\nWarlocks\nPagans','»','x',2)
                 while sampIsDialogActive(23145) do wait(0) end
