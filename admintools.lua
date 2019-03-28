@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.9999997')
+script_version('1.9999998')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -402,7 +402,7 @@ function asyncHttpRequest(method, url, args, resolve, reject)
    end)
 end
 function atext(text)
-    sampAddChatMessage(string.format(' [Admin Tools] {ffffff}%s', text), 0x66FF00)
+    sampAddChatMessage(string.format(' Admin Tools | {ffffff}%s', text), 0x66FF00)
 end
 function apply_custom_style()
     imgui.SwitchContext()
@@ -2401,7 +2401,7 @@ function sampev.onServerMessage(color, text)
     if text:match('^ Вы авторизировались как модератор %d+ уровня$') then cfg.other.admlvl = tonumber(text:match('^ Вы авторизировались как модератор (%d+) уровня$')) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
     punishlog(text)
     if cfg.other.admlvl > 1 and color == -10270806 then
-        if text:find(sampGetPlayerNickname(tonumber(punkey.warn.id))) or text:find(sampGetPlayerNickname(tonumber(punkey.ban.id))) or text:find(sampGetPlayerNickname(tonumber(punkey.prison.id))) then
+        if text:find(sampGetPlayerNickname(punkey.warn.id)) or text:find(sampGetPlayerNickname(punkey.ban.id)) or text:find(sampGetPlayerNickname(punkey.prison.id)) then
             if not text:find(mynick) then
                 atext('Команду выполнил другой администратор')
                 punkey = {
