@@ -1,7 +1,10 @@
+--[[
+  Осталось: Сделать возможность изменять онлайн и ответы;
+]]
 script_name("Activity checker") 
 script_authors({ 'Edward_Franklin', 'Thomas_Lawson' })
-script_version("1.31")
-script_version_number(13163)
+script_version("1.32")
+script_version_number(12364)
 script_properties('work-in-pause')
 script_url("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua")
 --------------------------------------------------------------------
@@ -123,7 +126,6 @@ function calculateOnline()
     end  
   end)
 end
-
 function autoupdate(json_url)
   lua_thread.create(function()
     local dlstatus = require('moonloader').download_status
@@ -180,7 +182,6 @@ function autoupdate(json_url)
   while update ~= false do wait(100) end
   end)
 end
-
 function saveconfig()
   if pInfo.info.dayOnline > 0 then
     inicfg.save(pInfo, "activity-checker");
@@ -429,8 +430,10 @@ function sampevents.onServerMessage(color, text)
     pInfo.info.dayPM = pInfo.info.dayPM + 1
     pInfo.info.weekPM = pInfo.info.weekPM + 1
   end
-  if text:match("Введите: %(/a%)dmin") and sInfo.isAlogin == false then -- Проверка на админку при перезагрузке скрипита в игре
-    sInfo.isAlogin = true
+  if text:match("Введите: %(/a%)dmin") and not sInfo.isAlogin then -- Проверка на админку при перезагрузке скрипита в игре
+    sInfo.isALogin = true
+    sInfo.sessionStart = os.time()
+    return false
   end
   if text:match("Время online за текущий день") then
     sampAddChatMessage(string.format(" Время online за неделю - %s (Без учета АФК) | Ответов: %d", secToTime(pInfo.info.weekOnline), pInfo.info.weekPM), 0xCCCCCC)
@@ -476,7 +479,7 @@ function string.split(inputstr, sep)
 end
 
 function atext(text)
-  sampAddChatMessage("Activity Helper | {FFFFFF}"..text, 0x954F4F)
+  sampAddChatMessage(" Activity Helper | {FFFFFF}"..text, 0x954F4F)
 end
 ------------------------ HLAM ------------------------
 --[[
