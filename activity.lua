@@ -3,8 +3,8 @@
 ]]
 script_name("Activity checker") 
 script_authors({ 'Edward_Franklin', 'Thomas_Lawson' })
-script_version("1.32")
-script_version_number(12364)
+script_version("1.33")
+script_version_number(13375)
 script_properties('work-in-pause')
 script_url("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua")
 --------------------------------------------------------------------
@@ -42,14 +42,13 @@ local pInfo = inicfg.load({
   	jail = 0
   }
 }, "activity-checker")
-
 local sInfo = {
   updateAFK = 0,
   authTime = 0,
   lvlAdmin = 0,
   isALogin = false
 }
-local DEBUG_MODE = false
+local DEBUG_MODE = true
 local dayName = {u8"Понедельник", u8"Вторник", u8"Среда", u8"Четверг", u8"Пятница", u8"Суббота", u8"Воскресенье"}
 local nick = ""
 local playerid = -1
@@ -69,7 +68,8 @@ function main()
     if not doesDirectoryExist("moonloader\\config") then
       createDirectory("moonloader\\config")
     end
-    if DEBUG_MODE == true then atext(("Скрипт успешно загружен. Версия: %s. Номер сборки: %s"):format(thisScript().version, thisScript().version_num)) end
+    debug_log("Main function: dayOnline = "..pInfo.info.dayOnline)
+    if DEBUG_MODE == true then atext(("Включен режим отладки. (Версия скрипта: %s. Номер сборки: %s)"):format(thisScript().version, thisScript().version_num)) end
     local day = os.date("%d.%m.%y")
     if pInfo.info.thisWeek == 0 then pInfo.info.thisWeek = os.date("%W") end
     if pInfo.info.day ~= day and tonumber(os.date("%H")) > 4 then
@@ -85,8 +85,10 @@ function main()
             pInfo[key][k] = 0
           end
         end
+        debug_log("Новая неделя. Обнуляем все переменные")
         pInfo.info.thisWeek = os.date("%W")
       end
+      debug_log("Новый день. Обнуляем день. weekOnline = "..pInfo.info.weekOnline)
       pInfo.info.day = day
       pInfo.info.dayPM = 0
       pInfo.info.dayOnline = 0
@@ -94,7 +96,9 @@ function main()
     end
     if sampGetGamestate() == 3 then
       sampSendChat("/a")
+      debug_log("Gamestate == 3, check alogin")
     end
+    debug_log("Main end: dayWeek = "..pInfo.info.weekOnline.." | dayOnline = "..pInfo.info.dayOnline)
     --------------------=========----------------------
     while not sampIsLocalPlayerSpawned() do wait(0) end
     local _, myid = sampGetPlayerIdByCharHandle(playerPed)
@@ -104,8 +108,9 @@ function main()
     nick = sampGetPlayerNickname(myid)
     calculateOnline()
     while true do wait(0)
-      if sampGetGamestate() ~= 3 then
+      if sampGetGamestate() ~= 3 and sInfo.isALogin == true then
         sInfo.isALogin = false
+        debug_log("Lost connection. isALogin = false")
       end
       imgui.Process = mainwindow.v
     end
@@ -146,6 +151,7 @@ function autoupdate(json_url)
                 local dlstatus = require('moonloader').download_status
                 local color = -1
                 atext('Обнаружено обновление. Пытаюсь обновиться c '..thisScript().version..' на '..updateversion)
+                debug_log("Найдено обновление скрипта") 
                 wait(250)
                 downloadUrlToFile(updatelink, thisScript().path,
                   function(id3, status1, p13, p23)
@@ -154,12 +160,15 @@ function autoupdate(json_url)
                     elseif status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
                       print('Загрузка обновления завершена.')
                       atext('Обновление завершено!')
+                      debug_log("Обновление успешно!")
                       goupdatestatus = true
+                      saveconfig()
                       lua_thread.create(function() wait(500) thisScript():reload() end)
                     end
                     if status1 == dlstatus.STATUSEX_ENDDOWNLOAD then
                       if goupdatestatus == nil then
-                          atext('Обновление прошло неудачно. Запускаю устаревшую версию..')
+                        atext('Обновление прошло неудачно. Запускаю устаревшую версию..')
+                        debug_log("Обновление неудачно!")
                         update = false
                       end
                     end
@@ -183,7 +192,8 @@ function autoupdate(json_url)
   end)
 end
 function saveconfig()
-  if pInfo.info.dayOnline > 0 then
+  debug_log("Update information: weekOnline = "..pInfo.info.weekOnline.." | dayOnline = "..pInfo.info.dayOnline)
+  if pInfo.info.dayOnline > 0 and pInfo.info.weekOnline > 0 then
     inicfg.save(pInfo, "activity-checker");
   end
 end
@@ -313,7 +323,7 @@ function imgui.OnDrawFrame()
     ---------
     imgui.Text(u8"Ник:"); imgui.SameLine(spacing); imgui.Text(('%s[%d]'):format(nick, playerid))
     imgui.Text(u8"Авторизация в ALogin:"); imgui.SameLine(spacing); imgui.TextColoredRGB(string.format('%s', sInfo.isALogin == true and "{00bf80}Авторизирован" or "{ec3737}Отсутствует"))
-    if sInfo.isALogin == true then
+    if sInfo.isALogin == true and sInfo.lvlAdmin > 0 then
       imgui.Text(u8"Уровень модератора:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(sInfo.lvlAdmin))
     end
     imgui.Text(u8"Время авторизации:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(sInfo.authTime))
@@ -480,6 +490,18 @@ end
 
 function atext(text)
   sampAddChatMessage(" Activity Helper | {FFFFFF}"..text, 0x954F4F)
+end
+
+function debug_log(text)
+  if DEBUG_MODE == false then return end
+  if not doesFileExist('moonloader/config/activity_debug.txt') then 
+      local file = io.open('moonloader/config/activity_debug.txt', 'w')
+      file:close()
+  end
+	local file = io.open('moonloader/config/activity_debug.txt', 'a')
+	file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
+	file:close()
+	file = nil
 end
 ------------------------ HLAM ------------------------
 --[[
