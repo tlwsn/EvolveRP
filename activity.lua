@@ -3,8 +3,8 @@
 ]]
 script_name("Activity checker") 
 script_authors({ 'Edward_Franklin', 'Thomas_Lawson' })
-script_version("1.33")
-script_version_number(13375)
+script_version("1.35")
+script_version_number(13567)
 script_properties('work-in-pause')
 script_url("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua")
 --------------------------------------------------------------------
@@ -142,8 +142,8 @@ function autoupdate(json_url)
           local f = io.open(json, 'r')
           if f then
             local info = decodeJson(f:read('*a'))
-            updatelink = info.activitylink
-            updateversion = info.activityversion
+            updatelink = info.activity.link
+            updateversion = info.activity.version
             f:close()
             os.remove(json)
             if updateversion > thisScript().version then
