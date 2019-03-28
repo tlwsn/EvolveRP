@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.9999995')
+script_version('1.9999996')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -750,6 +750,8 @@ function main()
         end
         atext(tostring(aafk))
     end)
+    sampRegisterChatCommand('ml', ml)
+    sampRegisterChatCommand('veh',veh)
     sampRegisterChatCommand('vehs', vehs)
     sampRegisterChatCommand('hblist', hblist)
     sampRegisterChatCommand('getlvl', getlvl)
@@ -764,7 +766,7 @@ function main()
     sampRegisterChatCommand('givehb', givehb)
 	sampRegisterChatCommand('addtemp', addtemp)
     sampRegisterChatCommand('deltemp', deltemp)
-    sampRegisterChatCommand('deltempall', function() temp_checker = {} temp_checker_online = {} end)
+    sampRegisterChatCommand('deltempall', function() temp_checker = {} temp_checker_online = {} atext('Временный чекер очищен') end)
 	sampRegisterChatCommand('massgun', massgun)
 	sampRegisterChatCommand('masshp', masshp)
 	sampRegisterChatCommand('massarm', massarm)
@@ -1285,6 +1287,10 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Описание: Переключить трейсера на определенного игрока')
                 imgui.TextWrapped(u8 'Использование: /tr [id/-1]')
             end
+            if imgui.CollapsingHeader('/ml', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Выдать лидерку игроку')
+                imgui.TextWrapped(u8 'Использование: /ml [id] [id фракции(не обязательно)]')
+            end
             if imgui.CollapsingHeader('/addadm', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Добавить игрока в чекер админов')
                 imgui.TextWrapped(u8 'Использование: /addadm [id/nick]')
@@ -1665,7 +1671,7 @@ function imgui.OnDrawFrame()
                 if imgui.Checkbox(u8 'Проверка статистики при warn / ban', fracstatb) then cfg.other.fracstat = fracstatb.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 imgui.TextWrapped(u8 ('Игнор проверки статистики будет происходить, если причина бана равна: %s'):format(table.concat(punishignor, ', ')))
                 imgui.TextWrapped(u8 'Настроить список игнора можно по пути moonloader/config/Admin Tools/punishingor.txt')
-                if imgui.Button(u8 'Обновисть список игнона') then punishignor = {} for line in io.lines('moonloader/config/Admin Tools/punishignor.txt') do table.insert(punishignor, line) end end
+                if imgui.Button(u8 'Обновисть список игнора') then punishignor = {} for line in io.lines('moonloader/config/Admin Tools/punishignor.txt') do table.insert(punishignor, line) end end
 			elseif data.imgui.menu == 5 then
 				local creconB = imgui.ImBool(cfg.crecon.enable)
 				local ipassb = imgui.ImBool(cfg.other.passb)
@@ -2832,8 +2838,8 @@ function sampev.onShowTextDraw(id, textdraw)
     end
 end
 function sampev.onTextDrawHide(id)
-    if id == 2164 then reconstate = false end
-    if cfg.crecon.enable then if id == 2164 then recon.v = false; reid = nil end end
+    if id == 2166 then reconstate = false end
+    if cfg.crecon.enable then if id == 2166 then recon.v = false; reid = nil traceid = -1 end end
 end
 function sampev.onPlayerQuit(id, reason)
     local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
@@ -3576,7 +3582,7 @@ function wl(pam)
             sampSendChat('/warnlog '..pam)
         end
     else
-        atext('Введите /wlog [id/nick]')
+        atext('Введите: /wlog [id/nick]')
     end
 end
 function gs(pam)
@@ -3592,7 +3598,7 @@ function gs(pam)
         if reid ~= nil then
             sampSendChat('/getstats '..reid)
         else
-            atext('Введите /gs [id]')
+            atext('Введите: /gs [id]')
         end
     end
 end
@@ -3610,7 +3616,7 @@ function sbiv(pam)
             atext('Игрок оффлайн')
         end
     else
-        atext("Введите /sbiv [id]")
+        atext("Введите: /sbiv [id]")
     end
 end
 function csbiv(pam)
@@ -3627,7 +3633,7 @@ function csbiv(pam)
             atext('Игрок оффлайн')
         end
     else
-        atext("Введите /csbiv [id]")
+        atext("Введите: /csbiv [id]")
     end
 end
 function cbug(pam)
@@ -3636,15 +3642,15 @@ function cbug(pam)
     if id ~= nil then
         if sampIsPlayerConnected(id) or id == myid then
             if cfg.other.admlvl < 2 then
-                sampSendChat(("/a /prison %s %s +с вне гетто"):format(id, cfg.timers.cbugtimer))
+                sampSendChat(("/a /prison %s %s +C вне гетто"):format(id, cfg.timers.cbugtimer))
             else
-                sampSendChat(("/prison %s %s +с вне гетто"):format(id, cfg.timers.cbugtimer))
+                sampSendChat(("/prison %s %s +C вне гетто"):format(id, cfg.timers.cbugtimer))
             end
         else
             atext('Игрок оффлайн')
         end
     else
-        atext("Введите /cbug [id]")
+        atext("Введите: /cbug [id]")
     end
 end
 function kills()
@@ -3696,7 +3702,7 @@ function fonl(pam)
                 atext('Значение не должно быть меньше 1 и больше 29!')
             end
         else
-            atext('Введите /fonl [id фракции]')
+            atext('Введите: /fonl [id фракции]')
         end
     end)
 end
@@ -3727,7 +3733,7 @@ function checkrangs(pam)
                 atext('Значение не должно быть меньше 1 и больше 29!')
             end
         else
-            atext('Введите /checkrangs [id фракции]')
+            atext('Введите: /checkrangs [id фракции]')
         end
     end)
 end
@@ -3744,7 +3750,7 @@ function ags(pam)
             sampSendChat('/agetstats '..pam)
         end
     else
-        atext('Введите /ags [id/nick]')
+        atext('Введите: /ags [id/nick]')
     end
 end
 function cheat(pam)
@@ -3798,7 +3804,7 @@ function cheat(pam)
 				atext('Игрок оффлайн')
 			end
 		else
-			atext('Введите /cheat [id]')
+			atext('Введите: /cheat [id]')
 		end
 	end)
 end
@@ -3934,7 +3940,7 @@ function massgun(pam)
 			end
 			atext('Выдача закончена')
 		else
-			atext('Введите /massgun [оружие] [патроны]')
+			atext('Введите: /massgun [оружие] [патроны]')
 		end
 	end)
 end
@@ -3948,7 +3954,7 @@ function masshp(pam)
 			end
 			atext('Выдача закончена')
 		else
-			atext('Введите /masshp [уровень хп]')
+			atext('Введите: /masshp [уровень хп]')
 		end
 	end)
 end
@@ -3962,7 +3968,7 @@ function massarm(pam)
 			end
 			atext('Выдача закончена')
 		else
-			atext('Введите /massarm [уровень брони]')
+			atext('Введите: /massarm [уровень брони]')
 		end
 	end)
 end
@@ -4063,7 +4069,7 @@ function blog(pam)
             sampSendChat('/banlog '..pam)
         end
     else
-        atext('Введите /blog [id/nick]')
+        atext('Введите: /blog [id/nick]')
     end
 end
 function arecon()
@@ -4433,8 +4439,8 @@ function admchecker()
     io.open('moonloader/config/Admin Tools/playerlist.txt', 'w'):close()
 end
 function addplayer(pam)
-    if pam:match('(%d+) (%S+) (.+)') then
-        local id, color, text = pam:match('(%d+) (%S+) (.+)')
+    if pam:match('^(%d+) (%S+) (.+)') then
+        local id, color, text = pam:match('^(%d+) (%S+) (.+)')
         if color == '-1' then color = 'ffffff' end
         if sampIsPlayerConnected(tonumber(id)) then
             table.insert(players, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = text})
@@ -4444,8 +4450,9 @@ function addplayer(pam)
             table.insert(players, {nick = id, color = color, text = text})
             atext(('Игрок %s добавлен в чекер игроков'):format(id))
         end
-    elseif pam:match("(%S+) (%S+)%s(.+)") then
-        local nick, color, text = pam:match("(%S+) (%S+) (.+)")
+    elseif pam:match("^(%S+) (%S+)%s(.+)") then
+        local nick, color, text = pam:match("^(%S+) (%S+) (.+)")
+        if color == '-1' then color = 'ffffff' end
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(players, {nick = nick, color = color, text = text})
         if id ~= nil then
@@ -4454,8 +4461,8 @@ function addplayer(pam)
         else
             atext(('Игрок %s добавлен в чекер игроков'):format(nick))
         end
-    elseif pam:match("(%d+) (%S+)") then
-        local id, color = pam:match("(%d+) (%S+)")
+    elseif pam:match("^(%d+) (%S+)") then
+        local id, color = pam:match("^(%d+) (%S+)")
         if color == '-1' then color = 'FFFFFF' end
         if sampIsPlayerConnected(tonumber(id)) then
             table.insert(players, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = ''})
@@ -4465,8 +4472,8 @@ function addplayer(pam)
             table.insert(players, {nick = id, color = color, text = ''})
             atext(('Игрок %s добавлен в чекер админов'):format(id))
         end
-    elseif pam:match("(%S+) (%S+)") then
-        local nick, color = pam:match("(%S+) (%S+)")
+    elseif pam:match("^(%S+) (%S+)") then
+        local nick, color = pam:match("^(%S+) (%S+)")
         local id = sampGetPlayerIdByNickname(nick)
         if color == '-1' then color = 'ffffff' end
         table.insert(players, {nick = nick, color = color, text = ''})
@@ -4476,8 +4483,8 @@ function addplayer(pam)
         else
             atext(('Игрок %s добавлен в чекер админов'):format(nick))
         end
-    elseif pam:match("(%d+)") then
-        local id = pam:match('(%d+)')
+    elseif pam:match("^(%d+)") then
+        local id = pam:match('^(%d+)')
         if sampIsPlayerConnected(tonumber(id)) then
             table.insert(players, {nick = sampGetPlayerNickname(tonumber(id)), color = 'ffffff', text = ''})
             table.insert(players_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = 'ffffff', text = ''})
@@ -4486,8 +4493,8 @@ function addplayer(pam)
             table.insert(players, {nick = id, color = 'ffffff', text = ''})
             atext(('Игрок %s добавлен в чекер игроков'):format(id))
         end
-    elseif pam:match('(%S+)') then
-        local nick = pam:match('(%S+)')
+    elseif pam:match('^(%S+)') then
+        local nick = pam:match('^(%S+)')
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(players, {nick = nick, color = 'ffffff', text = ''})
         if id ~= nil then
@@ -4496,14 +4503,14 @@ function addplayer(pam)
         else
             atext(('Игрок %s добавлен в чекер игроков'):format(nick))
         end
-    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") or pam:match("(%d+) (%S+)") or pam:match("(%S+) (%S+)") or not pam:match("(%S+) (%S+) (.+)") or not pam:match('(%d+) (%S+) (.+)') then
+    elseif #pam == 0 or not pam:match('^(%S+)') or not pam:match("^(%d+)") or pam:match("^(%d+) (%S+)") or pam:match("^(%S+) (%S+)") or not pam:match("^(%S+) (%S+) (.+)") or not pam:match('^(%d+) (%S+) (.+)') then
         atext('Введите: /addplayer [id/nick] [color(Пример: ffffff)/-1] [примечание]')
     end
     saveData(players, 'moonloader/config/Admin Tools/playerchecker.json')
 end
 function addadm(pam)
-    if pam:match('(%d+) (%S+) (.+)') then
-        local id, color, text = pam:match('(%d+) (%S+) (.+)')
+    if pam:match('^(%d+) (%S+) (.+)') then
+        local id, color, text = pam:match('^(%d+) (%S+) (.+)')
         if color == '-1' then color = 'ffffff' end
         if sampIsPlayerConnected(tonumber(id)) then
             table.insert(admins, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = text})
@@ -4513,8 +4520,9 @@ function addadm(pam)
             table.insert(admins, {nick = id, color = color, text = text})
             atext(('Игрок %s добавлен в чекер админов'):format(id))
         end
-    elseif pam:match("(%S+) (%S+) (.+)") then
-        local nick, color, text = pam:match("(%S+) (%S+) (.+)")
+    elseif pam:match("^(%S+) (%S+) (.+)") then
+        local nick, color, text = pam:match("^(%S+) (%S+) (.+)")
+        if color == '-1' then color = 'ffffff' end
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(admins, {nick = nick, color = color, text = text})
         if id ~= nil then
@@ -4523,8 +4531,8 @@ function addadm(pam)
         else
             atext(('Игрок %s добавлен в чекер админов'):format(nick))
         end
-    elseif pam:match("(%d+) (%S+)") then
-        local id, color = pam:match("(%d+) (%S+)")
+    elseif pam:match("^(%d+) (%S+)") then
+        local id, color = pam:match("^(%d+) (%S+)")
         if color == '-1' then color = 'FFFFFF' end
         if sampIsPlayerConnected(tonumber(id)) then
             table.insert(admins, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = ''})
@@ -4534,8 +4542,8 @@ function addadm(pam)
             table.insert(admins, {nick = id, color = color, text = ''})
             atext(('Игрок %s добавлен в чекер админов'):format(id))
         end
-    elseif pam:match("(%S+) (%S+)") then
-        local nick, color = pam:match("(%S+) (%S+)")
+    elseif pam:match("^(%S+) (%S+)") then
+        local nick, color = pam:match("^(%S+) (%S+)")
         local id = sampGetPlayerIdByNickname(nick)
         if color == '-1' then color = 'ffffff' end
         table.insert(admins, {nick = nick, color = color, text = ''})
@@ -4545,8 +4553,8 @@ function addadm(pam)
         else
             atext(('Игрок %s добавлен в чекер админов'):format(nick))
         end
-    elseif pam:match("(%d+)") then
-        local id = pam:match('(%d+)')
+    elseif pam:match("^(%d+)") then
+        local id = pam:match('^(%d+)')
         if sampIsPlayerConnected(tonumber(id)) then
             table.insert(admins, {nick = sampGetPlayerNickname(tonumber(id)), color = 'ffffff', text = ''})
             table.insert(admins_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = 'ffffff', text = ''})
@@ -4555,8 +4563,9 @@ function addadm(pam)
             table.insert(players, {nick = id, color = 'ffffff', text = ''})
             atext(('Игрок %s добавлен в чекер админов'):format(id))
         end
-    elseif pam:match('(%S+)') then
-        local nick = pam:match('(%S+)')
+    elseif pam:match('^(%S+)') then
+        atext(6)
+        local nick = pam:match('^(%S+)')
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(admins, {nick = nick, color = 'ffffff', text = ''})
         if id ~= nil then
@@ -4565,7 +4574,7 @@ function addadm(pam)
         else
             atext(('Игрок %s добавлен в чекер админов'):format(nick))
         end
-    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") or pam:match("(%d+) (%S+)") or pam:match("(%S+) (%S+)") or not pam:match("(%S+) (%S+) (.+)") or not pam:match('(%d+) (%S+) (.+)') then
+    elseif #pam == 0 or not pam:match('^(%S+)') or not pam:match("^(%d+)") or pam:match("^(%d+) (%S+)") or pam:match("^(%S+) (%S+)") or not pam:match("^(%S+) (%S+) (.+)") or not pam:match('^(%d+) (%S+) (.+)') then
         atext('Введите: /addadm [id/nick] [color(Пример: ffffff)/-1] [примечание]')
     end
     saveData(admins, 'moonloader/config/Admin Tools/admchecker.json')
@@ -4695,8 +4704,8 @@ function deladm(pam)
     saveData(admins, 'moonloader/config/Admin Tools/admchecker.json')
 end
 function addtemp(pam)
-    if pam:match('(%d+) (%S+) (.+)') then
-        local id, color, text = pam:match('(%d+) (%S+) (.+)')
+    if pam:match('^(%d+) (%S+) (.+)') then
+        local id, color, text = pam:match('^(%d+) (%S+) (.+)')
         if color == '-1' then color = 'ffffff' end
         if sampIsPlayerConnected(tonumber(id)) then
             table.insert(temp_checker, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = text})
@@ -4706,8 +4715,8 @@ function addtemp(pam)
             table.insert(temp_checker, {nick = id, color = color, text = text})
             atext(('Игрок %s добавлен в временный чекер'):format(id))
         end
-    elseif pam:match("(%S+) (%S+) (.+)") then
-        local nick, color, text = pam:match("(%S+) (%S+) (.+)")
+    elseif pam:match("^(%S+) (%S+) (.+)") then
+        local nick, color, text = pam:match("^(%S+) (%S+) (.+)")
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(temp_checker, {nick = nick, color = color, text = text})
         if id ~= nil then
@@ -4716,8 +4725,8 @@ function addtemp(pam)
         else
             atext(('Игрок %s добавлен в временный чекер'):format(nick))
         end
-    elseif pam:match("(%S+) (%S+)") then
-        local nick, color = pam:match("(%S+) (%S+)")
+    elseif pam:match("^(%S+) (%S+)") then
+        local nick, color = pam:match("^(%S+) (%S+)")
         local id = sampGetPlayerIdByNickname(nick)
         if color == '-1' then color = 'ffffff' end
         table.insert(temp_checker, {nick = nick, color = color, text = ''})
@@ -4727,18 +4736,19 @@ function addtemp(pam)
         else
             atext(('Игрок %s добавлен в чекер админов'):format(nick))
         end
-    elseif pam:match("(%d+)") then
-        local id = pam:match('(%d+)')
+    elseif pam:match("^(%d+) (%S+)") then
+        local id, color = pam:match('^(%d+) (%S+)')
+        if color == '-1' then color = 'ffffff' end
         if sampIsPlayerConnected(tonumber(id)) then
-            table.insert(temp_checker, {nick = sampGetPlayerNickname(tonumber(id)), color = 'ffffff', text = ''})
-            table.insert(temp_checker_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = 'ffffff', text = ''})
+            table.insert(temp_checker, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = ''})
+            table.insert(temp_checker_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = color, text = ''})
             atext(('Игрок %s [%s] добавлен в чекер игроков'):format(sampGetPlayerNickname(tonumber(id)), id))
         else
             table.insert(temp_checker, {nick = id, color = 'ffffff', text = ''})
             atext(('Игрок %s добавлен в чекер игроков'):format(id))
         end
-    elseif pam:match("(%d+)") then
-        local id = pam:match('(%d+)')
+    elseif pam:match("^(%d+)") then
+        local id = pam:match('^(%d+)')
         if sampIsPlayerConnected(tonumber(id)) then
             table.insert(temp_checker, {nick = sampGetPlayerNickname(tonumber(id)), color = 'ffffff', text = ''})
             table.insert(temp_checker_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = 'ffffff', text = ''})
@@ -4747,8 +4757,8 @@ function addtemp(pam)
             table.insert(players, {nick = id, color = 'ffffff', text = ''})
             atext(('Игрок %s добавлен в временный чекер'):format(id))
         end
-    elseif pam:match('(%S+)') then
-        local nick = pam:match('(%S+)')
+    elseif pam:match('^(%S+)') then
+        local nick = pam:match('^(%S+)')
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(temp_checker, {nick = nick, color = 'ffffff', text = ''})
         if id ~= nil then
@@ -4757,7 +4767,7 @@ function addtemp(pam)
         else
             atext(('Игрок %s добавлен в временный чекер'):format(nick))
         end
-    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") or pam:match("(%d+) (%S+)") or pam:match("(%S+) (%S+)") or not pam:match("(%S+) (%S+) (.+)") or not pam:match('(%d+) (%S+) (.+)') then
+    elseif #pam == 0 or not pam:match('^(%S+)') or not pam:match("^(%d+)") or pam:match("^(%d+) (%S+)") or pam:match("^(%S+) (%S+)") or not pam:match("^(%S+) (%S+) (.+)") or not pam:match('^(%d+) (%S+) (.+)') then
         atext('Введите: /addtemp [id/nick] [color(Пример: ffffff)/-1] [примечание]')
     end
 end
@@ -4829,33 +4839,33 @@ function admchat()
         if wcolor == 4294967040 and wtext:match('^ <ADM%-CHAT> .+ %[%d+%]: .+') then
             local nick, id, text = wtext:match('<ADM%-CHAT> (.+) %[(%d+)%]: (.+)')
             if cfg.other.admlvl > 1 and nick ~= mynick then
-                if text:match('/re %d+') then
-                    if sampIsPlayerConnected(tonumber(text:match('/re (%d+)'))) then
-                        punkey.re.id = text:match('/re (%d+)')
+                if text:match('re %d+') then
+                    if sampIsPlayerConnected(tonumber(text:match('re (%d+)'))) then
+                        punkey.re.id = text:match('re (%d+)')
                         punkey.re.nick = nick
                         atext(('Администратор %s [%s] просит зайти в слежку за игроком %s [%s]'):format(nick, id, sampGetPlayerNickname(punkey.re.id), punkey.re.id))
                         atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
                     end
                 end
-                if text:match('/warn %d+ %d+ .+') then
-                    if sampIsPlayerConnected(tonumber(text:match('/warn (%d+) %d+ .+'))) then
-                        punkey.warn.id, punkey.warn.day, punkey.warn.reason = text:match('/warn (%d+) (%d+) (.+)')
+                if text:match('warn %d+ %d+ .+') then
+                    if sampIsPlayerConnected(tonumber(text:match('warn (%d+) %d+ .+'))) then
+                        punkey.warn.id, punkey.warn.day, punkey.warn.reason = text:match('warn (%d+) (%d+) (.+)')
                         punkey.warn.admin = nick
                         atext(("Администратор %s [%s] хочет заварнить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.warn.id), punkey.warn.id, punkey.warn.reason))
                         atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
                     end
                 end
-                if text:match('/ban %d+ .+') then
-                    if sampIsPlayerConnected(tonumber(text:match('/ban (%d+) .+'))) then
-                        punkey.ban.id, punkey.ban.reason = text:match('/ban (%d+) (.+)')
+                if text:match('ban %d+ .+') then
+                    if sampIsPlayerConnected(tonumber(text:match('ban (%d+) .+'))) then
+                        punkey.ban.id, punkey.ban.reason = text:match('ban (%d+) (.+)')
                         punkey.ban.admin = nick
                         atext(("Администратор %s [%s] хочет забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.ban.id), punkey.ban.id, punkey.ban.reason))
                         atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
                     end
                 end
-                if text:match('/prison %d+ %d+ .+') then
-                    if sampIsPlayerConnected(tonumber(text:match('/prison (%d+) %d+ .+'))) then
-                        punkey.prison.id, punkey.prison.day, punkey.prison.reason = text:match('/prison (%d+) (%d+) (.+)')
+                if text:match('prison %d+ %d+ .+') then
+                    if sampIsPlayerConnected(tonumber(text:match('prison (%d+) %d+ .+'))) then
+                        punkey.prison.id, punkey.prison.day, punkey.prison.reason = text:match('prison (%d+) (%d+) (.+)')
                         punkey.prison.admin = nick
                         atext(("Администратор %s [%s] хочет посадить в присон игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.prison.id), punkey.prison.id, punkey.prison.reason))
                         atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
@@ -4939,5 +4949,108 @@ function vehs(pam)
                 atext(("[%s] %s"):format(399+k, v))
             end
         end
+    end
+end
+function veh(pam)
+    if pam:match("^(%d+) (%d+) (%d+)") then
+        local id, color1, color2 = pam:match("^(%d+) (%d+) (%d+)")
+        sampSendChat(('/veh %s %s %s'):format(id, color1, color2))
+    elseif pam:match("^(%S+) (%d+) (%d+)") then
+        local name, color1, color2 = pam:match("^(%S+) (%d+) (%d+)")
+        for k, v in pairs(tCarsName) do
+            if string.rlower(v):find(string.rlower(name)) then
+                local id = 399+k
+                sampSendChat(("/veh %s %s %s"):format(id, color1, color2))
+                break
+            end
+        end
+    elseif pam:match("^(%d+)") then
+        local id = pam:match("^(%d+)")
+        sampSendChat(('/veh %s 1 1'):format(id))
+    elseif pam:match("^(%S+)") then
+        local name = pam:match("^(%S+)")
+        for k, v in pairs(tCarsName) do
+            if string.rlower(v):find(string.rlower(name)) then
+                local id = 399+k
+                sampSendChat(('/veh %s 1 1'):format(id))
+                break
+            end
+        end
+    elseif #pam == 0 or not pam:match("^(%d+) (%d+) (%d+)") or not pam:match("^(%S+) (%d+) (%d+)") or not pam:match("^(%d+)") or not pam:match("^(%S+)") then
+        atext("Введите: /veh [id/название] [цвет1(не обязательно)] [цвет2(не обязательно)]")
+    end
+end
+function ml(pam)
+    if pam:match("^(%d+) (%d+)") then
+        local id, frak = pam:match("^(%d+) (%d+)")
+        if sampIsPlayerConnected(tonumber(id)) then
+            sampSendChat(('/makeleader %s %s'):format(id, frak))
+        else
+            atext('Игрок оффлайн')
+        end
+    elseif pam:match("^(%d+)") then
+        local id = pam:match("^(%d+)")
+        if sampIsPlayerConnected(tonumber(id)) then
+            lua_thread.create(function()
+                sampShowDialog(23145,("{ffffff}Выдача лидерки игроку: {66FF00}%s [%s]"):format(sampGetPlayerNickname(tonumber(id)), id),'LSPD\nFBI\nSFA\nLCN\nYakuza\nMayor\nSFN\nSFPD\nInstructors\nBallas\nVagos\nRM\nGrove\nLSN\nAztec\nRifa\nLVA\nLVN\nLVPD\nHospital\nMongols\nWarlocks\nPagans','»','x',2)
+                while sampIsDialogActive(23145) do wait(0) end
+                local result, button, list, text = sampHasDialogRespond(23145)
+                if result then
+                    if button == 1 then
+                        if list == 0 then
+                            sampSendChat(("/makeleader %s 1"):format(id))
+                        elseif list == 1 then
+                            sampSendChat(("/makeleader %s 2"):format(id))
+                        elseif list == 2 then
+                            sampSendChat(("/makeleader %s 3"):format(id))
+                        elseif list == 3 then
+                            sampSendChat(("/makeleader %s 5"):format(id))
+                        elseif list == 4 then
+                            sampSendChat(("/makeleader %s 6"):format(id))
+                        elseif list == 5 then
+                            sampSendChat(("/makeleader %s 7"):format(id))
+                        elseif list == 6 then
+                            sampSendChat(("/makeleader %s 9"):format(id))
+                        elseif list == 7 then
+                            sampSendChat(("/makeleader %s 10"):format(id))
+                        elseif list == 8 then
+                            sampSendChat(("/makeleader %s 11"):format(id))
+                        elseif list == 9 then
+                            sampSendChat(("/makeleader %s 12"):format(id))
+                        elseif list == 10 then
+                            sampSendChat(("/makeleader %s 13"):format(id))
+                        elseif list == 11 then
+                            sampSendChat(("/makeleader %s 14"):format(id))
+                        elseif list == 12 then 
+                            sampSendChat(("/makeleader %s 15"):format(id))
+                        elseif list == 13 then
+                            sampSendChat(("/makeleader %s 16"):format(id))
+                        elseif list == 14 then
+                            sampSendChat(("/makeleader %s 17"):format(id))
+                        elseif list == 15 then
+                            sampSendChat(("/makeleader %s 18"):format(id))
+                        elseif list == 16 then
+                            sampSendChat(("/makeleader %s 19"):format(id))
+                        elseif list == 17 then
+                            sampSendChat(("/makeleader %s 20"):format(id))
+                        elseif list == 18 then
+                            sampSendChat(("/makeleader %s 21"):format(id))
+                        elseif list == 19 then
+                            sampSendChat(("/makeleader %s 22"):format(id))
+                        elseif list == 20 then
+                            sampSendChat(("/makeleader %s 24"):format(id))
+                        elseif list == 21 then
+                            sampSendChat(("/makeleader %s 26"):format(id))
+                        elseif list == 22 then
+                            sampSendChat(("/makeleader %s 29"):format(id))
+                        end
+                    end
+                end
+            end)
+        else
+            atext('Игрок оффлайн')
+        end
+    elseif #pam == 0 or not pam:match("^(%d+) (%d+)") or not pam:match("^(%d+)") then
+        atext('Введите: /ml [id] [id фракции(не обязательно)]')
     end
 end
