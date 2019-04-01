@@ -1,10 +1,10 @@
 --[[
   Îñòàëîñü: Ñäåëàòü âîçìîæíîñòü èçìåíÿòü îíëàéí è îòâåòû;
 ]]
-script_name("Activity checker") 
+script_name("Activity") 
 script_authors({ 'Edward_Franklin', 'Thomas_Lawson' })
-script_version("1.35")
-script_version_number(13567)
+script_version("1.36")
+script_version_number(13643)
 script_properties('work-in-pause')
 script_url("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua")
 --------------------------------------------------------------------
@@ -48,7 +48,7 @@ local sInfo = {
   lvlAdmin = 0,
   isALogin = false
 }
-local DEBUG_MODE = true
+local DEBUG_MODE = false
 local dayName = {u8"Ïîíåäåëüíèê", u8"Âòîğíèê", u8"Ñğåäà", u8"×åòâåğã", u8"Ïÿòíèöà", u8"Ñóááîòà", u8"Âîñêğåñåíüå"}
 local nick = ""
 local playerid = -1
@@ -138,7 +138,9 @@ function autoupdate(json_url)
     if doesFileExist(json) then os.remove(json) end
     downloadUrlToFile(json_url, json, function(id, status, p1, p2)
       if status == dlstatus.STATUSEX_ENDDOWNLOAD then
+        debug_log("Ñêà÷èâàíèå ïàêåòà ñ îáíîâëåíèåì. Äèğåêòîğèÿ: "..json)
         if doesFileExist(json) then
+          debug_log("Ïàêåò íàéäåí. Îòêğûâàåì..")
           local f = io.open(json, 'r')
           if f then
             local info = decodeJson(f:read('*a'))
@@ -146,12 +148,13 @@ function autoupdate(json_url)
             updateversion = info.activity.version
             f:close()
             os.remove(json)
+            debug_log("updatelink = "..updatelink.." | updateversion = "..updateversion)
             if updateversion > thisScript().version then
+              debug_log("updateversion > thisScript().version | "..updateversion.." > "..thisScript().version)
               lua_thread.create(function()
                 local dlstatus = require('moonloader').download_status
                 local color = -1
                 atext('Îáíàğóæåíî îáíîâëåíèå. Ïûòàşñü îáíîâèòüñÿ c '..thisScript().version..' íà '..updateversion)
-                debug_log("Íàéäåíî îáíîâëåíèå ñêğèïòà") 
                 wait(250)
                 downloadUrlToFile(updatelink, thisScript().path,
                   function(id3, status1, p13, p23)
@@ -177,11 +180,13 @@ function autoupdate(json_url)
                 end, prefix
               )
             else
+              debug_log("Îáíîâëåíèå íå òğåáóåòñÿ")
               update = false
               print('v'..thisScript().version..': Îáíîâëåíèå íå òğåáóåòñÿ.')
             end
           end
-        else 
+        else
+          debug_log("Îøèáêà: Ïàêåò íå íàéäåí!")
           atext('Íå ìîãó óñòàíîâèòü îáíîâëåíèå')
           update = false
         end
@@ -493,7 +498,7 @@ function atext(text)
 end
 
 function debug_log(text)
-  if DEBUG_MODE == false then return end
+  --if DEBUG_MODE == false then return end
   if not doesFileExist('moonloader/config/activity_debug.txt') then 
       local file = io.open('moonloader/config/activity_debug.txt', 'w')
       file:close()
@@ -548,77 +553,5 @@ function ARGBtoRGB(color)
     rgb = bit.bor(rgb, bit.lshift(g, 8))
     rgb = bit.bor(rgb, bit.lshift(r, 16))
     return rgb
-end
-
-function checkActivity()
-  local zstring = "{ffffff}˜˜˜˜˜˜˜˜\t{FFFFFF}˜˜˜˜˜˜˜˜\n"
-  zstring = zstring.."˜˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜ ˜˜ ˜˜˜˜ ˜˜˜˜˜˜\n"
-  zstring = zstring.."˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜\n"
-  zstring = zstring..string.format("˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜\t%s ˜˜˜˜˜˜ ˜˜˜˜˜\n", sInfo.sessionStart == 0 and "-" or (os.time() - sInfo.sessionStart))
-  zstring = zstring..string.format("˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜˜\t%s\n", sInfo.authTime)
-  zstring = zstring..string.format("˜˜˜˜˜˜˜˜˜˜˜ ˜ ALogin\t%s\n", sInfo.isALogin and "˜˜˜˜˜˜˜˜˜˜˜˜˜" or "˜˜˜˜˜˜˜˜˜˜˜")
-  if sInfo.isALogin then
-    zstring = zstring..string.format("˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜\t%s\n", sInfo.lvlAdmin)
-  end  
-  zstring = zstring..string.format("˜˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜˜\t%s\n", secToTime(pInfo.info.dayOnline))
-  zstring = zstring..string.format("AFK ˜˜ ˜˜˜˜˜˜˜\t%s\n", sInfo.sessionStart == 0 and secToTime(pInfo.info.dayAFK) or secToTime(pInfo.info.dayAFK + (os.time() - sInfo.sessionStart - sInfo.onlineTime)))
-  zstring = zstring..string.format("˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜˜\t%d\n", pInfo.info.dayPM)
-  zstring = zstring..string.format("˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜\t%d\n", pInfo.info.weekPM)
-  zstring = zstring..string.format("˜˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜\t%s\n", secToTime(pInfo.info.weekOnline))
-  -------
-  lua_thread.create(function()
-    sampShowDialog(827453, string.format("{FFFFFF}˜˜˜˜˜˜˜˜˜˜ | {954F4F}%s", nick), zstring, "˜˜˜˜˜˜˜", "˜˜˜˜˜˜˜", DIALOG_STYLE_TABLIST_HEADERS)
-    while sampIsDialogActive(827453) do wait(50) end
-    local _, button, list, _ = sampHasDialogRespond(827453)
-    if button == 1 and list == 0 then
-      checkWeek()
-    elseif button == 1 and list == 1 then
-      checkPunishments()
-    end
-  end)
-end
-
-function checkPunishments()
-  local zstring = "{FFFFFF}˜˜˜˜˜˜˜˜˜\t{FFFFFF}˜˜˜˜˜˜˜˜˜˜\n"
-  local i = 1
-  for key, value in pairs(pInfo.punish) do
-    zstring = zstring..string.format("%s\t%s\n", key, value)
-    i = i + 1
-  end
-  lua_thread.create(function()
-    sampShowDialog(835163, string.format("{FFFFFF}˜˜˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜ | {954F4F}%s", nick), zstring, "˜˜˜˜˜˜˜", "˜˜˜˜˜", DIALOG_STYLE_TABLIST_HEADERS)
-    while sampIsDialogActive(835163) do wait(50) end
-    local _, button, _, _ = sampHasDialogRespond(835163)
-    if button == 0 then
-      checkActivity()
-    end
-  end)
-end
-
-function checkWeek()
-  local daynumber = dateToWeekNumber(os.date("%d.%m.%y"))
-  local i = 1
-  local zstring = "{FFFFFF}˜˜˜˜\t{FFFFFF}˜˜˜˜˜˜\n"
-  for key, value in pairs(pInfo.weeks) do
-    local colour = ""
-    if daynumber > 0 then
-      if daynumber < i then colour = "ec3737"
-      elseif daynumber == i then colour = "FFFFFF"
-      else colour = "00BF80" end
-    else
-      if daynumber == 0 and i == 7 then colour = "FFFFFF"
-      else colour = "00BF80" end
-    end
-    zstring = zstring..string.format("%s\t{%s}%s\n", dayName[i], colour, daynumber == i and secToTime(pInfo.info.dayOnline) or secToTime(value))
-    i = i + 1
-  end
-  lua_thread.create(function()
-    sampShowDialog(837763, string.format("{FFFFFF}˜˜˜˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜ ˜˜˜˜˜˜ | {954F4F}%s", nick), zstring, "˜˜˜˜˜˜˜", "˜˜˜˜˜", DIALOG_STYLE_TABLIST_HEADERS)
-    while sampIsDialogActive(837763) do wait(50) end
-    local _, button, _, _ = sampHasDialogRespond(837763)
-    if button == 0 then
-      checkActivity()
-    end
-  end)
 end
 ]]
