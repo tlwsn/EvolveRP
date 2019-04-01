@@ -3,8 +3,8 @@
 ]]
 script_name("Activity") 
 script_authors({ 'Edward_Franklin', 'Thomas_Lawson' })
-script_version("1.36")
-script_version_number(13643)
+script_version("1.37")
+script_version_number(13722)
 script_properties('work-in-pause')
 script_url("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua")
 --------------------------------------------------------------------
@@ -57,7 +57,7 @@ function main()
     apply_custom_style()
     if not isSampfuncsLoaded() or not isSampLoaded() then return end
     while not isSampAvailable() do wait(100) end
-    autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json")
+    autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", '[Activity Helper]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439")
     sampRegisterChatCommand("gip", cmd_gip)
     sampRegisterChatCommand('activitydebug', function()
       DEBUG_MODE = not DEBUG_MODE
@@ -131,6 +131,65 @@ function calculateOnline()
     end  
   end)
 end
+
+function autoupdate(json_url, prefix, url)
+  lua_thread.create(function()
+  local dlstatus = require('moonloader').download_status
+  local json = getWorkingDirectory() .. '\\'..thisScript().name..'-version.json'
+  if doesFileExist(json) then os.remove(json) end
+  downloadUrlToFile(json_url, json,
+    function(id, status, p1, p2)
+      if status == dlstatus.STATUSEX_ENDDOWNLOAD then
+        if doesFileExist(json) then
+          local f = io.open(json, 'r')
+          if f then
+            local info = decodeJson(f:read('*a'))
+            updatelink = info.activity.url
+            updateversion = info.activity.version
+            f:close()
+            os.remove(json)
+            if updateversion > thisScript().version then
+              lua_thread.create(function()
+                local dlstatus = require('moonloader').download_status
+                local color = -1
+                atext('Обнаружено обновление. Пытаюсь обновиться c '..thisScript().version..' на '..updateversion)
+                wait(250)
+                downloadUrlToFile(updatelink, thisScript().path,
+                  function(id3, status1, p13, p23)
+                    if status1 == dlstatus.STATUS_DOWNLOADINGDATA then
+                      print(string.format('Загружено %d из %d.', p13, p23))
+                    elseif status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
+                      print('Загрузка обновления завершена.')
+                      atext('Обновление завершено!')
+                      goupdatestatus = true
+                      lua_thread.create(function() wait(500) thisScript():reload() end)
+                    end
+                    if status1 == dlstatus.STATUSEX_ENDDOWNLOAD then
+                      if goupdatestatus == nil then
+                          atext('Обновление прошло неудачно. Запускаю устаревшую версию..')
+                        update = false
+                      end
+                    end
+                  end
+                )
+                end, prefix
+              )
+            else
+              update = false
+              print('v'..thisScript().version..': Обновление не требуется.')
+            end
+          end
+        else
+          print('v'..thisScript().version..': Не могу проверить обновление. Смиритесь или проверьте самостоятельно на '..url)
+          update = false
+        end
+      end
+    end
+  )
+  while update ~= false do wait(100) end
+  end)
+end
+--[[
 function autoupdate(json_url)
   lua_thread.create(function()
     local dlstatus = require('moonloader').download_status
@@ -144,8 +203,8 @@ function autoupdate(json_url)
           local f = io.open(json, 'r')
           if f then
             local info = decodeJson(f:read('*a'))
-            updatelink = info.activity.link
-            updateversion = info.activity.version
+            local updatelink = info.activity.link
+            local updateversion = info.activity.version
             f:close()
             os.remove(json)
             debug_log("updatelink = "..updatelink.." | updateversion = "..updateversion)
@@ -195,7 +254,7 @@ function autoupdate(json_url)
   )
   while update ~= false do wait(100) end
   end)
-end
+end]]
 function saveconfig()
   debug_log("Update information: weekOnline = "..pInfo.info.weekOnline.." | dayOnline = "..pInfo.info.dayOnline)
   if pInfo.info.dayOnline > 0 and pInfo.info.weekOnline > 0 then
