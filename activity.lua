@@ -1,8 +1,7 @@
 script_name("Activity") 
 script_authors({ 'Edward_Franklin', 'Thomas_Lawson' })
-script_version("1.37") -- Final version
-script_version_number(13722)
-script_properties('work-in-pause')
+script_version("1.38") -- Final version
+script_version_number(13846)
 script_url("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua")
 --------------------------------------------------------------------
 require "lib.moonloader"
@@ -55,7 +54,6 @@ function main()
     if not isSampfuncsLoaded() or not isSampLoaded() then return end
     while not isSampAvailable() do wait(100) end
     autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", '[Activity Helper]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439")
-    sampRegisterChatCommand("gip", cmd_gip)
     sampRegisterChatCommand('activitydebug', function()
       DEBUG_MODE = not DEBUG_MODE
       atext(("Debug mode %s"):format(DEBUG_MODE and "включен" or "отключен"))
@@ -376,20 +374,6 @@ function imgui.OnDrawFrame()
       imgui.End()
     end
   end
-end
-
------------------------- CMD'S ------------------------
-function cmd_gip(params)
-  if #params == 0 then
-    sampAddChatMessage("Введите /gip [playerid / nick]", -1)
-    return
-  end
-  local paramid = tonumber(params)
-  if paramid ~= nil then
-    sampSendChat("/getip "..params)
-  else
-    sampSendChat("/agetip "..params)
-  end  
 end
 
 ------------------------ HOOKS ------------------------

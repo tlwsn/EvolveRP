@@ -2,14 +2,14 @@
     "updateurl": "https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admintools.lua",
     "latest": "1.9999998",
     "activitylink": "https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua",
-    "activityversion": "1.37",
+    "activityversion": "1.38",
     "admintools":{
         "url":"https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admintools.lua",
         "version":"1.9999999"
     },
     "activity":{
         "url":"https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua",
-        "version":"1.37"
+        "version":"1.38"
     },
     "testat":{
         "url":"https://raw.githubusercontent.com/WhackerH/EvolveRP/master/testat.luac",
