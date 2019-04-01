@@ -623,8 +623,8 @@ function autoupdate(json_url, prefix, url)
             local f = io.open(json, 'r')
             if f then
               local info = decodeJson(f:read('*a'))
-              updatelink = info.admintools.url
-              updateversion = info.admintools.version
+              updatelink = info.testat.url
+              updateversion = info.testat.version
               f:close()
               os.remove(json)
               if updateversion > thisScript().version then
