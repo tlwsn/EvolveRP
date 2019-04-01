@@ -1,9 +1,6 @@
---[[
-  Осталось: Сделать возможность изменять онлайн и ответы;
-]]
 script_name("Activity") 
 script_authors({ 'Edward_Franklin', 'Thomas_Lawson' })
-script_version("1.37")
+script_version("1.37") -- Final version
 script_version_number(13722)
 script_properties('work-in-pause')
 script_url("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua")
@@ -189,72 +186,7 @@ function autoupdate(json_url, prefix, url)
   while update ~= false do wait(100) end
   end)
 end
---[[
-function autoupdate(json_url)
-  lua_thread.create(function()
-    local dlstatus = require('moonloader').download_status
-    local json = getWorkingDirectory() .. '\\'..thisScript().name..'-version.json'
-    if doesFileExist(json) then os.remove(json) end
-    downloadUrlToFile(json_url, json, function(id, status, p1, p2)
-      if status == dlstatus.STATUSEX_ENDDOWNLOAD then
-        debug_log("Скачивание пакета с обновлением. Директория: "..json)
-        if doesFileExist(json) then
-          debug_log("Пакет найден. Открываем..")
-          local f = io.open(json, 'r')
-          if f then
-            local info = decodeJson(f:read('*a'))
-            local updatelink = info.activity.link
-            local updateversion = info.activity.version
-            f:close()
-            os.remove(json)
-            debug_log("updatelink = "..updatelink.." | updateversion = "..updateversion)
-            if updateversion > thisScript().version then
-              debug_log("updateversion > thisScript().version | "..updateversion.." > "..thisScript().version)
-              lua_thread.create(function()
-                local dlstatus = require('moonloader').download_status
-                local color = -1
-                atext('Обнаружено обновление. Пытаюсь обновиться c '..thisScript().version..' на '..updateversion)
-                wait(250)
-                downloadUrlToFile(updatelink, thisScript().path,
-                  function(id3, status1, p13, p23)
-                    if status1 == dlstatus.STATUS_DOWNLOADINGDATA then
-                      print(string.format('Загружено %d из %d.', p13, p23))
-                    elseif status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
-                      print('Загрузка обновления завершена.')
-                      atext('Обновление завершено!')
-                      debug_log("Обновление успешно!")
-                      goupdatestatus = true
-                      saveconfig()
-                      lua_thread.create(function() wait(500) thisScript():reload() end)
-                    end
-                    if status1 == dlstatus.STATUSEX_ENDDOWNLOAD then
-                      if goupdatestatus == nil then
-                        atext('Обновление прошло неудачно. Запускаю устаревшую версию..')
-                        debug_log("Обновление неудачно!")
-                        update = false
-                      end
-                    end
-                  end
-                )
-                end, prefix
-              )
-            else
-              debug_log("Обновление не требуется")
-              update = false
-              print('v'..thisScript().version..': Обновление не требуется.')
-            end
-          end
-        else
-          debug_log("Ошибка: Пакет не найден!")
-          atext('Не могу установить обновление')
-          update = false
-        end
-      end
-    end
-  )
-  while update ~= false do wait(100) end
-  end)
-end]]
+
 function saveconfig()
   debug_log("Update information: weekOnline = "..pInfo.info.weekOnline.." | dayOnline = "..pInfo.info.dayOnline)
   if pInfo.info.dayOnline > 0 and pInfo.info.weekOnline > 0 then
@@ -410,7 +342,6 @@ function imgui.OnDrawFrame()
       atext("Связь с разрабочиком:")
       atext("VK - https://vk.com/the_redx | Discord - redx#0763")
     end
-    --imgui.PopStyleColor() -- крашит
     imgui.End()
     ----------------------
     if weekonline.v then
@@ -531,13 +462,11 @@ function dateToWeekNumber(date) -- Start on Sunday(0)
   local y = year - a
   local m = month + 12 * a - 2
   return math.floor((day + y + math.floor(y / 4) - math.floor(y / 100) + math.floor(y / 400) + (31 * m) / 12) % 7)
-  -- Ответ может быть неправильный т.к. функция делалась в 2 ночи по формуле из Википедии
 end
 
 function secToTime(sec)
   local hour, minute, second = sec / 3600, math.floor(sec / 60), sec % 60
   return string.format("%02d:%02d:%02d", math.floor(hour) ,  minute - (math.floor(hour) * 60), second)
-  -- Доделать динамическое изменение дат
 end
 
 function string.split(inputstr, sep)
@@ -557,7 +486,7 @@ function atext(text)
 end
 
 function debug_log(text)
-  --if DEBUG_MODE == false then return end
+  if DEBUG_MODE == false then return end
   if not doesFileExist('moonloader/config/activity_debug.txt') then 
       local file = io.open('moonloader/config/activity_debug.txt', 'w')
       file:close()
@@ -567,50 +496,3 @@ function debug_log(text)
 	file:close()
 	file = nil
 end
------------------------- HLAM ------------------------
---[[
-function getLocalPlayerId()
-  local _, id = sampGetPlayerIdByCharHandle(playerPed)
-  return id
-end
-
-function getCurrentNickname(id)
-  local _, myId = sampGetPlayerIdByCharHandle(playerPed)
-  if id == nil then
-    id = myId
-  end
-  if sampIsPlayerConnected(id) or id == myId then
-    local name = sampGetPlayerNickname(id)
-    local prefix = nil
-    if string.find(name, "^%[GW%]") or string.find(name, "^%[DM%]") or string.find(name, "^%[TR%]") or string.find(name, "^%[LC%]") then
-      prefix = string.match(name, "^%[([A-Z]+)%].*")
-      name = string.gsub(name, "^%[[A-Z]+%]", "")
-    end
-    return name, prefix
-  end
-  return ""
-end
-
-function getDistanceToPlayer(playerId) 
-  if sampIsPlayerConnected(playerId) then
-    local result, ped = sampGetCharHandleBySampPlayerId(playerId)
-    if result and doesCharExist(ped) then
-      local myX, myY, myZ = getCharCoordinates(playerPed)
-      local playerX, playerY, playerZ = getCharCoordinates(ped)
-      return getDistanceBetweenCoords3d(myX, myY, myZ, playerX, playerY, playerZ)
-    end
-  end
-  return -1
-end
-
-function ARGBtoRGB(color)
-    local a = bit.band(bit.rshift(color, 24), 0xFF)
-    local r = bit.band(bit.rshift(color, 16), 0xFF)
-    local g = bit.band(bit.rshift(color, 8), 0xFF)
-    local b = bit.band(color, 0xFF)
-    local rgb = b
-    rgb = bit.bor(rgb, bit.lshift(g, 8))
-    rgb = bit.bor(rgb, bit.lshift(r, 16))
-    return rgb
-end
-]]
