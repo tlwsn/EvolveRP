@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.9999999')
+script_version('1.99999991')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -2339,11 +2339,8 @@ function clickF()
                                     if doesVehicleExist(car) and (not isCharInAnyCar(playerPed) or storeCarCharIsInNoSave(playerPed) ~= car) then
                                         displayVehicleName(sx, sy - hoffs * 2, getNameOfVehicleModel(getCarModel(car)))
                                         local color = 0xAAFFFFFF
-                                        if isKeyDown(VK_RBUTTON) then
-                                            tpIntoCar = car
-                                            color = 0xFFFFFFFF
-                                        end
-                                        renderFontDrawText(font2, "Зажмите правую кнопку мыши для телепорта в авто", sx, sy - hoffs * 3, color)
+                                        tpIntoCar = car
+                                        color = 0xFFFFFFFF
                                     end
                                 end
                                 createPointMarker(pos.x, pos.y, pos.z)
