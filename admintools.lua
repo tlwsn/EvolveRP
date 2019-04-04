@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.99999991')
+script_version('1.99999992')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -11,6 +11,7 @@ local key = require 'vkeys'
 local Matrix3X3 = require 'matrix3x3'
 local Vector3D = require 'vector3d'
 local ffi = require 'ffi'
+local d3dx9_43 = ffi.load('d3dx9_43.dll')
 local effil = require 'effil'
 local getBonePosition = ffi.cast("int (__thiscall*)(void*, float*, int, bool)", 0x5E4280)
 local mem = require 'memory'
@@ -369,6 +370,107 @@ local cfg = {
         delay = 1200
     }
 }
+ID = {
+	Unarmed = 0,
+	Knuckles = 1,
+	Golf = 2,
+	Stick = 3,
+	Knife = 4,
+	Bat = 5,
+	Shovel = 6,
+	Cue = 7,
+	Katana = 8,
+	Chainsaw = 9,
+	Dildo1 = 10,
+	Dildo2 = 11,
+	Dildo3 = 12,
+	Dildo4 = 13,
+	Flowers = 14,
+	Cane = 15,
+	Grenade = 16,
+	Gas = 17,
+	Molotov = 18,
+	Pistol = 22,
+	Slicend = 23,
+	Eagle = 24,
+	Shotgun = 25,
+	Sawnoff = 26,
+	Combat = 27,
+	Uzi = 28,
+	Mp5 = 29,
+	Ak47 = 30,
+	M4 = 31,
+	Tec9 = 32,
+	Rifle = 33,
+	Sniper = 34,
+	RPG = 35,
+	Launcher = 36,
+	Flame = 37,
+	Minigun = 38,
+	Sachet = 39,
+	Detonator = 40,
+	Spray = 41,
+	Extinguisher = 42,
+	Goggles1 = 44,
+	Goggles2 = 45,
+    Parachute = 46,
+    Kill = 48,
+    Car = 49,
+    Helicopter = 50,
+    Explosion = 51,
+    Kill1 = 52
+}
+
+RenderGun = {
+	[ID.Unarmed] = 37,
+	[ID.Knuckles] = 66,
+	[ID.Golf] = 62,
+	[ID.Stick] = 40,
+	[ID.Knife] = 67,
+	[ID.Bat] = 63,
+	[ID.Shovel] = 38,
+	[ID.Cue] = 34,
+	[ID.Katana] = 33,
+	[ID.Chainsaw] = 49,
+	[ID.Dildo1] = 69,
+	[ID.Dildo2] = 69,
+	[ID.Dildo3] = 69,
+	[ID.Dildo4] = 69,
+	[ID.Flowers] = 36,
+	[ID.Cane] = 35,
+	[ID.Grenade] = 64,
+	[ID.Gas] = 68,
+	[ID.Molotov] = 39,
+	[ID.Pistol] = 54,
+	[ID.Slicend] = 50,
+	[ID.Eagle] = 51,
+	[ID.Shotgun] = 61,
+	[ID.Sawnoff] = 48,
+	[ID.Combat] = 43,
+	[ID.Uzi] = 73,
+	[ID.Mp5] = 56,
+	[ID.Ak47] = 72,
+	[ID.M4] = 53,
+	[ID.Tec9] = 55,
+	[ID.Rifle] = 46,
+	[ID.Sniper] = 65,
+	[ID.RPG] = 52,
+	[ID.Launcher] = 41,
+	[ID.Flame] = 42,
+	[ID.Minigun] = 70,
+	[ID.Sachet] = 60,
+	[ID.Detonator] = 59,
+	[ID.Spray] = 47,
+	[ID.Extinguisher] = 44,
+	[ID.Goggles1] = 45,
+    [ID.Goggles2] = 45,
+    [ID.Kill] = 48,
+    [ID.Car] = 49,
+    [ID.Kill1] = 52,
+    [ID.Parachute] = 58,
+    [ID.Helicopter] = 50,
+    [ID.Explosion] = 51
+}
 function asyncHttpRequest(method, url, args, resolve, reject)
    local request_thread = effil.thread(function (method, url, args)
       local requests = require 'requests'
@@ -406,6 +508,31 @@ function asyncHttpRequest(method, url, args, resolve, reject)
          wait(0)
       end
    end)
+end
+function d3dxfont_create(name, height, charset)
+    charset = charset or 1
+    local d3ddev = ffi.cast('void*', getD3DDevicePtr())
+    local pfont = ffi.new('ID3DXFont*[1]', {nil})
+    if tonumber(d3dx9_43.D3DXCreateFontA(d3ddev, height, 0, 600, 1, false, charset, 0, 4, 0, name, pfont)) < 0 then
+        return nil
+    end
+    return pfont[0]
+end
+
+function d3dxfont_draw(font, text, rect, color, format)
+    local prect = ffi.new('RECT[1]', {{rect[1], rect[2], rect[3], rect[4]}})
+    return font.vtbl.DrawTextA(font, nil, text, -1, prect, format, color)
+end
+function onD3DDeviceLost()
+    if fonts_loaded then
+        font_gtaweapon3.vtbl.OnLostDevice(font_gtaweapon3)
+    end
+end
+
+function onD3DDeviceReset()
+    if fonts_loaded then
+        font_gtaweapon3.vtbl.OnResetDevice(font_gtaweapon3)
+    end
 end
 function atext(text)
     sampAddChatMessage(string.format(' Admin Tools | {ffffff}%s', text), 0x66FF00)
@@ -533,6 +660,47 @@ struct stKillInfo
     void 			    	*pAuxFont2; // ID3DXFont
 } __attribute__ ((packed));
 bool DwmEnableComposition(int uCompositionAction);
+]]
+ffi.cdef [[
+typedef struct stRECT
+{
+    int left, top, right, bottom;
+} RECT;
+
+typedef struct stID3DXFont
+{
+    struct ID3DXFont_vtbl* vtbl;
+} ID3DXFont;
+
+struct ID3DXFont_vtbl
+{
+        void* QueryInterface; // STDMETHOD(QueryInterface)(THIS_ REFIID iid, LPVOID *ppv) PURE;
+    void* AddRef; // STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    uint32_t (__stdcall * Release)(ID3DXFont* font); // STDMETHOD_(ULONG, Release)(THIS) PURE;
+
+    // ID3DXFont
+    void* GetDevice; // STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9 *ppDevice) PURE;
+    void* GetDescA; // STDMETHOD(GetDescA)(THIS_ D3DXFONT_DESCA *pDesc) PURE;
+    void* GetDescW; // STDMETHOD(GetDescW)(THIS_ D3DXFONT_DESCW *pDesc) PURE;
+    void* GetTextMetricsA; // STDMETHOD_(BOOL, GetTextMetricsA)(THIS_ TEXTMETRICA *pTextMetrics) PURE;
+    void* GetTextMetricsW; // STDMETHOD_(BOOL, GetTextMetricsW)(THIS_ TEXTMETRICW *pTextMetrics) PURE;
+
+    void* GetDC; // STDMETHOD_(HDC, GetDC)(THIS) PURE;
+    void* GetGlyphData; // STDMETHOD(GetGlyphData)(THIS_ UINT Glyph, LPDIRECT3DTEXTURE9 *ppTexture, RECT *pBlackBox, POINT *pCellInc) PURE;
+
+    void* PreloadCharacters; // STDMETHOD(PreloadCharacters)(THIS_ UINT First, UINT Last) PURE;
+    void* PreloadGlyphs; // STDMETHOD(PreloadGlyphs)(THIS_ UINT First, UINT Last) PURE;
+    void* PreloadTextA; // STDMETHOD(PreloadTextA)(THIS_ LPCSTR pString, INT Count) PURE;
+    void* PreloadTextW; // STDMETHOD(PreloadTextW)(THIS_ LPCWSTR pString, INT Count) PURE;
+
+    int (__stdcall * DrawTextA)(ID3DXFont* font, void* pSprite, const char* pString, int Count, RECT* pRect, uint32_t Format, uint32_t Color); // STDMETHOD_(INT, DrawTextA)(THIS_ LPD3DXSPRITE pSprite, LPCSTR pString, INT Count, LPRECT pRect, DWORD Format, D3DCOLOR Color) PURE;
+    void* DrawTextW; // STDMETHOD_(INT, DrawTextW)(THIS_ LPD3DXSPRITE pSprite, LPCWSTR pString, INT Count, LPRECT pRect, DWORD Format, D3DCOLOR Color) PURE;
+
+    void (__stdcall * OnLostDevice)(ID3DXFont* font); // STDMETHOD(OnLostDevice)(THIS) PURE;
+    void (__stdcall * OnResetDevice)(ID3DXFont* font); // STDMETHOD(OnResetDevice)(THIS) PURE;
+};
+
+uint32_t D3DXCreateFontA(void* pDevice, int Height, uint32_t Width, uint32_t Weight, uint32_t MipLevels, bool Italic, uint32_t CharSet, uint32_t OutputPrecision, uint32_t Quality, uint32_t PitchAndFamily, const char* pFaceName, ID3DXFont** ppFont);
 ]]
 function rainbow(speed, alpha)
 	local r = math.sin(os.clock() * speed)
@@ -2154,6 +2322,8 @@ function initializeRender()
     whhpfont = renderCreateFont("Verdana", 8, 4)
 	checkfont = renderCreateFont(cfg.other.checkfont, cfg.other.checksize, 4)
     hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4)
+    font_gtaweapon3 = d3dxfont_create('gtaweapon3', 25, 2)
+    fonts_loaded = true
 end
 function rotateCarAroundUpAxis(car, vec)
     local mat = Matrix3X3(getVehicleRotationMatrix(car))
@@ -2380,6 +2550,9 @@ function onScriptTerminate(scr)
         nameTagOn()
         showCursor(false)
         removePointMarker()
+        if fonts_loaded then
+            font_gtaweapon3.vtbl.Release(font_gtaweapon3)
+        end
     end
 end
 frakcolor = {
@@ -2884,6 +3057,7 @@ function sampev.onPlayerQuit(id, reason)
     end
 end
 function sampev.onPlayerDeathNotification(killerId, killedId, reason)
+    print(("%s [%s] killed %s [%s] with %s"):format(sampGetPlayerNickname(killerId), killerId, sampGetPlayerNickname(killedId), killedId, reason))
 	local kill = ffi.cast('struct stKillInfo*', sampGetKillInfoPtr())
     local _, myid = sampGetPlayerIdByCharHandle(playerPed)
     local killercolor = ("%06X"):format(bit.band(sampGetPlayerColor(killerId), 0xFFFFFF))
@@ -2958,6 +3132,25 @@ function sampev.onPlayerJoin(id, clist, isNPC, nick)
 		end
 	end
 end
+function onD3DPresent()
+	local sw, sh = getScreenResolution()
+    if #tkilllist ~= 0 and fonts_loaded and not isPauseMenuActive() and swork then
+        if killlistmode == 1 then
+            local killsy = cfg.killlist.posy-5
+            for k, v in ipairs(tkilllist) do
+                local killlenght = renderGetFontDrawTextLength(hudfont,v['killer'])
+                local gunlenght = renderGetFontDrawTextLength(gunfont, v['reason'])
+                local deathlenght = renderGetFontDrawTextLength(hudfont,v['killed'])
+                --renderFontDrawText(hudfont, v['killer'], cfg.killlist.posx, killsy, -1)
+                renderDrawBox(cfg.killlist.posx+1, killsy, 29, 27, 0xCC000000)
+                d3dxfont_draw(font_gtaweapon3, string.char(RenderGun[v['reason']]), {cfg.killlist.posx ,killsy, sw, sh}, 0xFFFFFFFF, 0x10)
+                --renderFontDrawText(gunfont, v['reason'], cfg.killlist.posx+killlenght+10, killsy, -1)
+                --renderFontDrawText(hudfont, v['killed'], cfg.killlist.posx+killlenght+20+gunlenght ,killsy, -1)
+                killsy = killsy + 29
+            end
+        end
+    end
+end
 function renders()
     while true do wait(0)
         if swork then
@@ -2977,10 +3170,11 @@ function renders()
                     local killlenght = renderGetFontDrawTextLength(hudfont,v['killer'])
                     local gunlenght = renderGetFontDrawTextLength(gunfont, v['reason'])
                     local deathlenght = renderGetFontDrawTextLength(hudfont,v['killed'])
-                    renderFontDrawText(hudfont, v['killer'], cfg.killlist.posx, killsy, -1)
-                    renderFontDrawText(gunfont, v['reason'], cfg.killlist.posx+killlenght+10, killsy, -1)
-                    renderFontDrawText(hudfont, v['killed'], cfg.killlist.posx+killlenght+20+gunlenght ,killsy, -1)
-                    killsy = killsy + 20
+                    renderFontDrawText(hudfont, v['killer'], cfg.killlist.posx-killlenght-10, killsy, -1)
+                    --d3dxfont_draw(font_gtaweapon3, string.char( v['reason']), {cfg.killlist.posx+killlenght+10 ,killsy, sw, sh}, 0xFFFFFFFF, 0x10)
+                    --renderFontDrawText(gunfont, v['reason'], cfg.killlist.posx+killlenght+10, killsy, -1)
+                    renderFontDrawText(hudfont, v['killed'], cfg.killlist.posx+35 ,killsy, -1)
+                    killsy = killsy + 29
                 end
             end
             if cfg.joinquit.enable then
