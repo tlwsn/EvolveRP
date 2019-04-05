@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.99999992')
+script_version('1.99999993')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -40,6 +40,7 @@ local punishignor = {}
 local telegid = nil
 local nop = 0x90
 local killlistmode = 0
+local font_test = 1
 local cursorenb = false
 local u8 = encoding.UTF8
 local airspeed = nil
@@ -370,107 +371,121 @@ local cfg = {
         delay = 1200
     }
 }
-ID = {
-	Unarmed = 0,
-	Knuckles = 1,
-	Golf = 2,
-	Stick = 3,
-	Knife = 4,
-	Bat = 5,
-	Shovel = 6,
-	Cue = 7,
-	Katana = 8,
-	Chainsaw = 9,
-	Dildo1 = 10,
-	Dildo2 = 11,
-	Dildo3 = 12,
-	Dildo4 = 13,
-	Flowers = 14,
-	Cane = 15,
-	Grenade = 16,
-	Gas = 17,
-	Molotov = 18,
-	Pistol = 22,
-	Slicend = 23,
-	Eagle = 24,
-	Shotgun = 25,
-	Sawnoff = 26,
-	Combat = 27,
-	Uzi = 28,
-	Mp5 = 29,
-	Ak47 = 30,
-	M4 = 31,
-	Tec9 = 32,
-	Rifle = 33,
-	Sniper = 34,
-	RPG = 35,
-	Launcher = 36,
-	Flame = 37,
-	Minigun = 38,
-	Sachet = 39,
-	Detonator = 40,
-	Spray = 41,
-	Extinguisher = 42,
-	Goggles1 = 44,
-	Goggles2 = 45,
+local ID = {
+    Fist = 0,
+    Knuckles = 1,
+    Golf = 2,
+    Stick = 3,
+    Knife = 4,
+    Bat = 5,
+    Shovel = 6,
+    Cue = 7,
+    Katana = 8,
+    Chainsaw = 9,
+    Dildo1 = 10,
+    Dildo2 = 11,
+    Dildo3 = 12,
+    Dildo4 = 13,
+    Flowers = 14,
+    Cane = 15,
+    Grenade = 16,
+    Gas = 17,
+    Molotov = 18,
+    Pistol = 22,
+    Slicend = 23,
+    Deagle = 24,
+    Shotgun = 25,
+    Sawnoff = 26,
+    Combat = 27,
+    Uzi = 28,
+    MP5 = 29,
+    Ak47 = 30,
+    M4 = 31,
+    Tec9 = 32,
+    Rifle = 33,
+    Sniper = 34,
+    RPG = 35,
+    Launcher = 36,
+    Flame = 37,
+    Minigun = 38,
+    Satchel = 39,
+    Detonator = 40,
+    Spray = 41,
+    Extinguisher = 42,
+    Camera = 43,
+    Goggles1 = 44,
+    Goggles2 = 45,
     Parachute = 46,
-    Kill = 48,
-    Car = 49,
+    Fake = 47,
+    Huy2 = 48,
+    Vehicle = 49,
     Helicopter = 50,
     Explosion = 51,
-    Kill1 = 52
+    Huy = 52,
+    Drown = 53,
+    Collision = 54,
+    Connect = 200,
+    Disconnect = 201,
+    Suicide = 255
 }
-
-RenderGun = {
-	[ID.Unarmed] = 37,
-	[ID.Knuckles] = 66,
-	[ID.Golf] = 62,
-	[ID.Stick] = 40,
-	[ID.Knife] = 67,
-	[ID.Bat] = 63,
-	[ID.Shovel] = 38,
-	[ID.Cue] = 34,
-	[ID.Katana] = 33,
-	[ID.Chainsaw] = 49,
-	[ID.Dildo1] = 69,
+local RenderGun = {
+    [ID.Fist] = 37,
+    [ID.Knuckles] = 66,
+    [ID.Golf] = 62,
+    [ID.Stick] = 40,
+    [ID.Knife] = 67,
+    [ID.Bat] = 63,
+    [ID.Shovel] = 38,
+    [ID.Cue] = 34,
+    [ID.Katana] = 33,
+    [ID.Chainsaw] = 49,
+    [ID.Dildo1] = 69,
 	[ID.Dildo2] = 69,
 	[ID.Dildo3] = 69,
-	[ID.Dildo4] = 69,
-	[ID.Flowers] = 36,
-	[ID.Cane] = 35,
-	[ID.Grenade] = 64,
-	[ID.Gas] = 68,
-	[ID.Molotov] = 39,
-	[ID.Pistol] = 54,
-	[ID.Slicend] = 50,
-	[ID.Eagle] = 51,
-	[ID.Shotgun] = 61,
-	[ID.Sawnoff] = 48,
-	[ID.Combat] = 43,
-	[ID.Uzi] = 73,
-	[ID.Mp5] = 56,
-	[ID.Ak47] = 72,
-	[ID.M4] = 53,
-	[ID.Tec9] = 55,
-	[ID.Rifle] = 46,
-	[ID.Sniper] = 65,
-	[ID.RPG] = 52,
-	[ID.Launcher] = 41,
-	[ID.Flame] = 42,
-	[ID.Minigun] = 70,
-	[ID.Sachet] = 60,
-	[ID.Detonator] = 59,
-	[ID.Spray] = 47,
-	[ID.Extinguisher] = 44,
-	[ID.Goggles1] = 45,
+    [ID.Dildo4] = 69,
+    [ID.Flowers] = 36,
+    [ID.Cane] = 35,
+    [ID.Grenade] = 64,
+    [ID.Gas] = 68,
+    [ID.Molotov] = 39,
+    [ID.Pistol] = 54,
+    [ID.Slicend] = 50,
+    [ID.Deagle] = 51,
+    [ID.Shotgun] = 61,
+    [ID.Sawnoff] = 48,
+    [ID.Combat] = 43,
+    [ID.Uzi] = 73,
+    [ID.MP5] = 56,
+    [ID.Ak47] = 72,
+    [ID.M4] = 53,
+    [ID.Tec9] = 55,
+    [ID.Rifle] = 46,
+    [ID.Sniper] = 65,
+    [ID.RPG] = 52,
+    [ID.Launcher] = 41,
+    [ID.Flame] = 42,
+    [ID.Minigun] = 70,
+    [ID.Satchel] = 60,
+    [ID.Detonator] = 59,
+    [ID.Spray] = 47,
+    [ID.Extinguisher] = 44,
+    [ID.Camera] = 74,
+    [ID.Goggles1] = 45,
     [ID.Goggles2] = 45,
-    [ID.Kill] = 48,
-    [ID.Car] = 49,
-    [ID.Kill1] = 52,
-    [ID.Parachute] = 58,
-    [ID.Helicopter] = 50,
-    [ID.Explosion] = 51
+    [ID.Parachute] = 74,
+    [ID.Fake] = 74,
+    [ID.Huy2] = 74,
+    [ID.Vehicle] = 77,
+    [ID.Helicopter] = 82,
+    [ID.Explosion] = 81,
+    [ID.Huy] = 74,
+    [ID.Drown] = 74,
+    [ID.Collision] = 75,
+    [ID.Connect] = 78,
+    [ID.Disconnect] = 78,
+    [ID.Suicide] = 74
 }
+
 function asyncHttpRequest(method, url, args, resolve, reject)
    local request_thread = effil.thread(function (method, url, args)
       local requests = require 'requests'
@@ -926,6 +941,7 @@ function main()
         end
         atext(tostring(aafk))
     end)
+    sampRegisterChatCommand('ftest', function(pam) font_test = tonumber(pam) end)
     sampRegisterChatCommand('gip', gip)
     sampRegisterChatCommand('ml', ml)
     sampRegisterChatCommand('veh',veh)
@@ -1322,6 +1338,7 @@ function imgui.OnDrawFrame()
     end
     if mainwindow.v then
         imgui.ShowCursor = true
+        imgui.LockPlayer = false
         local btn_size = imgui.ImVec2(-0.1, 0)
         imgui.SetNextWindowSize(imgui.ImVec2(300, 300), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
@@ -1526,6 +1543,10 @@ function imgui.OnDrawFrame()
             if imgui.CollapsingHeader('/punish', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Выдать наказания по жалобам из списка, заготовленым прогаммой Стронга')
                 imgui.TextWrapped(u8 'Использование: /punish')
+            end
+            if imgui.CollapsingHeader('/gip', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Сокращение команды /getip (если игрок онлайн) /agetip (если игрок оффлайн) ')
+                imgui.TextWrapped(u8 'Использование: /gip [id/nick]')
             end
             imgui.End()
         end
@@ -1885,9 +1906,9 @@ function imgui.OnDrawFrame()
                 end
                 if imgui.Button(u8 'Изменить местоположения кил-листа') then data.imgui.killlist = true mainwindow.v = false end
                 if creconB.v then
-                    imgui.Text(u8 'Местоположение рекона')
+                    --imgui.Text(u8 'Местоположение рекона')
                     imgui.SameLine()
-                    if imgui.Button(u8 'Изменить##3') then data.imgui.reconpos = true; mainwindow.v = false end
+                    if imgui.Button(u8 'Изменить местоположение рекона##3') then data.imgui.reconpos = true; mainwindow.v = false end
                 end
                 if joinquitb.v then 
                     if imgui.Button(u8'Изменить местоположения подключившихся##1') then data.imgui.joinpos = true; mainwindow.v = false end
@@ -3133,7 +3154,7 @@ function sampev.onPlayerJoin(id, clist, isNPC, nick)
 	end
 end
 function onD3DPresent()
-	local sw, sh = getScreenResolution()
+    local sw, sh = getScreenResolution()
     if #tkilllist ~= 0 and fonts_loaded and not isPauseMenuActive() and swork then
         if killlistmode == 1 then
             local killsy = cfg.killlist.posy-5
@@ -3142,7 +3163,8 @@ function onD3DPresent()
                 local gunlenght = renderGetFontDrawTextLength(gunfont, v['reason'])
                 local deathlenght = renderGetFontDrawTextLength(hudfont,v['killed'])
                 --renderFontDrawText(hudfont, v['killer'], cfg.killlist.posx, killsy, -1)
-                renderDrawBox(cfg.killlist.posx+1, killsy, 29, 27, 0xCC000000)
+                d3dxfont_draw(font_gtaweapon3, 'G', {cfg.killlist.posx ,killsy, sw, sh}, 0xCC000000, 0x10)
+                --renderDrawBox(cfg.killlist.posx+1, killsy, 29, 27, 0xCC000000)
                 d3dxfont_draw(font_gtaweapon3, string.char(RenderGun[v['reason']]), {cfg.killlist.posx ,killsy, sw, sh}, 0xFFFFFFFF, 0x10)
                 --renderFontDrawText(gunfont, v['reason'], cfg.killlist.posx+killlenght+10, killsy, -1)
                 --renderFontDrawText(hudfont, v['killed'], cfg.killlist.posx+killlenght+20+gunlenght ,killsy, -1)
@@ -3164,6 +3186,7 @@ function renders()
             local hfps = math.floor(memory.getfloat(0xB7CB50, 4, false))
             local hsx, hsy = getScreenResolution()
             local hudheight = renderGetFontDrawHeight(hudfont)
+            local checkerheight = renderGetFontDrawHeight(checkfont)
             if killlistmode == 1 then
                 local killsy = cfg.killlist.posy
                 for k, v in ipairs(tkilllist) do
@@ -3209,21 +3232,21 @@ function renders()
             end
             renderFontDrawText(hudfont, ('%s %s %s [%s %s] [FPS: %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, hposint, hfps), 1, screeny-hudheight-2, -1)
             if cfg.admchecker.enable then
-                renderFontDrawText(checkfont, "{00ff00}Админы онлайн ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY-#admins_online*15, -1)
+                renderFontDrawText(checkfont, "{00ff00}Админы онлайн ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY-#admins_online*checkerheight, -1)
                 for k, v in ipairs(admins_online) do
-                    renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', v['text']) , cfg.admchecker.posx, (admrenderPosY - k*15)+15, -1)
+                    renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', v['text']) , cfg.admchecker.posx, (admrenderPosY - k*checkerheight)+checkerheight, -1)
                 end
             end
             if cfg.playerChecker.enable then
-                renderFontDrawText(checkfont, "{FFFF00}Игроки онлайн ["..#players_online.."]:", cfg.playerChecker.posx, playerRenderPosY-#players_online*15, -1)
+                renderFontDrawText(checkfont, "{FFFF00}Игроки онлайн ["..#players_online.."]:", cfg.playerChecker.posx, playerRenderPosY-#players_online*checkerheight, -1)
                 for k, v in ipairs(players_online) do
-                    renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', v['text']) , cfg.playerChecker.posx, (playerRenderPosY - k*15)+15, -1)
+                    renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', v['text']) , cfg.playerChecker.posx, (playerRenderPosY - k*checkerheight)+checkerheight, -1)
                 end
             end
             if cfg.tempChecker.enable then
-                renderFontDrawText(checkfont, "{ff0000}Temp Checker ["..#temp_checker_online.."]:", cfg.tempChecker.posx, tempRenderPosY-#temp_checker_online*15, -1)
+                renderFontDrawText(checkfont, "{ff0000}Temp Checker ["..#temp_checker_online.."]:", cfg.tempChecker.posx, tempRenderPosY-#temp_checker_online*checkerheight, -1)
                 for k, v in ipairs(temp_checker_online) do
-                    renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', v['text']) , cfg.tempChecker.posx, (tempRenderPosY - k*15)+15, -1)
+                    renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', v['text']) , cfg.tempChecker.posx, (tempRenderPosY - k*checkerheight)+checkerheight, -1)
                 end
             end
             
