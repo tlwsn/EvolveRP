@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.8')
+script_version('1.9')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -11,6 +11,7 @@ local key = require 'vkeys'
 local Matrix3X3 = require 'matrix3x3'
 local Vector3D = require 'vector3d'
 local ffi = require 'ffi'
+local d3dx9_43 = ffi.load('d3dx9_43.dll')
 local effil = require 'effil'
 local getBonePosition = ffi.cast("int (__thiscall*)(void*, float*, int, bool)", 0x5E4280)
 local mem = require 'memory'
@@ -39,6 +40,7 @@ local punishignor = {}
 local telegid = nil
 local nop = 0x90
 local killlistmode = 0
+local font_test = 1
 local cursorenb = false
 local u8 = encoding.UTF8
 local airspeed = nil
@@ -369,6 +371,121 @@ local cfg = {
         delay = 1200
     }
 }
+local ID = {
+    Fist = 0,
+    Knuckles = 1,
+    Golf = 2,
+    Stick = 3,
+    Knife = 4,
+    Bat = 5,
+    Shovel = 6,
+    Cue = 7,
+    Katana = 8,
+    Chainsaw = 9,
+    Dildo1 = 10,
+    Dildo2 = 11,
+    Dildo3 = 12,
+    Dildo4 = 13,
+    Flowers = 14,
+    Cane = 15,
+    Grenade = 16,
+    Gas = 17,
+    Molotov = 18,
+    Pistol = 22,
+    Slicend = 23,
+    Deagle = 24,
+    Shotgun = 25,
+    Sawnoff = 26,
+    Combat = 27,
+    Uzi = 28,
+    MP5 = 29,
+    Ak47 = 30,
+    M4 = 31,
+    Tec9 = 32,
+    Rifle = 33,
+    Sniper = 34,
+    RPG = 35,
+    Launcher = 36,
+    Flame = 37,
+    Minigun = 38,
+    Satchel = 39,
+    Detonator = 40,
+    Spray = 41,
+    Extinguisher = 42,
+    Camera = 43,
+    Goggles1 = 44,
+    Goggles2 = 45,
+    Parachute = 46,
+    Fake = 47,
+    Huy2 = 48,
+    Vehicle = 49,
+    Helicopter = 50,
+    Explosion = 51,
+    Huy = 52,
+    Drown = 53,
+    Collision = 54,
+    Connect = 200,
+    Disconnect = 201,
+    Suicide = 255
+}
+local RenderGun = {
+    [ID.Fist] = 37,
+    [ID.Knuckles] = 66,
+    [ID.Golf] = 62,
+    [ID.Stick] = 40,
+    [ID.Knife] = 67,
+    [ID.Bat] = 63,
+    [ID.Shovel] = 38,
+    [ID.Cue] = 34,
+    [ID.Katana] = 33,
+    [ID.Chainsaw] = 49,
+    [ID.Dildo1] = 69,
+	[ID.Dildo2] = 69,
+	[ID.Dildo3] = 69,
+    [ID.Dildo4] = 69,
+    [ID.Flowers] = 36,
+    [ID.Cane] = 35,
+    [ID.Grenade] = 64,
+    [ID.Gas] = 68,
+    [ID.Molotov] = 39,
+    [ID.Pistol] = 54,
+    [ID.Slicend] = 50,
+    [ID.Deagle] = 51,
+    [ID.Shotgun] = 61,
+    [ID.Sawnoff] = 48,
+    [ID.Combat] = 43,
+    [ID.Uzi] = 73,
+    [ID.MP5] = 56,
+    [ID.Ak47] = 72,
+    [ID.M4] = 53,
+    [ID.Tec9] = 55,
+    [ID.Rifle] = 46,
+    [ID.Sniper] = 65,
+    [ID.RPG] = 52,
+    [ID.Launcher] = 41,
+    [ID.Flame] = 42,
+    [ID.Minigun] = 70,
+    [ID.Satchel] = 60,
+    [ID.Detonator] = 59,
+    [ID.Spray] = 47,
+    [ID.Extinguisher] = 44,
+    [ID.Camera] = 74,
+    [ID.Goggles1] = 45,
+    [ID.Goggles2] = 45,
+    [ID.Parachute] = 74,
+    [ID.Fake] = 74,
+    [ID.Huy2] = 74,
+    [ID.Vehicle] = 77,
+    [ID.Helicopter] = 82,
+    [ID.Explosion] = 81,
+    [ID.Huy] = 74,
+    [ID.Drown] = 74,
+    [ID.Collision] = 75,
+    [ID.Connect] = 78,
+    [ID.Disconnect] = 78,
+    [ID.Suicide] = 74
+}
+
 function asyncHttpRequest(method, url, args, resolve, reject)
    local request_thread = effil.thread(function (method, url, args)
       local requests = require 'requests'
@@ -406,6 +523,31 @@ function asyncHttpRequest(method, url, args, resolve, reject)
          wait(0)
       end
    end)
+end
+function d3dxfont_create(name, height, charset)
+    charset = charset or 1
+    local d3ddev = ffi.cast('void*', getD3DDevicePtr())
+    local pfont = ffi.new('ID3DXFont*[1]', {nil})
+    if tonumber(d3dx9_43.D3DXCreateFontA(d3ddev, height, 0, 600, 1, false, charset, 0, 4, 0, name, pfont)) < 0 then
+        return nil
+    end
+    return pfont[0]
+end
+
+function d3dxfont_draw(font, text, rect, color, format)
+    local prect = ffi.new('RECT[1]', {{rect[1], rect[2], rect[3], rect[4]}})
+    return font.vtbl.DrawTextA(font, nil, text, -1, prect, format, color)
+end
+function onD3DDeviceLost()
+    if fonts_loaded then
+        font_gtaweapon3.vtbl.OnLostDevice(font_gtaweapon3)
+    end
+end
+
+function onD3DDeviceReset()
+    if fonts_loaded then
+        font_gtaweapon3.vtbl.OnResetDevice(font_gtaweapon3)
+    end
 end
 function atext(text)
     sampAddChatMessage(string.format(' Admin Tools | {ffffff}%s', text), 0x66FF00)
@@ -472,6 +614,17 @@ function apply_custom_style()
     colors[clr.TextSelectedBg] = ImVec4(0.25, 1.00, 0.00, 0.43)
     colors[clr.ModalWindowDarkening] = ImVec4(1.00, 0.98, 0.95, 0.73)
 end
+function transform2d(x, y, z)
+    local view = require("ffi").cast("float *", 0xB6FA2C)
+    local sx, sy = getScreenResolution()
+    local nx, ny, nz
+
+    nx = view[0] * x + view[4] * y + view[8] * z + view[12] * 1
+    ny = view[1] * x + view[5] * y + view[9] * z + view[13] * 1
+    nz = view[2] * x + view[6] * y + view[10] * z + view[14] * 1
+
+    return nx * sx / nz, ny * sy / nz
+end
 function calcScreenCoors(fX,fY,fZ)
     local memory = require 'memory'
 	local dwM = 0xB6FA2C
@@ -533,6 +686,47 @@ struct stKillInfo
     void 			    	*pAuxFont2; // ID3DXFont
 } __attribute__ ((packed));
 bool DwmEnableComposition(int uCompositionAction);
+]]
+ffi.cdef [[
+typedef struct stRECT
+{
+    int left, top, right, bottom;
+} RECT;
+
+typedef struct stID3DXFont
+{
+    struct ID3DXFont_vtbl* vtbl;
+} ID3DXFont;
+
+struct ID3DXFont_vtbl
+{
+        void* QueryInterface; // STDMETHOD(QueryInterface)(THIS_ REFIID iid, LPVOID *ppv) PURE;
+    void* AddRef; // STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    uint32_t (__stdcall * Release)(ID3DXFont* font); // STDMETHOD_(ULONG, Release)(THIS) PURE;
+
+    // ID3DXFont
+    void* GetDevice; // STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9 *ppDevice) PURE;
+    void* GetDescA; // STDMETHOD(GetDescA)(THIS_ D3DXFONT_DESCA *pDesc) PURE;
+    void* GetDescW; // STDMETHOD(GetDescW)(THIS_ D3DXFONT_DESCW *pDesc) PURE;
+    void* GetTextMetricsA; // STDMETHOD_(BOOL, GetTextMetricsA)(THIS_ TEXTMETRICA *pTextMetrics) PURE;
+    void* GetTextMetricsW; // STDMETHOD_(BOOL, GetTextMetricsW)(THIS_ TEXTMETRICW *pTextMetrics) PURE;
+
+    void* GetDC; // STDMETHOD_(HDC, GetDC)(THIS) PURE;
+    void* GetGlyphData; // STDMETHOD(GetGlyphData)(THIS_ UINT Glyph, LPDIRECT3DTEXTURE9 *ppTexture, RECT *pBlackBox, POINT *pCellInc) PURE;
+
+    void* PreloadCharacters; // STDMETHOD(PreloadCharacters)(THIS_ UINT First, UINT Last) PURE;
+    void* PreloadGlyphs; // STDMETHOD(PreloadGlyphs)(THIS_ UINT First, UINT Last) PURE;
+    void* PreloadTextA; // STDMETHOD(PreloadTextA)(THIS_ LPCSTR pString, INT Count) PURE;
+    void* PreloadTextW; // STDMETHOD(PreloadTextW)(THIS_ LPCWSTR pString, INT Count) PURE;
+
+    int (__stdcall * DrawTextA)(ID3DXFont* font, void* pSprite, const char* pString, int Count, RECT* pRect, uint32_t Format, uint32_t Color); // STDMETHOD_(INT, DrawTextA)(THIS_ LPD3DXSPRITE pSprite, LPCSTR pString, INT Count, LPRECT pRect, DWORD Format, D3DCOLOR Color) PURE;
+    void* DrawTextW; // STDMETHOD_(INT, DrawTextW)(THIS_ LPD3DXSPRITE pSprite, LPCWSTR pString, INT Count, LPRECT pRect, DWORD Format, D3DCOLOR Color) PURE;
+
+    void (__stdcall * OnLostDevice)(ID3DXFont* font); // STDMETHOD(OnLostDevice)(THIS) PURE;
+    void (__stdcall * OnResetDevice)(ID3DXFont* font); // STDMETHOD(OnResetDevice)(THIS) PURE;
+};
+
+uint32_t D3DXCreateFontA(void* pDevice, int Height, uint32_t Width, uint32_t Weight, uint32_t MipLevels, bool Italic, uint32_t CharSet, uint32_t OutputPrecision, uint32_t Quality, uint32_t PitchAndFamily, const char* pFaceName, ID3DXFont** ppFont);
 ]]
 function rainbow(speed, alpha)
 	local r = math.sin(os.clock() * speed)
@@ -1154,6 +1348,7 @@ function imgui.OnDrawFrame()
     end
     if mainwindow.v then
         imgui.ShowCursor = true
+        imgui.LockPlayer = false
         local btn_size = imgui.ImVec2(-0.1, 0)
         imgui.SetNextWindowSize(imgui.ImVec2(300, 300), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
@@ -1358,6 +1553,10 @@ function imgui.OnDrawFrame()
             if imgui.CollapsingHeader('/punish', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Выдать наказания по жалобам из списка, заготовленым прогаммой Стронга')
                 imgui.TextWrapped(u8 'Использование: /punish')
+            end
+            if imgui.CollapsingHeader('/gip', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Сокращение команды /getip (если игрок онлайн) /agetip (если игрок оффлайн) ')
+                imgui.TextWrapped(u8 'Использование: /gip [id/nick]')
             end
             imgui.End()
         end
@@ -1717,9 +1916,9 @@ function imgui.OnDrawFrame()
                 end
                 if imgui.Button(u8 'Изменить местоположения кил-листа') then data.imgui.killlist = true mainwindow.v = false end
                 if creconB.v then
-                    imgui.Text(u8 'Местоположение рекона')
+                    --imgui.Text(u8 'Местоположение рекона')
                     imgui.SameLine()
-                    if imgui.Button(u8 'Изменить##3') then data.imgui.reconpos = true; mainwindow.v = false end
+                    if imgui.Button(u8 'Изменить местоположение рекона##3') then data.imgui.reconpos = true; mainwindow.v = false end
                 end
                 if joinquitb.v then 
                     if imgui.Button(u8'Изменить местоположения подключившихся##1') then data.imgui.joinpos = true; mainwindow.v = false end
@@ -2154,6 +2353,8 @@ function initializeRender()
     whhpfont = renderCreateFont("Verdana", 8, 4)
 	checkfont = renderCreateFont(cfg.other.checkfont, cfg.other.checksize, 4)
     hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4)
+    font_gtaweapon3 = d3dxfont_create('gtaweapon3', 25, 2)
+    fonts_loaded = true
 end
 function rotateCarAroundUpAxis(car, vec)
     local mat = Matrix3X3(getVehicleRotationMatrix(car))
@@ -2380,6 +2581,9 @@ function onScriptTerminate(scr)
         nameTagOn()
         showCursor(false)
         removePointMarker()
+        if fonts_loaded then
+            font_gtaweapon3.vtbl.Release(font_gtaweapon3)
+        end
     end
 end
 frakcolor = {
@@ -2828,10 +3032,10 @@ function sampev.onServerMessage(color, text)
     return { color, text }
 end
 function sampev.onTextDrawSetString(id, text)
-    if id == 2165 then
+    if id == 2173 then
         imtextlvl, imtextwarn, imtextarm, imtexthp, imtextcarhp, imtextspeed, imtextping, imtextammo, imtextshot, imtexttimeshot, imtextafktime, imtextengine, imtextprosport = text:match('~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)')
     end
-    if id == 2166 then
+    if id == 2174 then
         if text:match('~w~.+') then
             imtextnick = text:match('~w~(.+)~n~ID:')
             reafk = true
@@ -2844,19 +3048,19 @@ function sampev.onTextDrawSetString(id, text)
     end
 end
 function sampev.onShowTextDraw(id, textdraw)
-    if id == 2165 then reconstate = true end
+    if id == 2173 then reconstate = true end
     if cfg.crecon.enable then
-        if id == 2165 then recon.v = true return false end
-        if id == 2166 then return false end
-        if id == 2160 then return false end
-        if id == 2161 then return false end
-        if id == 2164 then return false end
+        if id == 2174 then recon.v = true return false end
+        if id == 2173 then return false end
+        if id == 2172 then return false end
+        if id == 2168 then return false end
+        if id == 2169 then return false end
         --for i = 2160, 2191 do if id == i then return false end end
     end
 end
 function sampev.onTextDrawHide(id)
-    if id == 2166 then reconstate = false end
-    if cfg.crecon.enable then if id == 2166 then recon.v = false; reid = nil traceid = -1 end end
+    if id == 2173 then reconstate = false end
+    if cfg.crecon.enable then if id == 2173 then recon.v = false; reid = nil traceid = -1 end end
 end
 function sampev.onPlayerQuit(id, reason)
     local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
@@ -2884,6 +3088,7 @@ function sampev.onPlayerQuit(id, reason)
     end
 end
 function sampev.onPlayerDeathNotification(killerId, killedId, reason)
+    print(("%s [%s] killed %s [%s] with %s"):format(sampGetPlayerNickname(killerId), killerId, sampGetPlayerNickname(killedId), killedId, reason))
 	local kill = ffi.cast('struct stKillInfo*', sampGetKillInfoPtr())
     local _, myid = sampGetPlayerIdByCharHandle(playerPed)
     local killercolor = ("%06X"):format(bit.band(sampGetPlayerColor(killerId), 0xFFFFFF))
@@ -2958,6 +3163,26 @@ function sampev.onPlayerJoin(id, clist, isNPC, nick)
 		end
 	end
 end
+function onD3DPresent()
+    local sw, sh = getScreenResolution()
+    if #tkilllist ~= 0 and fonts_loaded and not isPauseMenuActive() and swork then
+        if killlistmode == 1 then
+            local killsy = cfg.killlist.posy-5
+            for k, v in ipairs(tkilllist) do
+                local killlenght = renderGetFontDrawTextLength(hudfont,v['killer'])
+                local gunlenght = renderGetFontDrawTextLength(gunfont, v['reason'])
+                local deathlenght = renderGetFontDrawTextLength(hudfont,v['killed'])
+                --renderFontDrawText(hudfont, v['killer'], cfg.killlist.posx, killsy, -1)
+                d3dxfont_draw(font_gtaweapon3, 'G', {cfg.killlist.posx ,killsy, sw, sh}, 0xCC000000, 0x10)
+                --renderDrawBox(cfg.killlist.posx+1, killsy, 29, 27, 0xCC000000)
+                d3dxfont_draw(font_gtaweapon3, string.char(RenderGun[v['reason']]), {cfg.killlist.posx ,killsy, sw, sh}, 0xFFFFFFFF, 0x10)
+                --renderFontDrawText(gunfont, v['reason'], cfg.killlist.posx+killlenght+10, killsy, -1)
+                --renderFontDrawText(hudfont, v['killed'], cfg.killlist.posx+killlenght+20+gunlenght ,killsy, -1)
+                killsy = killsy + 29
+            end
+        end
+    end
+end
 function renders()
     while true do wait(0)
         if swork then
@@ -2971,16 +3196,18 @@ function renders()
             local hfps = math.floor(memory.getfloat(0xB7CB50, 4, false))
             local hsx, hsy = getScreenResolution()
             local hudheight = renderGetFontDrawHeight(hudfont)
+            local checkerheight = renderGetFontDrawHeight(checkfont)
             if killlistmode == 1 then
                 local killsy = cfg.killlist.posy
                 for k, v in ipairs(tkilllist) do
                     local killlenght = renderGetFontDrawTextLength(hudfont,v['killer'])
                     local gunlenght = renderGetFontDrawTextLength(gunfont, v['reason'])
                     local deathlenght = renderGetFontDrawTextLength(hudfont,v['killed'])
-                    renderFontDrawText(hudfont, v['killer'], cfg.killlist.posx, killsy, -1)
-                    renderFontDrawText(gunfont, v['reason'], cfg.killlist.posx+killlenght+10, killsy, -1)
-                    renderFontDrawText(hudfont, v['killed'], cfg.killlist.posx+killlenght+20+gunlenght ,killsy, -1)
-                    killsy = killsy + 20
+                    renderFontDrawText(hudfont, v['killer'], cfg.killlist.posx-killlenght-10, killsy, -1)
+                    --d3dxfont_draw(font_gtaweapon3, string.char( v['reason']), {cfg.killlist.posx+killlenght+10 ,killsy, sw, sh}, 0xFFFFFFFF, 0x10)
+                    --renderFontDrawText(gunfont, v['reason'], cfg.killlist.posx+killlenght+10, killsy, -1)
+                    renderFontDrawText(hudfont, v['killed'], cfg.killlist.posx+35 ,killsy, -1)
+                    killsy = killsy + 29
                 end
             end
             if cfg.joinquit.enable then
@@ -3015,21 +3242,21 @@ function renders()
             end
             renderFontDrawText(hudfont, ('%s %s %s [%s %s] [FPS: %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, hposint, hfps), 1, screeny-hudheight-2, -1)
             if cfg.admchecker.enable then
-                renderFontDrawText(checkfont, "{00ff00}Админы онлайн ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY-#admins_online*15, -1)
+                renderFontDrawText(checkfont, "{00ff00}Админы онлайн ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY-#admins_online*checkerheight, -1)
                 for k, v in ipairs(admins_online) do
-                    renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', v['text']) , cfg.admchecker.posx, (admrenderPosY - k*15)+15, -1)
+                    renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', v['text']) , cfg.admchecker.posx, (admrenderPosY - k*checkerheight)+checkerheight, -1)
                 end
             end
             if cfg.playerChecker.enable then
-                renderFontDrawText(checkfont, "{FFFF00}Игроки онлайн ["..#players_online.."]:", cfg.playerChecker.posx, playerRenderPosY-#players_online*15, -1)
+                renderFontDrawText(checkfont, "{FFFF00}Игроки онлайн ["..#players_online.."]:", cfg.playerChecker.posx, playerRenderPosY-#players_online*checkerheight, -1)
                 for k, v in ipairs(players_online) do
-                    renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', v['text']) , cfg.playerChecker.posx, (playerRenderPosY - k*15)+15, -1)
+                    renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', v['text']) , cfg.playerChecker.posx, (playerRenderPosY - k*checkerheight)+checkerheight, -1)
                 end
             end
             if cfg.tempChecker.enable then
-                renderFontDrawText(checkfont, "{ff0000}Temp Checker ["..#temp_checker_online.."]:", cfg.tempChecker.posx, tempRenderPosY-#temp_checker_online*15, -1)
+                renderFontDrawText(checkfont, "{ff0000}Temp Checker ["..#temp_checker_online.."]:", cfg.tempChecker.posx, tempRenderPosY-#temp_checker_online*checkerheight, -1)
                 for k, v in ipairs(temp_checker_online) do
-                    renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', v['text']) , cfg.tempChecker.posx, (tempRenderPosY - k*15)+15, -1)
+                    renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', v['text']) , cfg.tempChecker.posx, (tempRenderPosY - k*checkerheight)+checkerheight, -1)
                 end
             end
             
@@ -4593,7 +4820,6 @@ function addadm(pam)
             atext(('Игрок %s добавлен в чекер админов'):format(id))
         end
     elseif pam:match('^(%S+)') then
-        atext(6)
         local nick = pam:match('^(%S+)')
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(admins, {nick = nick, color = 'ffffff', text = ''})
@@ -4691,7 +4917,7 @@ function deladm(pam)
                     k = k + 1
                 end
             end
-            atext(('Игрок %s [%s] удален из чекера игроков'):format(nick, id))
+            atext(('Игрок %s [%s] удален из чекера админов'):format(nick, id))
         else
             local v = 1
             while v <= #admins do
@@ -4701,7 +4927,7 @@ function deladm(pam)
                     v = v + 1
                 end
             end
-            atext(('Игрок %s удален из чекера игроков'):format(id))
+            atext(('Игрок %s удален из чекера админов'):format(id))
         end
     elseif pam:match('(%S+)') then
         local nick = pam:match('(%S+)')
@@ -4716,9 +4942,9 @@ function deladm(pam)
                     i = i + 1
                 end
             end
-            atext(('Игрок %s [%s] удален из чекера игроков'):format(nick, id))
+            atext(('Игрок %s [%s] удален из чекера админов'):format(nick, id))
         else
-            atext(('Игрок %s удален из чекера игроков'):format(nick))
+            atext(('Игрок %s удален из чекера админов'):format(nick))
         end
         while k <= #admins do
             if admins[k]['nick'] == nick then

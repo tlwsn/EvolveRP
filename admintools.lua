@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.99999994')
+script_version('1.99999995')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -952,7 +952,6 @@ function main()
         end
         atext(tostring(aafk))
     end)
-    sampRegisterChatCommand('ftest', function(pam) font_test = tonumber(pam) end)
     sampRegisterChatCommand('gip', gip)
     sampRegisterChatCommand('ml', ml)
     sampRegisterChatCommand('veh',veh)
@@ -4821,7 +4820,6 @@ function addadm(pam)
             atext(('Игрок %s добавлен в чекер админов'):format(id))
         end
     elseif pam:match('^(%S+)') then
-        atext(6)
         local nick = pam:match('^(%S+)')
         local id = sampGetPlayerIdByNickname(nick)
         table.insert(admins, {nick = nick, color = 'ffffff', text = ''})
@@ -4919,7 +4917,7 @@ function deladm(pam)
                     k = k + 1
                 end
             end
-            atext(('Игрок %s [%s] удален из чекера игроков'):format(nick, id))
+            atext(('Игрок %s [%s] удален из чекера админов'):format(nick, id))
         else
             local v = 1
             while v <= #admins do
@@ -4929,7 +4927,7 @@ function deladm(pam)
                     v = v + 1
                 end
             end
-            atext(('Игрок %s удален из чекера игроков'):format(id))
+            atext(('Игрок %s удален из чекера админов'):format(id))
         end
     elseif pam:match('(%S+)') then
         local nick = pam:match('(%S+)')
@@ -4944,9 +4942,9 @@ function deladm(pam)
                     i = i + 1
                 end
             end
-            atext(('Игрок %s [%s] удален из чекера игроков'):format(nick, id))
+            atext(('Игрок %s [%s] удален из чекера админов'):format(nick, id))
         else
-            atext(('Игрок %s удален из чекера игроков'):format(nick))
+            atext(('Игрок %s удален из чекера админов'):format(nick))
         end
         while k <= #admins do
             if admins[k]['nick'] == nick then
