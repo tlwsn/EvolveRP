@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.99999993')
+script_version('1.99999994')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -613,6 +613,17 @@ function apply_custom_style()
     colors[clr.PlotHistogramHovered] = ImVec4(0.25, 1.00, 0.00, 1.00)
     colors[clr.TextSelectedBg] = ImVec4(0.25, 1.00, 0.00, 0.43)
     colors[clr.ModalWindowDarkening] = ImVec4(1.00, 0.98, 0.95, 0.73)
+end
+function transform2d(x, y, z)
+    local view = require("ffi").cast("float *", 0xB6FA2C)
+    local sx, sy = getScreenResolution()
+    local nx, ny, nz
+
+    nx = view[0] * x + view[4] * y + view[8] * z + view[12] * 1
+    ny = view[1] * x + view[5] * y + view[9] * z + view[13] * 1
+    nz = view[2] * x + view[6] * y + view[10] * z + view[14] * 1
+
+    return nx * sx / nz, ny * sy / nz
 end
 function calcScreenCoors(fX,fY,fZ)
     local memory = require 'memory'
@@ -3022,10 +3033,10 @@ function sampev.onServerMessage(color, text)
     return { color, text }
 end
 function sampev.onTextDrawSetString(id, text)
-    if id == 2165 then
+    if id == 2173 then
         imtextlvl, imtextwarn, imtextarm, imtexthp, imtextcarhp, imtextspeed, imtextping, imtextammo, imtextshot, imtexttimeshot, imtextafktime, imtextengine, imtextprosport = text:match('~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)')
     end
-    if id == 2166 then
+    if id == 2174 then
         if text:match('~w~.+') then
             imtextnick = text:match('~w~(.+)~n~ID:')
             reafk = true
@@ -3038,19 +3049,19 @@ function sampev.onTextDrawSetString(id, text)
     end
 end
 function sampev.onShowTextDraw(id, textdraw)
-    if id == 2165 then reconstate = true end
+    if id == 2173 then reconstate = true end
     if cfg.crecon.enable then
-        if id == 2165 then recon.v = true return false end
-        if id == 2166 then return false end
-        if id == 2160 then return false end
-        if id == 2161 then return false end
-        if id == 2164 then return false end
+        if id == 2174 then recon.v = true return false end
+        if id == 2173 then return false end
+        if id == 2172 then return false end
+        if id == 2168 then return false end
+        if id == 2169 then return false end
         --for i = 2160, 2191 do if id == i then return false end end
     end
 end
 function sampev.onTextDrawHide(id)
-    if id == 2166 then reconstate = false end
-    if cfg.crecon.enable then if id == 2166 then recon.v = false; reid = nil traceid = -1 end end
+    if id == 2173 then reconstate = false end
+    if cfg.crecon.enable then if id == 2173 then recon.v = false; reid = nil traceid = -1 end end
 end
 function sampev.onPlayerQuit(id, reason)
     local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
