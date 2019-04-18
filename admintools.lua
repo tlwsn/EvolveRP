@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.99999995')
+script_version('1.99999996')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -19,6 +19,8 @@ local wm = require 'lib.windows.message'
 local screenx, screeny = getScreenResolution()
 encoding.default = 'CP1251'
 local imgui = require 'imgui'
+local res, https = pcall(require, 'ssl.https')
+assert(res, 'Library ssl.https not found')
 imgui.HotKey = require('imgui_addons').HotKey
 imgui.ToggleButton = require('imgui_addons').ToggleButton
 local rkeys = require 'rkeys'
@@ -37,6 +39,7 @@ local mpsponsors = imgui.ImBuffer(256)
 local mpwinner = imgui.ImBuffer(256)
 local wrecon = {}
 local punishignor = {}
+local adminslist = {}
 local telegid = nil
 local nop = 0x90
 local killlistmode = 0
@@ -65,6 +68,9 @@ local notification_connect = nil
 local notification_disconnect = nil
 local smsids = {}
 local PlayersNickname = {}
+local bcheckb  = false
+local bnick = nil
+local bancheck = false
 local reconstate = false
 local config_keys = {
     banipkey = {v = {190}},
@@ -203,7 +209,17 @@ local punkey = {
     },
     re = {
         id = nil,
-        nick = nil
+        admin = nil
+    },
+    sban = {
+        id = nil,
+        reason = nil,
+        admin = nil 
+    },
+    auninvite = {
+        id = nil,
+        reason = nil,
+        admin = nil
     }
 }
 local tkills = {}
@@ -254,13 +270,13 @@ local tCarsType = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1
 }
 function WorkInBackground(wstate)
     local memory = require 'memory'
-    if wstate then -- on
+    if wstate then
         memory.setuint8(7634870, 1)
         memory.setuint8(7635034, 1)
         memory.fill(7623723, 144, 8)
         memory.fill(5499528, 144, 6)
 		aafk = true
-    else -- off
+    else
         memory.setuint8(7634870, 0)
         memory.setuint8(7635034, 0)
         memory.hex2bin('5051FF1500838500', 7623723, 8)
@@ -339,10 +355,10 @@ local cfg = {
 		cbugtimer = 60
     },
     joinquit = {
-        joinposx = screenx/2,
-        joinposy = screeny/2,
-        quitposx = screenx/2,
-        quitposy = screeny/2+20,
+        joinposx = 3,
+        joinposy = screeny-45,
+        quitposx = 3,
+        quitposy = screeny-30,
         enable = true
     },
     killlist = {
@@ -361,6 +377,8 @@ local cfg = {
         whfont = "Verdana",
         whsize = 8,
         hudfont = "Times New Roman",
+        killfont = "Times New Roman",
+        killsize = 10,
         hudsize = 10,
         fracstat = true,
         chatconsole = false,
@@ -497,10 +515,8 @@ function asyncHttpRequest(method, url, args, resolve, reject)
          return false, response
       end
    end)(method, url, args)
-   -- Если запрос без функций обработки ответа и ошибок.
    if not resolve then resolve = function() end end
    if not reject then reject = function() end end
-   -- Проверка выполнения потока
    lua_thread.create(function()
       local runner = request_thread
       while true do
@@ -576,7 +592,6 @@ function apply_custom_style()
     colors[clr.TextDisabled] = ImVec4(0.24, 0.23, 0.29, 1.00)
     colors[clr.WindowBg] = ImVec4(0.06, 0.05, 0.07, 1.00)
     colors[clr.ChildWindowBg] = ImVec4(0.06, 0.05, 0.07, 1.00)
-    --colors[clr.ChildWindowBg] = ImVec4(0.07, 0.07, 0.09, 1.00)
     colors[clr.PopupBg] = ImVec4(0.07, 0.07, 0.09, 1.00)
     colors[clr.Border] = ImVec4(0.80, 0.80, 0.83, 0.88)
     colors[clr.BorderShadow] = ImVec4(0.92, 0.91, 0.88, 0.00)
@@ -777,9 +792,9 @@ function string.rlower(s)
     local output = ''
     for i = 1, strlen do
         local ch = s:byte(i)
-        if ch >= 192 and ch <= 223 then -- upper russian characters
+        if ch >= 192 and ch <= 223 then
             output = output .. russian_characters[ch + 32]
-        elseif ch == 168 then -- Ё
+        elseif ch == 168 then
             output = output .. russian_characters[184]
         else
             output = output .. string.char(ch)
@@ -795,9 +810,9 @@ function string.rupper(s)
     local output = ''
     for i = 1, strlen do
         local ch = s:byte(i)
-        if ch >= 224 and ch <= 255 then -- lower russian characters
+        if ch >= 224 and ch <= 255 then
             output = output .. russian_characters[ch - 32]
-        elseif ch == 184 then -- ё
+        elseif ch == 184 then
             output = output .. russian_characters[168]
         else
             output = output .. string.char(ch)
@@ -863,7 +878,7 @@ function autoupdate(json_url, prefix, url)
     end)
 end
 function split(str, delim, plain)
-    local lines, pos, plain = {}, 1, not (plain == false) --[[ delimiter is plain text by default ]]
+    local lines, pos, plain = {}, 1, not (plain == false)
     repeat
         local npos, epos = string.find(str, delim, pos, plain)
         table.insert(lines, string.sub(str, pos, npos and npos - 1))
@@ -900,10 +915,12 @@ function main()
 	mem.fill(samp + 0x9D31A, nop, 12, true)
     mem.fill(samp + 0x9D329, nop, 12, true)
     mem.fill(sampGetBase() + 0x2D3C45, 0, 2, true)
-	mem.fill(0x00531155, 0x90, 5, true)
+    mem.fill(0x00531155, 0x90, 5, true)
+    mem.setint8(0xB7CEE4, 1)
+    mem.setuint8(samp + 0x67450, 0xC3, true)
     local DWMAPI = ffi.load('dwmapi')
-    local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools'}
-    local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt', 'moonloader/Admin Tools/punishjb.txt', 'moonloader/Admin Tools/punishlogs.txt'}
+    local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools', 'moonloader/Admin Tools/Check Banned'}
+    local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt', 'moonloader/Admin Tools/punishjb.txt', 'moonloader/Admin Tools/punishlogs.txt', 'moonloader/Admin Tools/Check Banned/players.txt'}
 	for k, v in pairs(directors) do
 		if not doesDirectoryExist(v) then createDirectory(v) end
 	end
@@ -916,6 +933,18 @@ function main()
     if not doesFileExist('moonloader/config/Admin Tools/config.json') then
         local file = io.open('moonloader/config/Admin Tools/config.json', 'w')
         file:close()
+        local scx, scy = convertGameScreenCoordsToWindowScreenCoords(540, 435)
+        local tcx, tcy = convertGameScreenCoordsToWindowScreenCoords(450, 435)
+        local ascx, ascy = convertGameScreenCoordsToWindowScreenCoords(3, 272)
+        local kscx, kscy = convertGameScreenCoordsToWindowScreenCoords(536, 110)
+        cfg.playerChecker.posx = scx
+        cfg.playerChecker.posy = screeny-15
+        cfg.tempChecker.posx = tcx
+        cfg.tempChecker.posy = screeny-15
+        cfg.admchecker.posx = ascx
+        cfg.admchecker.posy = ascy
+        cfg.killlist.posx = kscx
+        cfg.killlist.posy = kscy
     else
         local file = io.open('moonloader/config/Admin Tools/config.json', 'r')
         if file then
@@ -928,6 +957,9 @@ function main()
                 startenable = true
             } end
             if cfg.other.delay == nil then cfg.other.delay = 1200 end
+            if cfg.other.killfont == nil then cfg.other.killfont = "Times New Roman" end
+            if cfg.other.killsize == nil then cfg.other.killsize = 10 end
+            file:close()
         end
     end
     saveData(cfg, 'moonloader/config/Admin Tools/config.json')
@@ -952,6 +984,24 @@ function main()
         end
         atext(tostring(aafk))
     end)
+    local zapros = https.request('https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admins.txt')
+    if zapros ~= nil then
+        for line in zapros:gmatch('[^\r\n]+') do
+            table.insert(adminslist, line)
+        end
+        print("Список админов был успешно загружен")
+    else
+        print("Не удалось загрузить список админов")
+    end
+    sampRegisterChatCommand("gpc", function()
+        local cx, cy = getCursorPos()
+        atext(renderGetFontDrawHeight(checkfont))
+        atext(("X: %s | Y: %s"):format(cx, cy))
+        setClipboardText(("%s, %s"):format(cx, cy))
+    end)
+    sampfuncsRegisterConsoleCommand('reportbot', function() reportbot = not reportbot sampfuncsLog('{66ff00}REPORT BOT '..tostring(reportbot)) end)
+    sampRegisterChatCommand('checkb', checkB)
+    sampRegisterChatCommand('aunv', aunv)
     sampRegisterChatCommand('gip', gip)
     sampRegisterChatCommand('ml', ml)
     sampRegisterChatCommand('veh',veh)
@@ -970,9 +1020,6 @@ function main()
 	sampRegisterChatCommand('addtemp', addtemp)
     sampRegisterChatCommand('deltemp', deltemp)
     sampRegisterChatCommand('deltempall', function() temp_checker = {} temp_checker_online = {} atext('Временный чекер очищен') end)
-	sampRegisterChatCommand('massgun', massgun)
-	sampRegisterChatCommand('masshp', masshp)
-	sampRegisterChatCommand('massarm', massarm)
     sampRegisterChatCommand('cip', cip)
     sampRegisterChatCommand('cip2', cip2)
     sampRegisterChatCommand('al', function() sampSendChat('/alogin') end)
@@ -1154,6 +1201,11 @@ function main()
     lua_thread.create(admchat)
     lua_thread.create(whon)
     while true do wait(0)
+        for k, v in ipairs(wrecon) do
+            if os.clock() > v["time"] then
+                table.remove(wrecon, k)
+            end
+        end
         if swork then if killlistmode == 1 or killlistmode == 2 then enableKillList(false) elseif killlistmode == 0 then enableKillList(true) end end
         if sampGetGamestate() ~= 3 then
             admins_online = {}
@@ -1285,15 +1337,14 @@ function rkeys.onHotKey(id, keys)
     end
 end
 function imgui.OnDrawFrame()
+    imgui.ShowCursor = mainwindow.v
     local btn_size = imgui.ImVec2(-0.1, 0)
 	local ir, ig, ib, ia = rainbow(1, 1)
-	--imgui.PushStyleColor(imgui.Col.Border, imgui.ImVec4(ir, ig, ib, ia))
     if recon.v then
 		local style = imgui.GetStyle()
 		local colors = style.Colors
 		local clr = imgui.Col
 		local ImVec4 = imgui.ImVec4
-        imgui.ShowCursor = false
 		imgui.LockPlayer = false
         local imvsize = imgui.GetWindowSize()
         local spacing, height = 140.0, 162.0
@@ -1325,29 +1376,17 @@ function imgui.OnDrawFrame()
         imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Engine:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtextengine))
         imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Pro Sport:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtextprosport))
         imgui.PopStyleVar()
-        --[[imgui.SameLine()
-        imgui.Text(string.format('%s', imgui.GetWindowSize().y))]]
         imgui.End()
-        --imgui.PopStyleColor()
         imgui.PopStyleColor()
-        --[[local rbtn_size = imgui.ImVec2(150, 33)
-        imgui.SetNextWindowPos(imgui.ImVec2(20, cfg.crecon.posy), imgui.ImVec2(0.5, 0.5))
-        imgui.SetNextWindowSize(imgui.ImVec2(150, 308), imgui.Cond.FirstUseEver)
-        imgui.Begin('##1112312321321321321312',_, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoTitleBar)
-        if imgui.Button(u8 'Change', btn_size) then sampSendClickTextdraw(2165) end
-        if imgui.Button(u8 'Check »', btn_size) then end
-        if imgui.Button(u8 'Drop »', btn_size) then end
-        if imgui.Button(u8 'Kick »', btn_size) then end
-        if imgui.Button(u8 'Warn', btn_size) then sampSendClickTextdraw(2169) end
-        if imgui.Button(u8 'Ban »', btn_size) then end
-        if imgui.Button(u8 'Stats »', btn_size) then end
-        if imgui.Button(u8 'Refresh', btn_size) then sampSendClickTextdraw(2172) end
-        if imgui.Button(u8 'Exit', btn_size) then sampSendClickTextdraw(2173) end
-        if imgui.IsKeyDown(0x04) then imgui.ShowCursor = not imgui.ShowCursor end
-        imgui.End()]]
+        if imgui.IsMouseClicked(0) and data.imgui.reconpos then
+            data.imgui.reconpos = false
+            recon.v = false
+            sampToggleCursor(false)
+            mainwindow.v = true
+            saveData(cfg, 'moonloader/config/Admin Tools/config.json')
+        end
     end
     if mainwindow.v then
-        imgui.ShowCursor = true
         imgui.LockPlayer = false
         local btn_size = imgui.ImVec2(-0.1, 0)
         imgui.SetNextWindowSize(imgui.ImVec2(300, 300), imgui.Cond.FirstUseEver)
@@ -1526,18 +1565,6 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Описание: Начать / окончить телепортацию по СМС')
                 imgui.TextWrapped(u8 'Использование: /masstp')
             end
-			if imgui.CollapsingHeader('/masshp', btn_size) then
-                imgui.TextWrapped(u8 'Описание: Выдать ХП игрока в зоне стрима')
-                imgui.TextWrapped(u8 'Использование: /masshp [кол-во хп]')
-            end
-			if imgui.CollapsingHeader('/massarm', btn_size) then
-                imgui.TextWrapped(u8 'Описание: Выдать броню игрокам в зоне стрима')
-                imgui.TextWrapped(u8 'Использование: /massarm [кол-во брони]')
-            end
-			if imgui.CollapsingHeader('/massgun', btn_size) then
-                imgui.TextWrapped(u8 'Описание: Выдать оружие игрокам в зоне стрима')
-                imgui.TextWrapped(u8 'Использование: /massgun [id оружия] [кол-во патронов]')
-            end
             if imgui.CollapsingHeader('/masshb', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Выдать комплект объектов игрокам в зоне стрима')
                 imgui.TextWrapped(u8 'Использование: /masshb [имя комплекта]')
@@ -1557,6 +1584,14 @@ function imgui.OnDrawFrame()
             if imgui.CollapsingHeader('/gip', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Сокращение команды /getip (если игрок онлайн) /agetip (если игрок оффлайн) ')
                 imgui.TextWrapped(u8 'Использование: /gip [id/nick]')
+            end
+            if imgui.CollapsingHeader('/aunv', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Сокращение команды /auninvite')
+                imgui.TextWrapped(u8 'Использование: /aunv [id] [причина]')
+            end
+            if imgui.CollapsingHeader('/checkb', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Проверить аккаунты из файла на блокировку (Файл находится по пути moonloader/Admin Tools/Check Banned/players.txt')
+                imgui.TextWrapped(u8 'Использование: /checkb')
             end
             imgui.End()
         end
@@ -1765,7 +1800,7 @@ function imgui.OnDrawFrame()
                     rkeys.changeHotKey(cwarningbind, config_keys.cwarningkey.v)
 					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                 end
-                imgui.SameLine(); imgui.Text(u8 'Клавиша перехода по скриптовым варнингам')
+                imgui.SameLine(); imgui.Text(u8 'Клавиша перехода по клиентским варнингам')
                 if imgui.HotKey('##reportkey', config_keys.reportkey, tLastKeys, 100) then
                     rkeys.changeHotKey(reportbind, config_keys.reportkey.v)
 					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
@@ -1892,10 +1927,12 @@ function imgui.OnDrawFrame()
 				local ipass = imgui.ImBuffer(tostring(cfg.other.password), 256)
                 local iapass = imgui.ImBuffer(tostring(cfg.other.adminpass), 256)
                 local hudfontb = imgui.ImBuffer(tostring(cfg.other.hudfont), 256)
+                local killfontb = imgui.ImBuffer(tostring(cfg.other.killfont), 256)
+                local killsizeb = imgui.ImInt(cfg.other.killsize)
                 local hudsizeb = imgui.ImInt(cfg.other.hudsize)
                 local delayb = imgui.ImInt(cfg.other.delay)
 				imgui.CentrText(u8 'Остальное')
-				imgui.Separator()
+                imgui.Separator()
 				if imgui.ToggleButton(u8 'reconw##1', reconwb) then cfg.other.reconw = reconwb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Варнинги на клео реконнект')
                 if imgui.ToggleButton(u8 'Включить замененный рекон##1', creconB) then cfg.crecon.enable = creconB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить замененный рекон')
 				if imgui.ToggleButton(u8 'Автологин##11', ipassb) then cfg.other.passb = ipassb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автологин')
@@ -1914,9 +1951,13 @@ function imgui.OnDrawFrame()
                         end
                     end)
                 end
+                if imgui.InputText(u8 'Шрифт кил-листа##hud', killfontb) then cfg.other.killfont = killfontb.v killfont = renderCreateFont(cfg.other.killfont, cfg.other.killsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.InputInt(u8 'Размер шрифта кил-листа##hud', killsizeb, 0) then 
+                    cfg.other.killsize = killsizeb.v 
+                    killfont = renderCreateFont(cfg.other.killfont, cfg.other.killsize, 4)
+                end
                 if imgui.Button(u8 'Изменить местоположения кил-листа') then data.imgui.killlist = true mainwindow.v = false end
                 if creconB.v then
-                    --imgui.Text(u8 'Местоположение рекона')
                     imgui.SameLine()
                     if imgui.Button(u8 'Изменить местоположение рекона##3') then data.imgui.reconpos = true; mainwindow.v = false end
                 end
@@ -1934,7 +1975,17 @@ function imgui.OnDrawFrame()
 					if imgui.Button(u8 'Узнать пароль##2') then atext('Ваш админский пароль: {66FF00}'..cfg.other.adminpass) end
                 end
                 if imgui.InputText(u8 'Шрифт нижней панели##hud', hudfontb) then cfg.other.hudfont = hudfontb.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
-                if imgui.InputInt(u8 'Размер шрифта нижней панели##hud', hudsizeb, 0) then cfg.other.hudsize = hudsizeb.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) gunfont = renderCreateFont(getGameDirectory()..'\\gtaweap3.ttf', cfg.other.hudsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.InputInt(u8 'Размер шрифта нижней панели##hud', hudsizeb, 0) then 
+                    cfg.other.hudsize = hudsizeb.v 
+                    hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4)
+                    if fonts_loaded then
+                        fonts_loaded = false
+                        font_gtaweapon3.vtbl.Release(font_gtaweapon3)
+                    end 
+                    font_gtaweapon3 = d3dxfont_create('gtaweapon3', cfg.other.hudsize+16, 2) 
+                    fonts_loaded = true
+                    saveData(cfg, 'moonloader/config/Admin Tools/config.json') 
+                end
             elseif data.imgui.menu == 6 then
                 imgui.CentrText(u8 'Настройка цветов')
                 imgui.Separator()
@@ -2076,8 +2127,6 @@ function imgui.OnDrawFrame()
 			imgui.End()
 		end
     end
-	--imgui.PopStyleColor()
-	--imgui.PopStyleColor()
 end
 function onHotKey(id, keys)
     lua_thread.create(function()
@@ -2353,7 +2402,8 @@ function initializeRender()
     whhpfont = renderCreateFont("Verdana", 8, 4)
 	checkfont = renderCreateFont(cfg.other.checkfont, cfg.other.checksize, 4)
     hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4)
-    font_gtaweapon3 = d3dxfont_create('gtaweapon3', 25, 2)
+    killfont = renderCreateFont(cfg.other.killfont, cfg.other.killsize, 4)
+    font_gtaweapon3 = d3dxfont_create('gtaweapon3', cfg.other.hudsize+16, 2)
     fonts_loaded = true
 end
 function rotateCarAroundUpAxis(car, vec)
@@ -2446,16 +2496,16 @@ function getCarFreeSeat(car)
           return i + 1
         end
       end
-      return nil -- no free seats
+      return nil
     else
-      return 0 -- driver seat
+      return 0
     end
 end
 function jumpIntoCar(car)
     local seat = getCarFreeSeat(car)
-    if not seat then return false end                         -- no free seats
-    if seat == 0 then warpCharIntoCar(playerPed, car)         -- driver seat
-    else warpCharIntoCarAsPassenger(playerPed, car, seat - 1) -- passenger seat
+    if not seat then return false end                     
+    if seat == 0 then warpCharIntoCar(playerPed, car)         
+    else warpCharIntoCarAsPassenger(playerPed, car, seat - 1) 
     end
     restoreCameraJumpcut()
     return true
@@ -2477,9 +2527,9 @@ function setEntityCoordinates(entityPtr, x, y, z)
       local matrixPtr = readMemory(entityPtr + 0x14, 4, false)
       if matrixPtr ~= 0 then
         local posPtr = matrixPtr + 0x30
-        writeMemory(posPtr + 0, 4, representFloatAsInt(x), false) -- X
-        writeMemory(posPtr + 4, 4, representFloatAsInt(y), false) -- Y
-        writeMemory(posPtr + 8, 4, representFloatAsInt(z), false) -- Z
+        writeMemory(posPtr + 0, 4, representFloatAsInt(x), false)
+        writeMemory(posPtr + 4, 4, representFloatAsInt(y), false)
+        writeMemory(posPtr + 8, 4, representFloatAsInt(z), false)
       end
     end
 end
@@ -2512,18 +2562,15 @@ function clickF()
                 end
                 local sx, sy = getCursorPos()
                 local sw, sh = getScreenResolution()
-                -- is cursor in game window bounds?
                 if sx >= 0 and sy >= 0 and sx < sw and sy < sh then
                     local posX, posY, posZ = convertScreenCoordsToWorld3D(sx, sy, 700.0)
                     local camX, camY, camZ = getActiveCameraCoordinates()
-                    -- search for the collision point
                     local result, colpoint = processLineOfSight(camX, camY, camZ, posX, posY, posZ, true, true, false, true, false, false, false)
                     if result and colpoint.entity ~= 0 then
                         local normal = colpoint.normal
                         local pos = Vector3D(colpoint.pos[1], colpoint.pos[2], colpoint.pos[3]) - (Vector3D(normal[1], normal[2], normal[3]) * 0.1)
                         local zOffset = 300
                         if normal[3] >= 0.5 then zOffset = 1 end
-                            -- search for the ground position vertically down
                             local result, colpoint2 = processLineOfSight(pos.x, pos.y, pos.z + zOffset, pos.x, pos.y, pos.z - 0.3,
                                 true, true, false, true, false, false, false)
                             if result then
@@ -2545,11 +2592,9 @@ function clickF()
                                     end
                                 end
                                 createPointMarker(pos.x, pos.y, pos.z)
-                                -- teleport!
                                 if isKeyDown(key.VK_LBUTTON) then
                                     if tpIntoCar then
                                         if not jumpIntoCar(tpIntoCar) then
-                                            -- teleport to the car if there is no free seats
                                             teleportPlayer(pos.x, pos.y, pos.z)
                                         end
                                     else
@@ -2645,12 +2690,36 @@ function sampev.onServerMessage(color, text)
                         },
                         re = {
                             id = nil,
-                            nick = nil
+                            admin = nil
+                        },
+                        sban = {
+                            id = nil,
+                            reason = nil,
+                            admin = nil 
+                        },
+                        auninvite = {
+                            id = nil,
+                            reason = nil,
+                            admin = nil
                         }
                     }
                 end
             end
         end
+    end
+    if bancheck and text:find("Игрок не найден") then 
+        atext(("Игрок %s не заблокирован"):format(bnick)) 
+        if not doesFileExist('moonloader/Admin Tools/Check Banned/result.txt') then
+            local file = io.open("moonloader/Admin Tools/Check Banned/result.txt", 'w')
+            file:write(bnick.."\n")
+            file:close()
+        else
+            local file = io.open('moonloader/Admin Tools/Check Banned/result.txt', 'a')
+            file:write(bnick.."\n")
+            file:close()
+        end
+        bancheck = false 
+        return false 
     end
     if cfg.other.chatconsole then sampfuncsLog(text) end
 	if doesFileExist('moonloader/Admin Tools/chatlog_all.txt') then
@@ -2667,7 +2736,13 @@ function sampev.onServerMessage(color, text)
                 local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
                 local a = text:gsub('{.+}', '')
                 if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                    text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+                    if nick:find("%[") then
+                        if nick:find("%]") then
+                            text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                        end
+                    else
+                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                    end
                 end
             end
         end
@@ -2682,7 +2757,13 @@ function sampev.onServerMessage(color, text)
                 local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
                 local a = text:gsub('{.+}', '')
                 if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                    text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+                    if nick:find("%[") then
+                        if nick:find("%]") then
+                            text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                        end
+                    else
+                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                    end
                 end
             end
         end
@@ -2696,7 +2777,13 @@ function sampev.onServerMessage(color, text)
                 local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
                 local a = text:gsub('{.+}', '')
                 if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                    text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+                    if nick:find("%[") then
+                        if nick:find("%]") then
+                            text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                        end
+                    else
+                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                    end
                 end
             end
         end
@@ -2717,7 +2804,13 @@ function sampev.onServerMessage(color, text)
                 local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
                 local a = text:gsub('{.+}', '')
                 if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                    text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+                    if nick:find("%[") then
+                        if nick:find("%]") then
+                            text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                        end
+                    else
+                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                    end
                 end
             end
         end
@@ -2731,7 +2824,13 @@ function sampev.onServerMessage(color, text)
                 local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
                 local a = text:gsub('{.+}', '')
                 if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                    text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+                    if nick:find("%[") then
+                        if nick:find("%]") then
+                            text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                        end
+                    else
+                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                    end
                 end
             end
         end
@@ -2952,7 +3051,6 @@ function sampev.onServerMessage(color, text)
         if text == ' ' and color == -1 then return false end
     end
     if text:match("^ Жалоба от .+%[%d+%] на .+%[%d+%]%: .+") then
-        reportid = text:match("Жалоба от .+%[%d+%] на .+%[(%d+)%]%: .+")
         local color = '0x'..config_colors.jbchat.color..'FF'
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
         for i = 0, 1000 do
@@ -2960,9 +3058,21 @@ function sampev.onServerMessage(color, text)
                 local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
                 local a = text:gsub('{.+}', '')
                 if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                    text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+                    if nick:find("%[") then
+                        if nick:find("%]") then
+                            text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                        end
+                    else
+                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                    end
                 end
             end
+        end
+        reportid = text:match("Жалоба от .+%[%d+%] на .+%[(%d+)%]%: .+")
+        if reportbot and not reconstate then 
+            local color1 = '0x'..config_colors.jbchat.color
+            sampSendChat('/re '..reportid) 
+            sampAddChatMessage(text, color1) 
         end
         return {color, text}
     end
@@ -2998,7 +3108,13 @@ function sampev.onServerMessage(color, text)
                 local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
                 local a = text:gsub('{.+}', '')
                 if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                    text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+                    if nick:find("%[") then
+                        if nick:find("%]") then
+                            text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                        end
+                    else
+                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                    end
                 end
             end
         end
@@ -3013,7 +3129,13 @@ function sampev.onServerMessage(color, text)
                 local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
                 local a = text:gsub('{.+}', '')
                 if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                    text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
+                    if nick:find("%[") then
+                        if nick:find("%]") then
+                            text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                        end
+                    else
+                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                    end
                 end
             end
         end
@@ -3021,14 +3143,20 @@ function sampev.onServerMessage(color, text)
     end
 	local _, myid = sampGetPlayerIdByCharHandle(playerPed)
     for i = 0, 1000 do
-       if sampIsPlayerConnected(i) or i == myid then
-         local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
-         local a = text:gsub('{.+}', '')
-           if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-              text = text:gsub(sampGetPlayerNickname(i), sampGetPlayerNickname(i)..' ['..i..']')
-          end
+        if sampIsPlayerConnected(i) or i == myid then
+            local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
+            local a = text:gsub('{.+}', '')
+            if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
+                if nick:find("%[") then
+                    if nick:find("%]") then
+                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                    end
+                else
+                    text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                end
+            end
         end
-      end
+    end
     return { color, text }
 end
 function sampev.onTextDrawSetString(id, text)
@@ -3055,7 +3183,6 @@ function sampev.onShowTextDraw(id, textdraw)
         if id == 2172 then return false end
         if id == 2168 then return false end
         if id == 2169 then return false end
-        --for i = 2160, 2191 do if id == i then return false end end
     end
 end
 function sampev.onTextDrawHide(id)
@@ -3067,7 +3194,6 @@ function sampev.onPlayerQuit(id, reason)
     local color = ("%06X"):format(bit.band(sampGetPlayerColor(id), 0xFFFFFF))
     text_notify_disconnect('{ff0000}Отключился: {ffffff}'..sampGetPlayerNickname(id)..' ['..id..']')
     if reason == 2 or reason == 1 then table.insert(wrecon, {nick = sampGetPlayerNickname(id), time = os.time()}) end
-    if id == reid then atext(('Игрок {%s}%s [%s] {ffffff}отключился от сервера. Причина: %s'):format(color, sampGetPlayerNickname(id), id, quitReason[reason])) end
 	for i, v in ipairs(admins_online) do
 		if tonumber(v["id"]) == id then
 			table.remove(admins_online, i)
@@ -3088,7 +3214,6 @@ function sampev.onPlayerQuit(id, reason)
     end
 end
 function sampev.onPlayerDeathNotification(killerId, killedId, reason)
-    print(("%s [%s] killed %s [%s] with %s"):format(sampGetPlayerNickname(killerId), killerId, sampGetPlayerNickname(killedId), killedId, reason))
 	local kill = ffi.cast('struct stKillInfo*', sampGetKillInfoPtr())
     local _, myid = sampGetPlayerIdByCharHandle(playerPed)
     local killercolor = ("%06X"):format(bit.band(sampGetPlayerColor(killerId), 0xFFFFFF))
@@ -3169,16 +3294,9 @@ function onD3DPresent()
         if killlistmode == 1 then
             local killsy = cfg.killlist.posy-5
             for k, v in ipairs(tkilllist) do
-                local killlenght = renderGetFontDrawTextLength(hudfont,v['killer'])
-                local gunlenght = renderGetFontDrawTextLength(gunfont, v['reason'])
-                local deathlenght = renderGetFontDrawTextLength(hudfont,v['killed'])
-                --renderFontDrawText(hudfont, v['killer'], cfg.killlist.posx, killsy, -1)
-                d3dxfont_draw(font_gtaweapon3, 'G', {cfg.killlist.posx ,killsy, sw, sh}, 0xCC000000, 0x10)
-                --renderDrawBox(cfg.killlist.posx+1, killsy, 29, 27, 0xCC000000)
+                d3dxfont_draw(font_gtaweapon3, 'G', {cfg.killlist.posx ,killsy, sw, sh}, 0xFF000000, 0x10)
                 d3dxfont_draw(font_gtaweapon3, string.char(RenderGun[v['reason']]), {cfg.killlist.posx ,killsy, sw, sh}, 0xFFFFFFFF, 0x10)
-                --renderFontDrawText(gunfont, v['reason'], cfg.killlist.posx+killlenght+10, killsy, -1)
-                --renderFontDrawText(hudfont, v['killed'], cfg.killlist.posx+killlenght+20+gunlenght ,killsy, -1)
-                killsy = killsy + 29
+                killsy = killsy + cfg.other.hudsize+19
             end
         end
     end
@@ -3195,25 +3313,23 @@ function renders()
             local hpos = ("%0.2f %0.2f %0.2f"):format(hposx, hposy, hposz)
             local hfps = math.floor(memory.getfloat(0xB7CB50, 4, false))
             local hsx, hsy = getScreenResolution()
-            local hudheight = renderGetFontDrawHeight(hudfont)
             local checkerheight = renderGetFontDrawHeight(checkfont)
+            local hudheight = renderGetFontDrawHeight(hudfont)
             if killlistmode == 1 then
                 local killsy = cfg.killlist.posy
                 for k, v in ipairs(tkilllist) do
-                    local killlenght = renderGetFontDrawTextLength(hudfont,v['killer'])
+                    local killlenght = renderGetFontDrawTextLength(killfont,v['killer'])
                     local gunlenght = renderGetFontDrawTextLength(gunfont, v['reason'])
-                    local deathlenght = renderGetFontDrawTextLength(hudfont,v['killed'])
-                    renderFontDrawText(hudfont, v['killer'], cfg.killlist.posx-killlenght-10, killsy, -1)
-                    --d3dxfont_draw(font_gtaweapon3, string.char( v['reason']), {cfg.killlist.posx+killlenght+10 ,killsy, sw, sh}, 0xFFFFFFFF, 0x10)
-                    --renderFontDrawText(gunfont, v['reason'], cfg.killlist.posx+killlenght+10, killsy, -1)
-                    renderFontDrawText(hudfont, v['killed'], cfg.killlist.posx+35 ,killsy, -1)
-                    killsy = killsy + 29
+                    local deathlenght = renderGetFontDrawTextLength(killfont,v['killed'])
+                    renderFontDrawText(killfont, v['killer'], cfg.killlist.posx-killlenght-3, killsy, -1)
+                    renderFontDrawText(killfont, v['killed'], cfg.killlist.posx+cfg.other.hudsize+19 ,killsy, -1)
+                    killsy = killsy + cfg.other.hudsize+19
                 end
             end
             if cfg.joinquit.enable then
                 if notification_connect then
                     if localClock() - notification_connect.tick <= notification_connect.duration then
-                        local alpha = 255 * math.min(1, notification_connect.duration - (localClock() - notification_connect.tick)) -- затухание на последней секунде
+                        local alpha = 255 * math.min(1, notification_connect.duration - (localClock() - notification_connect.tick))
                         local color = bit.bor(notification_connect.color, bit.lshift(alpha, 24))
                         for k = #notification_connect.lines, 1, -1 do
                             local text = notification_connect.lines[k]
@@ -3227,7 +3343,7 @@ function renders()
                 end
                 if notification_disconnect then
                     if localClock() - notification_disconnect.tick <= notification_disconnect.duration then
-                        local alpha = 255 * math.min(1, notification_disconnect.duration - (localClock() - notification_disconnect.tick)) -- затухание на последней секунде
+                        local alpha = 255 * math.min(1, notification_disconnect.duration - (localClock() - notification_disconnect.tick))
                         local color = bit.bor(notification_disconnect.color, bit.lshift(alpha, 24))
                         for k = #notification_disconnect.lines, 1, -1 do
                             local text = notification_disconnect.lines[k]
@@ -3285,7 +3401,7 @@ function sampGetPlayerIdByNickname(nick)
     for i = 0, 1000 do if sampIsPlayerConnected(i) and sampGetPlayerNickname(i) == tostring(nick) then return i end end
 end
 
-function check_keystrokes() -- inv
+function check_keystrokes()
     while true do wait(0)
         if swork then
             if not isSampfuncsConsoleActive() and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() then
@@ -3295,12 +3411,14 @@ function check_keystrokes() -- inv
                 if isKeyJustPressed(key.VK_INSERT) then
                     funcsStatus.Inv = not funcsStatus.Inv
                 end
-                if isKeyJustPressed(config_keys.airbrkkey.v) then -- airbrake
+                if isKeyJustPressed(config_keys.airbrkkey.v) then
                     airspeed = cfg.cheat.airbrkspeed
                     funcsStatus.AirBrk = not funcsStatus.AirBrk
                     if funcsStatus.AirBrk then
-                        local posX, posY, posZ = getCharCoordinates(playerPed)
-                        airBrkCoords = {posX, posY, posZ, 0.0, 0.0, getCharHeading(playerPed)}
+                        if not reconstate then
+                            local posX, posY, posZ = getCharCoordinates(playerPed)
+                            airBrkCoords = {posX, posY, posZ, 0.0, 0.0, getCharHeading(playerPed)}
+                        end
                     end
                 end
             end
@@ -3310,7 +3428,7 @@ end
 function main_funcs()
     while true do wait(0)
         if swork then
-            if funcsStatus.Inv then -- inv
+            if funcsStatus.Inv then
                 if isCharInAnyCar(playerPed) then
                     setCarProofs(storeCarCharIsInNoSave(playerPed), true, true, true, true, true)
                     setCharCanBeKnockedOffBike(playerPed, true)
@@ -3326,32 +3444,32 @@ function main_funcs()
             end
 
             local time = os.clock() * 1000
-            if funcsStatus.AirBrk then -- airbrake
-                if isCharInAnyCar(playerPed) then heading = getCarHeading(storeCarCharIsInNoSave(playerPed))
-                else heading = getCharHeading(playerPed) end
-                local camCoordX, camCoordY, camCoordZ = getActiveCameraCoordinates()
-                local targetCamX, targetCamY, targetCamZ = getActiveCameraPointAt()
-                local angle = getHeadingFromVector2d(targetCamX - camCoordX, targetCamY - camCoordY)
-                if isCharInAnyCar(playerPed) then difference = 0.79 else difference = 1.0 end
-                setCharCoordinates(playerPed, airBrkCoords[1], airBrkCoords[2], airBrkCoords[3] - difference)
-                if not isSampfuncsConsoleActive() and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() then
-                    if isKeyDown(key.VK_W) then
-                        airBrkCoords[1] = airBrkCoords[1] + airspeed * math.sin(-math.rad(angle))
-                        airBrkCoords[2] = airBrkCoords[2] + airspeed * math.cos(-math.rad(angle))
-                        if not isCharInAnyCar(playerPed) then setCharHeading(playerPed, angle)
-                        else setCarHeading(storeCarCharIsInNoSave(playerPed), angle) end
-                    elseif isKeyDown(key.VK_S) then
-                        airBrkCoords[1] = airBrkCoords[1] - airspeed * math.sin(-math.rad(heading))
-                        airBrkCoords[2] = airBrkCoords[2] - airspeed * math.cos(-math.rad(heading))
-                    end
-                    if isKeyDown(key.VK_A) then
-                        airBrkCoords[1] = airBrkCoords[1] - airspeed * math.sin(-math.rad(heading - 90))
-                        airBrkCoords[2] = airBrkCoords[2] - airspeed * math.cos(-math.rad(heading - 90))
-                    elseif isKeyDown(key.VK_D) then
-                        airBrkCoords[1] = airBrkCoords[1] - airspeed * math.sin(-math.rad(heading + 90))
-                        airBrkCoords[2] = airBrkCoords[2] - airspeed * math.cos(-math.rad(heading + 90))
-                    end
-                    if not reconstate then
+            if funcsStatus.AirBrk then
+                if not reconstate then
+                    if isCharInAnyCar(playerPed) then heading = getCarHeading(storeCarCharIsInNoSave(playerPed))
+                    else heading = getCharHeading(playerPed) end
+                    local camCoordX, camCoordY, camCoordZ = getActiveCameraCoordinates()
+                    local targetCamX, targetCamY, targetCamZ = getActiveCameraPointAt()
+                    local angle = getHeadingFromVector2d(targetCamX - camCoordX, targetCamY - camCoordY)
+                    if isCharInAnyCar(playerPed) then difference = 0.79 else difference = 1.0 end
+                    setCharCoordinates(playerPed, airBrkCoords[1], airBrkCoords[2], airBrkCoords[3] - difference)
+                    if not isSampfuncsConsoleActive() and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() then
+                        if isKeyDown(key.VK_W) then
+                            airBrkCoords[1] = airBrkCoords[1] + airspeed * math.sin(-math.rad(angle))
+                            airBrkCoords[2] = airBrkCoords[2] + airspeed * math.cos(-math.rad(angle))
+                            if not isCharInAnyCar(playerPed) then setCharHeading(playerPed, angle)
+                            else setCarHeading(storeCarCharIsInNoSave(playerPed), angle) end
+                        elseif isKeyDown(key.VK_S) then
+                            airBrkCoords[1] = airBrkCoords[1] - airspeed * math.sin(-math.rad(heading))
+                            airBrkCoords[2] = airBrkCoords[2] - airspeed * math.cos(-math.rad(heading))
+                        end
+                        if isKeyDown(key.VK_A) then
+                            airBrkCoords[1] = airBrkCoords[1] - airspeed * math.sin(-math.rad(heading - 90))
+                            airBrkCoords[2] = airBrkCoords[2] - airspeed * math.cos(-math.rad(heading - 90))
+                        elseif isKeyDown(key.VK_D) then
+                            airBrkCoords[1] = airBrkCoords[1] - airspeed * math.sin(-math.rad(heading + 90))
+                            airBrkCoords[2] = airBrkCoords[2] - airspeed * math.cos(-math.rad(heading + 90))
+                        end
                         if isKeyDown(key.VK_UP) then airBrkCoords[3] = airBrkCoords[3] + airspeed / 2.0 end
                         if isKeyDown(key.VK_DOWN) and airBrkCoords[3] > -95.0 then airBrkCoords[3] = airBrkCoords[3] - airspeed / 2.0 end
                         if isKeyDown(key.VK_LSHIFT) and not isKeyDown(key.VK_RSHIFT) and airspeed > 0.06 then airspeed = airspeed - 0.050; printStringNow('Speed: '..airspeed, 1000) end
@@ -3375,7 +3493,7 @@ function check_keys_fast()
                 if isKeyJustPressed(key.VK_INSERT) then
                     funcsStatus.Inv = not funcsStatus.Inv
                 end
-                if isKeyJustPressed(config_keys.airbrkkey.v) then -- airbrake
+                if isKeyJustPressed(config_keys.airbrkkey.v) then
                     airspeed = cfg.cheat.airbrkspeed
                     funcsStatus.AirBrk = not funcsStatus.AirBrk
                     if funcsStatus.AirBrk then
@@ -3383,7 +3501,7 @@ function check_keys_fast()
                         airBrkCoords = {posX, posY, posZ, 0.0, 0.0, getCharHeading(playerPed)}
                     end
                 end
-                if isKeyJustPressed(key.VK_B) then -- hop
+                if isKeyJustPressed(key.VK_B) then 
                     if isCharInAnyCar(playerPed) then
                         local cVecX, cVecY, cVecZ = getCarSpeedVector(storeCarCharIsInNoSave(playerPed))
                         if cVecZ < 7.0 then applyForceToCar(storeCarCharIsInNoSave(playerPed), 0.0, 0.0, 0.3, 0.0, 0.0, 0.0) end
@@ -3392,7 +3510,7 @@ function check_keys_fast()
                         if pVecZ < 7.0 then setCharVelocity(playerPed, 0.0, 0.0, 10.0) end
                     end
                 end
-                if isKeyJustPressed(key.VK_BACK) and isCharInAnyCar(playerPed) then -- turn back
+                if isKeyJustPressed(key.VK_BACK) and isCharInAnyCar(playerPed) then
                     local cVecX, cVecY, cVecZ = getCarSpeedVector(storeCarCharIsInNoSave(playerPed))
                     applyForceToCar(storeCarCharIsInNoSave(playerPed), -cVecX / 25, -cVecY / 25, -cVecZ / 25, 0.0, 0.0, 0.0)
                     local x, y, z, w = getVehicleQuaternion(storeCarCharIsInNoSave(playerPed))
@@ -3406,18 +3524,18 @@ function check_keys_fast()
                     local w, x, y, z = convertMatrixToQuaternion(matrix[1], matrix[2], matrix[3], matrix[4], matrix[5], matrix[6], matrix[7], matrix[8], matrix[9])
                     setVehicleQuaternion(storeCarCharIsInNoSave(playerPed), x, y, z, w)
                 end
-                if isKeyJustPressed(key.VK_N) and isCharInAnyCar(playerPed) then -- fast exit
+                if isKeyJustPressed(key.VK_N) and isCharInAnyCar(playerPed) then 
                     local posX, posY, posZ = getCarCoordinates(storeCarCharIsInNoSave(playerPed))
                     warpCharFromCarToCoord(playerPed, posX, posY, posZ)
                 end
-                if isKeyJustPressed(key.VK_F3) then -- suicide
+                if isKeyJustPressed(key.VK_F3) then 
                     if not isCharInAnyCar(playerPed) then
                         setCharHealth(playerPed, 0.0)
                     else
                         setCarHealth(storeCarCharIsInNoSave(playerPed), 0.0)
                     end
                 end
-                if isKeyDown(key.VK_DELETE) then -- flip
+                if isKeyDown(key.VK_DELETE) then 
                     if veh ~= nil then
                         local heading = getCarHeading(veh)
                         heading = heading + 2 * fps_correction()
@@ -3425,7 +3543,7 @@ function check_keys_fast()
                         setCarHeading(veh, heading)
                     end
                 end
-                if isKeyDown(key.VK_LMENU) and isCharInAnyCar(playerPed) then -- speedhack
+                if isKeyDown(key.VK_LMENU) and isCharInAnyCar(playerPed) then 
                     if getCarSpeed(storeCarCharIsInNoSave(playerPed)) * 2.01 <= 200 then
                         local cVecX, cVecY, cVecZ = getCarSpeedVector(storeCarCharIsInNoSave(playerPed))
                         local heading = getCarHeading(storeCarCharIsInNoSave(playerPed))
@@ -3447,9 +3565,9 @@ function check_keys_fast()
         end
     end
 end
-function onReceiveRpc(id, bs) --перехватываем все входящие рпс
-    if id == 91 and swork and isKeyDown(key.VK_LMENU) then --делаем проверку на нужный нам, в данном случае это RPC_SetVehicleVelocity
-        return false -- блокируем рпс
+function onReceiveRpc(id, bs) 
+    if id == 91 and swork and isKeyDown(key.VK_LMENU) then 
+        return false 
     end
 end
 function tr(pam)
@@ -3516,13 +3634,11 @@ function wh()
                                     if wcpedArmor > 100 then wcpedArmor = 100 end
                                     renderDrawBoxWithBorder(wposx+1, wposy+15, math.floor(100 / 2) + 1, 5, 0x80000000, 1, 0xFF000000)
                                     renderDrawBox(wposx, wposy+15, math.floor(wcpedHealth / 2) + 1, 5, 0xAACC0000)
-                                    --renderFontDrawText(font2, 'HP: ' .. tostring(hp2), 1, resY - 11, 0xFFFFFFFF)
                                     renderFontDrawText(whhpfont, ('%s'):format(wcpedHealth), wposx+60, wposy+12.5, 0xFFFF0000)
                                     renderFontDrawText(whfont, 'LVL: '..wcpedlvl, wposx+85, wposy+14.5, -1)
                                     if wcpedArmor ~= 0 then
                                         renderDrawBoxWithBorder(wposx, wposy+25, math.floor(100 / 2) + 1, 5, 0x80000000, 1, 0xFF000000)
                                         renderDrawBox(wposx, wposy+25, math.floor(wcpedArmor / 2) + 1, 5, 0xAAAAAAAA)
-                                        --renderFontDrawText(font, 'Armor: '..cpedArmor, posx, posy+25, -1)
                                         renderFontDrawText(whhpfont, ('%s'):format(wcpedArmor), wposx+60, wposy+22.5, -1)
                                     end
                                 end
@@ -3668,6 +3784,19 @@ function gun(pam)
 end
 function sampev.onShowDialog(id, style, title, button1, button2, text)
     if id == 0 then
+        if bancheck then
+            if title == bnick then
+                for line in text:gmatch('[^\r\n]+') do
+                    if not line:find("Дата") then
+                        local adm, reason, data1, data2 = line:match("(%S+)\t(.+)\t(.+)\t(.+)")
+                        atext(("Игрок %s заблокирован до %s. Причина: %s"):format(bnick, data2, reason))
+                        sampSendDialogResponse(id, 1, 1, nil)
+                        bancheck = false
+                        return false
+                    end
+                end
+            end
+        end
         if warnst then
 			if title == 'Статистика персонажа' then
 	            wbfrak = text:match('.+Организация%:%s+(.+)%s+Ранг')
@@ -3686,7 +3815,7 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
 			end
         end
     end
-    if id == 1 and #tostring(cfg.other.password) >=6 then
+    if id == 1 and #tostring(cfg.other.password) >=6  and cfg.other.passb then
         sampSendDialogResponse(id, 1, _, tostring(cfg.other.password))
         return false
     end
@@ -4138,7 +4267,7 @@ function cip(pam)
                         end
                     end)
                 end)
-                wait(200)
+                wait(400)
             end
             while #rdata ~= 2 do wait(0) end
             if rdata[1]["status"] and rdata[2]["status"] then
@@ -4177,48 +4306,50 @@ function cip(pam)
         end
     end)
 end
-function massgun(pam)
-	lua_thread.create(function()
-		local gun, pt = pam:match('(%d+) (%d+)')
-		if gun and pt then
-			for k, v in pairs(sampGetStreamedPlayers()) do
-				sampSendChat(("/givegun %s %s %s"):format(v, gun, pt))
-				wait(cfg.other.delay)
-			end
-			atext('Выдача закончена')
-		else
-			atext('Введите: /massgun [оружие] [патроны]')
-		end
-	end)
-end
-function masshp(pam)
-	lua_thread.create(function()
-		local hp = pam:match('(%d+)')
-		if hp then
-			for k, v in pairs(sampGetStreamedPlayers()) do
-				sampSendChat(("/sethp %s %s"):format(v, hp))
-				wait(cfg.other.delay)
-			end
-			atext('Выдача закончена')
-		else
-			atext('Введите: /masshp [уровень хп]')
-		end
-	end)
-end
-function massarm(pam)
-	lua_thread.create(function()
-		local arm = pam:match('(%d+)')
-		if arm then
-			for k, v in pairs(sampGetStreamedPlayers()) do
-				sampSendChat(("/setarm %s %s"):format(v, arm))
-				wait(cfg.other.delay)
-			end
-			atext('Выдача закончена')
-		else
-			atext('Введите: /massarm [уровень брони]')
-		end
-	end)
-end
+--[[function cip(pam)
+    local checkstatus = false
+    cipst = lua_thread.create(function()
+        local rdata = {}
+        if #ips == 2 then
+            atext('Идет проверка IP адресов. Ожидайте..')
+            for ik, iv in pairs(ips) do
+                checkstatus = true
+                local zapros = https.request('http://free.ipwhois.io/json/8.8.8.8')
+                if zapros then
+                    local info = decodeJson(zapros)
+                    if info then
+                        table.insert(rdata, {country = info.country, city = info.city, isp = info.isp, query = info.ip, lat = info.latitude, lon = info.longitude, status = info.success})
+                        checkstatus = false
+                    else
+                        atext('Произошла ошибка проверки IP адресов')
+                        print(zapros)
+                    end
+                else
+                    atext('Произошла ошибка проверки IP адресов')
+                end
+                while checkstatus do wait(0) end
+            end
+            if rdata[1]["status"] and rdata[2]["status"] then
+                local distances1 = distance_cord(rdata[2]["lat"], rdata[2]["lon"], rdata[1]["lat"], rdata[1]["lon"])
+                if tonumber(pam) == nil then
+                    sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(u8:decode(rdata[1]["country"]), u8:decode(rdata[1]["city"]), u8:decode(rdata[1]["isp"]), u8:decode(rdata[1]["query"])), -1)
+                    sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(u8:decode(rdata[2]["country"]), u8:decode(rdata[2]["city"]), u8:decode(rdata[2]["isp"]), u8:decode(rdata[2]["query"])), -1)
+                    sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s'):format(math.floor(distances1), rnick), -1)
+                else
+                    sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(u8:decode(rdata[1]["country"]), u8:decode(rdata[1]["city"]), u8:decode(rdata[1]["isp"]), u8:decode(rdata[1]["query"])), -1)
+                    wait(cfg.other.delay)
+                    sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(u8:decode(rdata[2]["country"]), u8:decode(rdata[2]["city"]), u8:decode(rdata[2]["isp"]), u8:decode(rdata[2]["query"])), -1)
+                    wait(cfg.other.delay)
+                    sampSendChat(('/a Расстояние: %s км. | Ник: %s'):format(math.floor(distances1), rnick), -1)
+                end
+            else
+                atext('Произошла ошибка проверки IP адресов')
+            end
+        else
+            atext('Не найдено IP адресов для сравнения')
+        end
+    end)
+end]]
 function givehb(pam)
     lua_thread.create(function()
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
@@ -4593,14 +4724,6 @@ function punishlog(text)
         local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
         file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
         file:close()
-    end
-    if text:match('^ Администратор: .+ забанил .+ %[3 Предупреждения%]. Причина: .+ ') then
-        local nick = text:match('^ Администратор: (.+) забанил .+ %[3 Предупреждения%]. Причина: .+ ')
-        if nick == mynick then
-            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
-            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
-            file:close()
-        end
     end
     if text:match('^ Администратор: .+ кикнул .+. Причина: .+') then
         local nick = text:match('^ Администратор: (.+) кикнул .+. Причина: .+')
@@ -5096,34 +5219,62 @@ function admchat()
             if cfg.other.admlvl > 1 and nick ~= mynick then
                 if text:match('^re %d+') or text:match('^/re %d+') then
                     if sampIsPlayerConnected(tonumber(text:match('re (%d+)'))) then
-                        punkey.re.id = text:match('re (%d+)')
-                        punkey.re.nick = nick
-                        atext(('Администратор %s [%s] просит зайти в слежку за игроком %s [%s]'):format(nick, id, sampGetPlayerNickname(punkey.re.id), punkey.re.id))
-                        atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                        if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('re (%d+)')))) then
+                            punkey.re.id = text:match('re (%d+)')
+                            punkey.re.nick = nick
+                            atext(('Администратор %s [%s] просит зайти в слежку за игроком %s [%s]'):format(nick, id, sampGetPlayerNickname(punkey.re.id), punkey.re.id))
+                            atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                        end
                     end
                 end
                 if text:match('^warn %d+ %d+ .+') or text:match('^/warn %d+ %d+ .+') then
                     if sampIsPlayerConnected(tonumber(text:match('warn (%d+) %d+ .+'))) then
-                        punkey.warn.id, punkey.warn.day, punkey.warn.reason = text:match('warn (%d+) (%d+) (.+)')
-                        punkey.warn.admin = nick
-                        atext(("Администратор %s [%s] хочет заварнить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.warn.id), punkey.warn.id, punkey.warn.reason))
-                        atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                        if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('warn (%d+) %d+ .+')))) then
+                            punkey.warn.id, punkey.warn.day, punkey.warn.reason = text:match('warn (%d+) (%d+) (.+)')
+                            punkey.warn.admin = nick
+                            atext(("Администратор %s [%s] хочет заварнить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.warn.id), punkey.warn.id, punkey.warn.reason))
+                            atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                        end
                     end
                 end
                 if text:match('^ban %d+ .+') or text:match('^/ban %d+ .+') then
                     if sampIsPlayerConnected(tonumber(text:match('ban (%d+) .+'))) then
-                        punkey.ban.id, punkey.ban.reason = text:match('ban (%d+) (.+)')
-                        punkey.ban.admin = nick
-                        atext(("Администратор %s [%s] хочет забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.ban.id), punkey.ban.id, punkey.ban.reason))
-                        atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                        if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('ban (%d+) .+')))) then
+                            punkey.ban.id, punkey.ban.reason = text:match('ban (%d+) (.+)')
+                            punkey.ban.admin = nick
+                            atext(("Администратор %s [%s] хочет забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.ban.id), punkey.ban.id, punkey.ban.reason))
+                            atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                        end
                     end
                 end
                 if text:match('^prison %d+ %d+ .+') or text:match('^/prison %d+ %d+ .+') then
                     if sampIsPlayerConnected(tonumber(text:match('prison (%d+) %d+ .+'))) then
-                        punkey.prison.id, punkey.prison.day, punkey.prison.reason = text:match('prison (%d+) (%d+) (.+)')
-                        punkey.prison.admin = nick
-                        atext(("Администратор %s [%s] хочет посадить в присон игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.prison.id), punkey.prison.id, punkey.prison.reason))
-                        atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                        if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('prison (%d+) %d+ .+')))) then
+                            punkey.prison.id, punkey.prison.day, punkey.prison.reason = text:match('prison (%d+) (%d+) (.+)')
+                            punkey.prison.admin = nick
+                            atext(("Администратор %s [%s] хочет посадить в присон игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.prison.id), punkey.prison.id, punkey.prison.reason))
+                            atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                        end
+                    end
+                end
+                if cfg.other.admlvl >= 4 then
+                    if text:match('^auninvite %d+ .+') or text:match('^/auninvite %d+ .+') then
+                        if sampIsPlayerConnected(tonumber(text:match('auninvite (%d+) .+'))) then
+                            punkey.auninvite.id, punkey.auninvite.reason = text:match('auninvite (%d+) (.+)')
+                            punkey.auninvite.admin = nick
+                            atext(("Администратор %s [%s] хочет уволить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.auninvite.id), punkey.auninvite.id, punkey.auninvite.reason))
+                            atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                        end
+                    end
+                    if text:match('^sban %d+ .+') or text:match('^/sban %d+ .+') then
+                        if sampIsPlayerConnected(tonumber(text:match('sban (%d+) .+'))) then
+                            if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('sban (%d+) .+')))) then
+                                punkey.sban.id, punkey.sban.reason = text:match('sban (%d+) (.+)')
+                                punkey.sban.admin = nick
+                                atext(("Администратор %s [%s] хочет тихо забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.sban.id), punkey.sban.id, punkey.sban.reason))
+                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                            end
+                        end
                     end
                 end
             end
@@ -5150,9 +5301,19 @@ function punaccept()
         ban(('%s %s • %s.%s'):format(punkey.ban.id, punkey.ban.reason, admnick:sub(1,1), admfam))
         punkey.ban.id, punkey.ban.reason, punkey.ban.admin = nil, nil, nil
     end
+    if punkey.sban.id then
+        local admnick, admfam = punkey.sban.admin:match('(.+)_(.+)')
+        sampSendChat(('/sban %s %s • %s.%s'):format(punkey.sban.id, punkey.sban.reason, admnick:sub(1,1), admfam))
+        punkey.sban.id, punkey.sban.reason, punkey.sban.admin = nil, nil, nil
+    end
+    if punkey.auninvite.id then
+        local admnick, admfam = punkey.auninvite.admin:match('(.+)_(.+)')
+        sampSendChat(('/auninvite %s %s • %s.%s'):format(punkey.auninvite.id, punkey.auninvite.reason, admnick:sub(1,1), admfam))
+        punkey.auninvite.id, punkey.auninvite.reason, punkey.auninvite.admin = nil, nil, nil
+    end
 end
 function pundeny()
-    if punkey.re.id or punkey.warn.id or punkey.ban.id or punkey.prison.id then
+    if punkey.re.id or punkey.warn.id or punkey.ban.id or punkey.prison.id or punkey.auninvite.id or punkey.sban.id then
         punkey = {
             warn = {
                 id = nil,
@@ -5173,7 +5334,17 @@ function pundeny()
             },
             re = {
                 id = nil,
-                nick = nil
+                admin = nil
+            },
+            sban = {
+                id = nil,
+                reason = nil,
+                admin = nil 
+            },
+            auninvite = {
+                id = nil,
+                reason = nil,
+                admin = nil
             }
         }
         atext('Выдача наказаний отменена')
@@ -5330,5 +5501,54 @@ function gip(pam)
         end
     else
         atext('Введите: /gip [id/nick]')
+    end
+end
+
+function aunv(pam)
+    local id, reason = pam:match("(%d+) (.+)")
+    if id and reason then
+        if sampIsPlayerConnected(tonumber(id)) then
+            sampSendChat(("/auninvite %s %s"):format(id, reason))
+        else
+            atext("Игрок оффлайн")
+        end
+    else
+        atext("Введите: /aunv [id] [причина]")
+    end
+end
+
+function checkB()
+    if cfg.other.admlvl >=3 then
+        lcheckb = lua_thread.create(function()
+            bcheckb = not bcheckb
+            if bcheckb then
+                atext("Проверка начата")
+                for line in io.lines('moonloader/Admin Tools/Check Banned/players.txt') do
+                    for v in line:gmatch("%S+$") do
+                        if v ~= '[IP:' and not v:match("%d+.%d+.%d+.%d+%]") and v ~= '[R_IP:' then
+                            if #v >= 3 then
+                                bnick = v
+                                bancheck = true
+                                sampSendChat(("/banlog %s"):format(bnick))
+                                while bancheck do wait(0) end
+                                wait(cfg.other.delay)
+                                break
+                            end
+                        end
+                    end
+                end
+                atext("Проверка окончена")
+                bnick = nil
+                bancheck = false
+                bcheckb = false
+            else
+                atext("Проверка окончена")
+                lcheckb:terminate()
+                bnick = nil
+                bancheck = false
+            end
+        end)
+    else
+        atext('Команда доступна с 3 лвл администрирования')
     end
 end
