@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.99999996')
+script_version('1.99999997')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -1955,6 +1955,13 @@ function imgui.OnDrawFrame()
                 if imgui.InputInt(u8 'Размер шрифта кил-листа##hud', killsizeb, 0) then 
                     cfg.other.killsize = killsizeb.v 
                     killfont = renderCreateFont(cfg.other.killfont, cfg.other.killsize, 4)
+                    if fonts_loaded then
+                        fonts_loaded = false
+                        font_gtaweapon3.vtbl.Release(font_gtaweapon3)
+                    end 
+                    font_gtaweapon3 = d3dxfont_create('gtaweapon3', cfg.other.hudsize+16, 2) 
+                    fonts_loaded = true
+                    saveData(cfg, 'moonloader/config/Admin Tools/config.json')
                 end
                 if imgui.Button(u8 'Изменить местоположения кил-листа') then data.imgui.killlist = true mainwindow.v = false end
                 if creconB.v then
