@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.11')
+script_version('1.12')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -1959,7 +1959,7 @@ function imgui.OnDrawFrame()
                         fonts_loaded = false
                         font_gtaweapon3.vtbl.Release(font_gtaweapon3)
                     end 
-                    font_gtaweapon3 = d3dxfont_create('gtaweapon3', cfg.other.hudsize+16, 2) 
+                    font_gtaweapon3 = d3dxfont_create('gtaweapon3', cfg.other.killsize+16, 2) 
                     fonts_loaded = true
                     saveData(cfg, 'moonloader/config/Admin Tools/config.json')
                 end
@@ -3303,7 +3303,7 @@ function onD3DPresent()
             for k, v in ipairs(tkilllist) do
                 d3dxfont_draw(font_gtaweapon3, 'G', {cfg.killlist.posx ,killsy, sw, sh}, 0xFF000000, 0x10)
                 d3dxfont_draw(font_gtaweapon3, string.char(RenderGun[v['reason']]), {cfg.killlist.posx ,killsy, sw, sh}, 0xFFFFFFFF, 0x10)
-                killsy = killsy + cfg.other.hudsize+19
+                killsy = killsy + cfg.other.killsize+19
             end
         end
     end
@@ -3329,8 +3329,8 @@ function renders()
                     local gunlenght = renderGetFontDrawTextLength(gunfont, v['reason'])
                     local deathlenght = renderGetFontDrawTextLength(killfont,v['killed'])
                     renderFontDrawText(killfont, v['killer'], cfg.killlist.posx-killlenght-3, killsy, -1)
-                    renderFontDrawText(killfont, v['killed'], cfg.killlist.posx+cfg.other.hudsize+19 ,killsy, -1)
-                    killsy = killsy + cfg.other.hudsize+19
+                    renderFontDrawText(killfont, v['killed'], cfg.killlist.posx+cfg.other.killsize+19 ,killsy, -1)
+                    killsy = killsy + cfg.other.killsize+19
                 end
             end
             if cfg.joinquit.enable then
