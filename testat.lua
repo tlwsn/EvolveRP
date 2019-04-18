@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.12')
+script_version('2')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
