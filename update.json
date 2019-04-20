@@ -9,7 +9,7 @@
     },
     "activity":{
         "url":"https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua",
-        "version":"1.39"
+        "version":"1.40"
     },
     "testat":{
         "url":"https://raw.githubusercontent.com/WhackerH/EvolveRP/master/testat.luac",
