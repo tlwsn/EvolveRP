@@ -1,7 +1,7 @@
 script_name("Activity") 
 script_authors({ 'Edward_Franklin', 'Thomas_Lawson' })
-script_version("1.38") -- Final version
-script_version_number(13846)
+script_version("1.39") -- Final version
+script_version_number(13925)
 script_url("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua")
 --------------------------------------------------------------------
 require "lib.moonloader"
@@ -45,7 +45,7 @@ local sInfo = {
   isALogin = false
 }
 local DEBUG_MODE = false
-local dayName = {u8"Понедельник", u8"Вторник", u8"Среда", u8"Четверг", u8"Пятница", u8"Суббота", u8"Воскресенье"}
+local dayName = {u8"", u8"", u8"", u8"", u8"", u8"", u8""}
 local nick = ""
 local playerid = -1
 --------------------------------------------------------------------
@@ -56,7 +56,7 @@ function main()
     autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", '[Activity Helper]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439")
     sampRegisterChatCommand('activitydebug', function()
       DEBUG_MODE = not DEBUG_MODE
-      atext(("Debug mode %s"):format(DEBUG_MODE and "включен" or "отключен"))
+      atext(("Debug mode %s"):format(DEBUG_MODE and "" or ""))
     end)
     sampRegisterChatCommand('activity', function() mainwindow.v = not mainwindow.v end)
     --------------------=========----------------------
@@ -64,26 +64,26 @@ function main()
       createDirectory("moonloader\\config")
     end
     debug_log("Main function: dayOnline = "..pInfo.info.dayOnline)
-    if DEBUG_MODE == true then atext(("Включен режим отладки. (Версия скрипта: %s. Номер сборки: %s)"):format(thisScript().version, thisScript().version_num)) end
+    if DEBUG_MODE == true then atext(("  . ( : %s.  : %s)"):format(thisScript().version, thisScript().version_num)) end
     local day = os.date("%d.%m.%y")
     if pInfo.info.thisWeek == 0 then pInfo.info.thisWeek = os.date("%W") end
     if pInfo.info.day ~= day and tonumber(os.date("%H")) > 4 then
       local weeknum = dateToWeekNumber(pInfo.info.day)
       if weeknum == 0 then weeknum = 7 end
       pInfo.weeks[weeknum] = pInfo.info.dayOnline
-      atext(string.format("Начался новый день. Итоги предыдущего дня (%s): %s", pInfo.info.day, secToTime(pInfo.info.dayOnline)))
+      atext(string.format("  .    (%s): %s", pInfo.info.day, secToTime(pInfo.info.dayOnline)))
       -----------------
       if tonumber(pInfo.info.thisWeek) ~= tonumber(os.date("%W")) then
-        atext("Началась новая неделя. Итоги предыдущей недели: "..secToTime(pInfo.info.weekOnline))
+        atext("  .   : "..secToTime(pInfo.info.weekOnline))
         for key in pairs(pInfo) do
           for k in pairs(pInfo[key]) do
             pInfo[key][k] = 0
           end
         end
-        debug_log("Новая неделя. Обнуляем все переменные")
+        debug_log(" .   ")
         pInfo.info.thisWeek = os.date("%W")
       end
-      debug_log("Новый день. Обнуляем день. weekOnline = "..pInfo.info.weekOnline)
+      debug_log(" .  . weekOnline = "..pInfo.info.weekOnline)
       pInfo.info.day = day
       pInfo.info.dayPM = 0
       pInfo.info.dayOnline = 0
@@ -147,21 +147,21 @@ function autoupdate(json_url, prefix, url)
               lua_thread.create(function()
                 local dlstatus = require('moonloader').download_status
                 local color = -1
-                atext('Обнаружено обновление. Пытаюсь обновиться c '..thisScript().version..' на '..updateversion)
+                atext(' .   c '..thisScript().version..'  '..updateversion)
                 wait(250)
                 downloadUrlToFile(updatelink, thisScript().path,
                   function(id3, status1, p13, p23)
                     if status1 == dlstatus.STATUS_DOWNLOADINGDATA then
-                      print(string.format('Загружено %d из %d.', p13, p23))
+                      print(string.format(' %d  %d.', p13, p23))
                     elseif status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
-                      print('Загрузка обновления завершена.')
-                      atext('Обновление завершено!')
+                      print('  .')
+                      atext(' !')
                       goupdatestatus = true
                       lua_thread.create(function() wait(500) thisScript():reload() end)
                     end
                     if status1 == dlstatus.STATUSEX_ENDDOWNLOAD then
                       if goupdatestatus == nil then
-                          atext('Обновление прошло неудачно. Запускаю устаревшую версию..')
+                          atext('  .   ..')
                         update = false
                       end
                     end
@@ -171,11 +171,11 @@ function autoupdate(json_url, prefix, url)
               )
             else
               update = false
-              print('v'..thisScript().version..': Обновление не требуется.')
+              print('v'..thisScript().version..':   .')
             end
           end
         else
-          print('v'..thisScript().version..': Не могу проверить обновление. Смиритесь или проверьте самостоятельно на '..url)
+          print('v'..thisScript().version..':    .      '..url)
           update = false
         end
       end
@@ -315,29 +315,29 @@ function imgui.OnDrawFrame()
     imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
     imgui.Begin('Activity Helper', mainwindow, imgui.WindowFlags.NoResize)
     ---------
-    imgui.Text(u8"Ник:"); imgui.SameLine(spacing); imgui.Text(('%s[%d]'):format(nick, playerid))
-    imgui.Text(u8"Авторизация в ALogin:"); imgui.SameLine(spacing); imgui.TextColoredRGB(string.format('%s', sInfo.isALogin == true and "{00bf80}Авторизирован" or "{ec3737}Отсутствует"))
+    imgui.Text(u8":"); imgui.SameLine(spacing); imgui.Text(('%s[%d]'):format(nick, playerid))
+    imgui.Text(u8"  ALogin:"); imgui.SameLine(spacing); imgui.TextColoredRGB(string.format('%s', sInfo.isALogin == true and "{00bf80}" or "{ec3737}"))
     if sInfo.isALogin == true and sInfo.lvlAdmin > 0 then
-      imgui.Text(u8"Уровень модератора:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(sInfo.lvlAdmin))
+      imgui.Text(u8" :"); imgui.SameLine(spacing); imgui.Text(('%s'):format(sInfo.lvlAdmin))
     end
-    imgui.Text(u8"Время авторизации:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(sInfo.authTime))
+    imgui.Text(u8" :"); imgui.SameLine(spacing); imgui.Text(('%s'):format(sInfo.authTime))
     imgui.Separator()
-    imgui.Text(u8"Отыграно за сегодня:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(secToTime(pInfo.info.dayOnline)))
-    imgui.Text(u8"AFK за сегодня:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(secToTime(pInfo.info.dayAFK)))
-    imgui.Text(u8"Ответов за сегодня:"); imgui.SameLine(spacing); imgui.Text(('%d'):format(pInfo.info.dayPM))
+    imgui.Text(u8"  :"); imgui.SameLine(spacing); imgui.Text(('%s'):format(secToTime(pInfo.info.dayOnline)))
+    imgui.Text(u8"AFK  :"); imgui.SameLine(spacing); imgui.Text(('%s'):format(secToTime(pInfo.info.dayAFK)))
+    imgui.Text(u8"  :"); imgui.SameLine(spacing); imgui.Text(('%d'):format(pInfo.info.dayPM))
     imgui.Separator()
-    imgui.Text(u8"Отыграно за неделю:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(secToTime(pInfo.info.weekOnline)))
-    imgui.Text(u8"Ответов за неделю:"); imgui.SameLine(spacing); imgui.Text(('%d'):format(pInfo.info.weekPM))
+    imgui.Text(u8"  :"); imgui.SameLine(spacing); imgui.Text(('%s'):format(secToTime(pInfo.info.weekOnline)))
+    imgui.Text(u8"  :"); imgui.SameLine(spacing); imgui.Text(('%d'):format(pInfo.info.weekPM))
     imgui.Separator()
-    if imgui.Button(u8 'Статистика по дням', btn_size) then weekonline.v = not weekonline.v end
-    if imgui.Button(u8 'Статистика наказаний', btn_size) then punishments.v = not punishments.v end
-    if imgui.Button(u8 'Перезагрузить скрипт', btn_size) then
-      atext("Перезагружаемся...")
+    if imgui.Button(u8 '  ', btn_size) then weekonline.v = not weekonline.v end
+    if imgui.Button(u8 ' ', btn_size) then punishments.v = not punishments.v end
+    if imgui.Button(u8 ' ', btn_size) then
+      atext("...")
       showCursor(false)
       thisScript():reload()
     end
-    if imgui.Button(u8 'Сообщить об ошибке', btn_size) then
-      atext("Связь с разрабочиком:")
+    if imgui.Button(u8 '  ', btn_size) then
+      atext("  :")
       atext("VK - https://vk.com/the_redx | Discord - redx#0763")
     end
     imgui.End()
@@ -345,7 +345,7 @@ function imgui.OnDrawFrame()
     if weekonline.v then
       imgui.SetNextWindowSize(imgui.ImVec2(325, 300), imgui.Cond.FirstUseEver)
       imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-      imgui.Begin(u8 'Статистика по дням', weekonline, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize)
+      imgui.Begin(u8 '  ', weekonline, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize)
       local daynumber = dateToWeekNumber(os.date("%d.%m.%y"))
       if daynumber == 0 then daynumber = 7 end
       for key, value in ipairs(pInfo.weeks) do
@@ -365,7 +365,7 @@ function imgui.OnDrawFrame()
     if punishments.v then
       imgui.SetNextWindowSize(imgui.ImVec2(325, 300), imgui.Cond.FirstUseEver)
       imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-      imgui.Begin(u8 'Статистика наказаний', punishments, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize)
+      imgui.Begin(u8 ' ', punishments, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize)
       local i = 1
       for key, value in pairs(pInfo.punish) do
         imgui.Text(('%s'):format(key)); imgui.SameLine(spacing); imgui.Text(('%s'):format(value))
@@ -385,47 +385,47 @@ end
 
 function sampevents.onServerMessage(color, text)
   if text:match(nick) then
-    if text:match("OffBan") or text:match("забанил (.+) Причина") or text:match("SBan") or text:match("IOffBan") then
+    if text:match("OffBan") or text:match(" (.+) ") or text:match("SBan") or text:match("IOffBan") then
       pInfo.punish.ban = pInfo.punish.ban + 1
     end
-    if text:match("выдал warn") or text:match("получил предупреждение до") then
+    if text:match(" warn") or text:match("  ") then
       pInfo.punish.warn = pInfo.punish.warn + 1
     end
-    if text:match("кикнул .+ Причина") then
+    if text:match(" .+ ") then
       pInfo.punish.kick = pInfo.punish.kick + 1
     end
-    if text:match("поместил в ДеМорган") or text:match("посажен в prison") then
+    if text:match("  ") or text:match("  prison") then
       pInfo.punish.prison = pInfo.punish.prison + 1
     end
-    if text:match("заблокировал чат игрока") or text:match("OffMute") then
+    if text:match("  ") or text:match("OffMute") then
       pInfo.punish.mute = pInfo.punish.mute + 1
     end
-    if text:match("забанил IP") then
+    if text:match(" IP") then
       pInfo.punish.banip = pInfo.punish.banip + 1
     end
-    if text:match("выдал затычку на репорт") then
+    if text:match("   ") then
       pInfo.punish.rmute = pInfo.punish.rmute + 1
     end
   end
-  if text:match("Вы посадили .+ в тюрьму") then
+  if text:match("  .+  ") then
   	pInfo.punish.jail = pInfo.punish.jail + 1
   end
-  if text:match("Вы авторизировались как модератор .+ уровня") then
-    sInfo.lvlAdmin = tonumber(text:match("Вы авторизировались как модератор (.+) уровня"))
+  if text:match("    .+ ") then
+    sInfo.lvlAdmin = tonumber(text:match("    (.+) "))
     sInfo.isALogin = true
     sInfo.sessionStart = os.time()
   end
-  if text:match("Ответ от "..nick) then
+  if text:match("  "..nick) then
     pInfo.info.dayPM = pInfo.info.dayPM + 1
     pInfo.info.weekPM = pInfo.info.weekPM + 1
   end
-  if text:match("Введите: %(/a%)dmin") and not sInfo.isAlogin then -- Проверка на админку при перезагрузке скрипита в игре
+  if text:match(": %(/a%)dmin") and not sInfo.isAlogin then --        
     sInfo.isALogin = true
     sInfo.sessionStart = os.time()
     return false
   end
-  if text:match("Время online за текущий день") then
-    sampAddChatMessage(string.format(" Время online за неделю - %s (Без учета АФК) | Ответов: %d", secToTime(pInfo.info.weekOnline), pInfo.info.weekPM), 0xCCCCCC)
+  if text:match(" online   ") then
+    sampAddChatMessage(string.format("  online   - %s (  ) | : %d", secToTime(pInfo.info.weekOnline), pInfo.info.weekPM), 0xCCCCCC)
   end
 end
 
