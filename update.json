@@ -8,7 +8,7 @@
         "version":"1.99999998"
     },
     "activity":{
-        "url":"https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua",
+        "url":"https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.luac",
         "version":"1.38"
     },
     "testat":{
