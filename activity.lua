@@ -1,8 +1,7 @@
 script_name("Activity") 
 script_authors({ 'Edward_Franklin', 'Thomas_Lawson' })
-script_version("1.40") -- Final version
-script_version_number(14025)
-script_url("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua")
+script_version("1.45") -- Final version
+script_version_number(14535)
 --------------------------------------------------------------------
 require "lib.moonloader"
 local inicfg = require 'inicfg'
@@ -62,29 +61,8 @@ function main()
       DEBUG_MODE = not DEBUG_MODE
       atext(("Debug mode %s"):format(DEBUG_MODE and "включен" or "отключен"))
     end)
-    sampRegisterChatCommand('pgetips', function()
-      lua_thread.create(function()
-        local count = #pgetips
-        local strings = ""
-        for i = count, count - 15, -1 do
-          if(pgetips[i] ~= nil) then
-            strings = strings..string.format("%s\n", pgetips[i]) end
-        end
-        sampShowDialog(23554, "PGETIPS | Последние 15 IPшников", strings, "Выбрать", "Закрыть", DIALOG_STYLE_LIST)
-        while true do
-          wait(0)
-          local result, button, list, input = sampHasDialogRespond(23554)
-          if result then
-            if button == 1 then
-              if pgetips[count - list] ~= nil then
-                sampSendChat("/pgetipoff "..pgetips[count - list]) end
-            else break end
-          end
-        end
-      end)
-    end)
     sampRegisterChatCommand('activity', function() mainwindow.v = not mainwindow.v end)
-    sampRegisterChatCommand('blacklist_start', function()
+    --[[sampRegisterChatCommand('blacklist_start', function()
       local ips = {"93.85.137.241", "92.63.110.250", "194.1.237.67", "81.162.233.192", "194.28.172.176", "46.167.79.56", "82.202.167.203"}
       lua_thread.create(function()
         local count = #ips
@@ -93,7 +71,7 @@ function main()
           wait(1150)
         end
       end)
-    end)
+    end)]]
     --------------------=========----------------------
     if not doesDirectoryExist("moonloader\\config") then
       createDirectory("moonloader\\config")
@@ -185,9 +163,14 @@ function autoupdate(json_url, prefix, url)
               lua_thread.create(function()
                 local dlstatus = require('moonloader').download_status
                 local color = -1
+                local path = thisScript().path
                 atext('Обнаружено обновление. Пытаюсь обновиться c '..thisScript().version..' на '..updateversion)
                 wait(250)
-                downloadUrlToFile(updatelink, thisScript().path,
+                if thisScript().filename == "activity.lua" then
+                  os.rename('moonloader/activity.lua', 'moonloader/activity.luac')
+                  path = path.."c"
+                end
+                downloadUrlToFile(updatelink, path,
                   function(id3, status1, p13, p23)
                     if status1 == dlstatus.STATUS_DOWNLOADINGDATA then
                       print(string.format('Загружено %d из %d.', p13, p23))
