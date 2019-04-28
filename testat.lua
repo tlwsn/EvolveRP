@@ -234,7 +234,6 @@ local admins_online = {}
 local players_online = {}
 local funcsStatus = {ClickWarp = false, Inv = false, AirBrk = false}
 local tLastKeys = {}
-local aafk = false
 local tCarsName = {"Landstalker", "Bravura", "Buffalo", "Linerunner", "Perrenial", "Sentinel", "Dumper", "Firetruck", "Trashmaster", "Stretch", "Manana", "Infernus",
 "Voodoo", "Pony", "Mule", "Cheetah", "Ambulance", "Leviathan", "Moonbeam", "Esperanto", "Taxi", "Washington", "Bobcat", "Whoopee", "BFInjection", "Hunter",
 "Premier", "Enforcer", "Securicar", "Banshee", "Predator", "Bus", "Rhino", "Barracks", "Hotknife", "Trailer", "Previon", "Coach", "Cabbie", "Stallion", "Rumpo",
@@ -268,22 +267,6 @@ local tCarsType = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1
 1, 3, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 1, 1, 1, 1, 8, 8, 7, 1, 1, 1, 1, 1, 4,
 1, 1, 1, 2, 1, 1, 5, 1, 2, 1, 1, 1, 7, 5, 4, 4, 7, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 5, 1, 5, 5
 }
-function WorkInBackground(wstate)
-    local memory = require 'memory'
-    if wstate then
-        memory.setuint8(7634870, 1)
-        memory.setuint8(7635034, 1)
-        memory.fill(7623723, 144, 8)
-        memory.fill(5499528, 144, 6)
-		aafk = true
-    else
-        memory.setuint8(7634870, 0)
-        memory.setuint8(7635034, 0)
-        memory.hex2bin('5051FF1500838500', 7623723, 8)
-        memory.hex2bin('0F847B010000', 5499528, 6)
-		aafk = false
-    end
-end
 function saveData(table, path)
 	if doesFileExist(path) then os.remove(path) end
     local sfa = io.open(path, "w")
@@ -976,14 +959,6 @@ function main()
     if cfg.other.autoupdate then autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", '[Admin Tools]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439") end
     lua_thread.create(wh)
     registerFastAnswer()
-    --[[sampRegisterChatCommand('aafk', function()
-		if aafk then
-            WorkInBackground(false)
-		else
-			WorkInBackground(true)
-        end
-        atext(tostring(aafk))
-    end)]]
     local zapros = https.request('https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admins.txt')
     if zapros ~= nil then
         for line in zapros:gmatch('[^\r\n]+') do
@@ -2659,17 +2634,8 @@ function sampev.onConnectionRejected(reason)
     admins_online = {}
     players_online = {}
 end
-function sampev.onSetPlayerPos(pos)
-    if aafk and telegid then  asyncHttpRequest("POST", 'https://api.telegram.org/bot893731440:AAF3TO6rbo_ON_pz-38aG02GM4dMlpeEDo8/sendMessage?chat_id='..telegid..'&text='..u8('ВНИМАНИЕ! ТЕБЯ ТПХНУЛИ!'), _, function (response) print(response.text) end, function (err) atext(err) end) end
-end
-function sampev.onSendSpawn()
-    if aafk and telegid then asyncHttpRequest("POST", 'https://api.telegram.org/bot893731440:AAF3TO6rbo_ON_pz-38aG02GM4dMlpeEDo8/sendMessage?chat_id='..telegid..'&text='..u8("SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!SPAWN!"), _, function (response) print(response.text) end, function (err) atext(err) end) end
-end
 function sampev.onServerMessage(color, text)
-    local redadm = {'Maxim_Kudryavtsev', 'Jeysen_Prado', 'Ioan_Grozny', 'Tellarion_Foldring', 'Salvatore_Giordano', 'Dwayne_Eagle', 'Sergo_Cross', 'Ziggi_Shmiggi', 'Tobey_Marshall', 'Alex_Extra', 'Maks_Wirense', 'Brain_Hernandez', 'Leonid_Litvinenko'}
-    for k, v in pairs(redadm) do if aafk and telegid then if text:find(v) then asyncHttpRequest("POST", 'https://api.telegram.org/bot893731440:AAF3TO6rbo_ON_pz-38aG02GM4dMlpeEDo8/sendMessage?chat_id='..telegid..'&text='..u8(text), _, function (response) print(response.text) end, function (err) atext(err) end) end end end
     local mynick = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
-    if text:find(mynick) and aafk and telegid then asyncHttpRequest("POST", 'https://api.telegram.org/bot893731440:AAF3TO6rbo_ON_pz-38aG02GM4dMlpeEDo8/sendMessage?chat_id='..telegid..'&text='..u8(text), _, function (response) print(response.text) end, function (err) atext(err) end) end
     if text:match('^ Вы авторизировались как модератор %d+ уровня$') then cfg.other.admlvl = tonumber(text:match('^ Вы авторизировались как модератор (%d+) уровня$')) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
     punishlog(text)
     if cfg.other.admlvl > 1 and color == -10270806 then
@@ -2756,7 +2722,6 @@ function sampev.onServerMessage(color, text)
         return {color, text} 
     end
     if text:match('^ <ADM%-CHAT> .+: .+') then
-        if aafk and telegid then asyncHttpRequest("POST", 'https://api.telegram.org/bot893731440:AAF3TO6rbo_ON_pz-38aG02GM4dMlpeEDo8/sendMessage?chat_id='..telegid..'&text='..u8(text), _, function (response) print(response.text) end, function (err) atext(err) end) end
         local color = '0x'..config_colors.admchat.color..'FF'
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
         for i = 0, 1000 do
@@ -3259,13 +3224,6 @@ end
 function sampev.onPlayerJoin(id, clist, isNPC, nick)
     local redadm = {'Maxim_Kudryavtsev', 'Jeysen_Prado', 'Ioan_Grozny', 'Tellarion_Foldring', 'Salvatore_Giordano', 'Dwayne_Eagle', 'Sergo_Cross', 'Ziggi_Shmiggi', 'Tobey_Marshall', 'Alex_Extra', 'Maks_Wirense', 'Brain_Hernandez', 'Leonid_Litvinenko'}
     text_notify_connect('{00ff00}Подключился: {ffffff}'..nick..' ['..id..']')
-    if aafk and telegid then
-        for k, v in pairs(redadm) do
-            if nick == v then
-                asyncHttpRequest("POST", 'https://api.telegram.org/bot893731440:AAF3TO6rbo_ON_pz-38aG02GM4dMlpeEDo8/sendMessage?chat_id='..telegid..'&text='..u8("ВНИМАНИЕ! НА СЕРВЕР ЗАШЕЛ: "..nick..' ['..id..']'), _, function (response) print(response.text) end, function (err) atext(err) end)
-            end
-        end
-    end
 	for i, v in ipairs(wrecon) do
 		if v["nick"] == nick then
 			if (os.time() - v["time"]) < 5 and (os.time() - v["time"]) > 0 then
