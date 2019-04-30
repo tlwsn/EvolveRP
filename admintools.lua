@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.99999999')
+script_version('1.999999991')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -98,9 +98,9 @@ local leaders = {
     ['LVN'] = '-',
     ['LVPD'] = '-',
     ['Medic'] = '-',
-    ['Mongols'] = '-',
-    ['Warlocks'] = '-',
-    ['Pagans'] = '-'
+    ['Mongols MC'] = '-',
+    ['Warlocks MC'] = '-',
+    ['Pagans MC'] = '-'
 }
 local leaders1 = {
     ['LSPD'] = '110CE7',
@@ -123,9 +123,9 @@ local leaders1 = {
     ['LVN'] = 'E6284E',
     ['LVPD'] = '110CE7',
     ['Medic'] = '483D8B',
-    ['Mongols'] = '333333',
-    ['Warlocks'] = 'F45000',
-    ['Pagans'] = '2C9197'
+    ['Mongols MC'] = '333333',
+    ['Warlocks MC'] = 'F45000',
+    ['Pagans MC'] = '2C9197'
 }
 local config_keys = {
     banipkey = {v = {190}},
@@ -997,6 +997,22 @@ function main()
     mem.fill(0x00531155, 0x90, 5, true)
     mem.setint8(0xB7CEE4, 1)
     mem.setuint8(samp + 0x67450, 0xC3, true)
+    local ressamp1, samp1 = loadDynamicLibrary('samp.dll')  -- (загружает динамическую библиотеку по названию и возвращает её хендл (адрес). аналог опкода CLEO 0AA2)
+    if ressamp1 then
+        samp1 = samp1+0x5CF2C
+        writeMemory(samp1, 4, 0x90909090, 1)
+        samp1 = samp1 + 4
+        writeMemory(samp1, 1, 0x90, 1)
+        samp1 = samp1 + 9
+        writeMemory(samp1, 4, 0x90909090, 1)
+        samp1 = samp1 + 4
+        writeMemory(samp1, 1, 0x90, 1)
+    end
+    local ressamp2, samp2 = loadDynamicLibrary('samp.dll')  -- (загружает динамическую библиотеку по названию и возвращает её хендл (адрес). аналог опкода CLEO 0AA2)
+    if ressamp2 then
+        samp2 = samp2 + 0x9D9D0
+        writeMemory(samp2, 4, 0x5051FF15, 1)
+    end
     local DWMAPI = ffi.load('dwmapi')
     local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools', 'moonloader/Admin Tools/Check Banned'}
     local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt', 'moonloader/Admin Tools/punishjb.txt', 'moonloader/Admin Tools/punishlogs.txt', 'moonloader/Admin Tools/Check Banned/players.txt'}
@@ -2822,10 +2838,8 @@ frakcolor = {
     ['Groove'] = '{009F00}Grove{ffffff}',
     ['Aztecas'] = '{01FCFF}Aztecas{ffffff}',
     ['Rifa'] = '{2A9170}Rifa{ffffff}',
-    ['Warlocks'] = '{F45000}Warlocks{ffffff}',
     ['Warlocks MC'] = '{F45000}Warlocks MC{ffffff}',
-    ['Mongols'] = '{333333}Mongols{ffffff}',
-    ['Pagans'] = '{2C9197}Pagans{ffffff}',
+    ['Mongols MC'] = '{333333}Mongols MC{ffffff}',
     ['Pagans MC'] = '{2C9197}Pagans MC{ffffff}'
 }
 function sampev.onConnectionRejected(reason)
@@ -2833,6 +2847,24 @@ function sampev.onConnectionRejected(reason)
     admins_online = {}
     players_online = {}
     leader_checker_online = {}
+end
+function sampev.onUnoccupiedSync(id, data)
+    if data.roll.x >= 10000.0 or data.roll.y >= 10000.0 or data.roll.z >= 10000.0 or data.roll.x <= -10000.0 or data.roll.y <= -10000.0 or data.roll.z <= -10000.0 then
+        local pcol = ("%06X"):format(bit.band(sampGetPlayerColor(id), 0xFFFFFF))
+        sampAddChatMessage(("<Warning>{ffffff} Игрок {%s}%s [%s]{ffffff} возможно использует крашер"):format(pcol, sampGetPlayerNickname(id), id), 0xFF2424)
+        return false
+	end
+end
+function sampev.onTrailerSync(playerId, data)
+	if isCharInAnyCar(PLAYER_PED) then
+		local veh = storeCarCharIsInNoSave(PLAYER_PED)
+		local _, v = sampGetVehicleIdByCarHandle(veh) 
+        if data.trailerId == v then
+            local pcol = ("%06X"):format(bit.band(sampGetPlayerColor(playerId), 0xFFFFFF))
+            sampAddChatMessage(("<Warning>{ffffff} Игрок {%s}%s [%s]{ffffff} возможно использует крашер"):format(pcol, sampGetPlayerNickname(id), id), 0xFF2424)
+			return false
+		end
+	end
 end
 function sampev.onServerMessage(color, text)
     local mynick = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
@@ -5038,7 +5070,11 @@ function admchecker()
     else
         local file = io.open('moonloader/config/Admin Tools/leaders.json', 'r')
         if file then
-            leaders = decodeJson(file:read("*a"))
+            local info = file:read("*a")
+            if not info:match('Mongols MC') then info = info:gsub("Mongols", "Mongols MC") end
+            if not info:match('Pagans MC') then info = info:gsub("Pagans", "Pagans MC") end
+            if not info:match('Warlocks MC') then info = info:gsub("Warlocks", "Warlocks MC") end
+            leaders = decodeJson(info)
             file:close()
         end
     end
