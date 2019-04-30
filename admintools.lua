@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('2.1')
+script_version('1.99999999')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -911,8 +911,8 @@ function autoupdate(json_url, prefix, url)
             local f = io.open(json, 'r')
             if f then
               local info = decodeJson(f:read('*a'))
-              updatelink = info.testat.url
-              updateversion = info.testat.version
+              updatelink = info.admintools.url
+              updateversion = info.admintools.version
               f:close()
               os.remove(json)
               if updateversion > thisScript().version then
