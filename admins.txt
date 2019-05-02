@@ -13,7 +13,6 @@ Laurence_Lawson
 Diego_Hudson
 Vito_Scalleto
 Chrisstian_Norton
-Edward_Franklin
 Snoop_Noop
 Thomas_Lawson
 Alvaro_Welloso
@@ -65,14 +64,12 @@ Emilie_Rouse
 Darth_Revan
 Alexander_Almazov
 Scrappy_Morrar
-Kurt_Cobain
 Zmey_Cayenne
 Fernando_Barrowman
 Carl_Miller
 Roberto_Oppenheimer
 Timur_Zlobin
 Christopher_Big
-Norton_Screen
 Artem_Karasev
 Ernest_Kolfak
 Xavi_Santana
