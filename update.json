@@ -1,6 +1,4 @@
 {
-    "activitylink": "https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.lua",
-    "activityversion": "1.45",
     "admintools":{
         "url":"https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admintools.lua",
         "version":"1.999999992"
