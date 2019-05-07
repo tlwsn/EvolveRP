@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.999999991')
+script_version('1.999999992')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -335,7 +335,7 @@ function argb_to_rgba(argb)
     local a, r, g, b = explode_argb(argb)
     return join_argb(r, g, b, a)
 end
-  
+
 function explode_argb(argb)
     local a = bit.band(bit.rshift(argb, 24), 0xFF)
     local r = bit.band(bit.rshift(argb, 16), 0xFF)
@@ -343,15 +343,15 @@ function explode_argb(argb)
     local b = bit.band(argb, 0xFF)
     return a, r, g, b
 end
-  
+
 function join_argb(a, r, g, b)
-     local argb = b
-     argb = bit.bor(argb, bit.lshift(g, 8))
-     argb = bit.bor(argb, bit.lshift(r, 16))
-     argb = bit.bor(argb, bit.lshift(a, 24))
-     return argb
+    local argb = b
+    argb = bit.bor(argb, bit.lshift(g, 8))
+    argb = bit.bor(argb, bit.lshift(r, 16))
+    argb = bit.bor(argb, bit.lshift(a, 24))
+    return argb
 end
-  
+
 function ARGBtoRGB(color) return bit32 or require'bit'.band(color, 0xFFFFFF) end
 local data = {
     imgui = {
@@ -550,40 +550,40 @@ local RenderGun = {
 }
 
 function asyncHttpRequest(method, url, args, resolve, reject)
-   local request_thread = effil.thread(function (method, url, args)
-      local requests = require 'requests'
-      local result, response = pcall(requests.request, method, url, args)
-      if result then
-         response.json, response.xml = nil, nil
-         return true, response
-      else
-         return false, response
-      end
-   end)(method, url, args)
-   if not resolve then resolve = function() end end
-   if not reject then reject = function() end end
-   lua_thread.create(function()
-      local runner = request_thread
-      while true do
-         local status, err = runner:status()
-         if not err then
-            if status == 'completed' then
-               local result, response = runner:get()
-               if result then
-                  resolve(response)
-               else
-                  reject(response)
-               end
-               return
-            elseif status == 'canceled' then
-               return reject(status)
+    local request_thread = effil.thread(function (method, url, args)
+        local requests = require 'requests'
+        local result, response = pcall(requests.request, method, url, args)
+        if result then
+            response.json, response.xml = nil, nil
+            return true, response
+        else
+            return false, response
+        end
+    end)(method, url, args)
+    if not resolve then resolve = function() end end
+    if not reject then reject = function() end end
+    lua_thread.create(function()
+        local runner = request_thread
+        while true do
+            local status, err = runner:status()
+            if not err then
+                if status == 'completed' then
+                    local result, response = runner:get()
+                    if result then
+                        resolve(response)
+                    else
+                        reject(response)
+                    end
+                    return
+                elseif status == 'canceled' then
+                    return reject(status)
+                end
+            else
+                return reject(err)
             end
-         else
-            return reject(err)
-         end
-         wait(0)
-      end
-   end)
+            wait(0)
+        end
+    end)
 end
 function d3dxfont_create(name, height, charset)
     charset = charset or 1
@@ -905,53 +905,53 @@ function autoupdate(json_url, prefix, url)
     local json = getWorkingDirectory() .. '\\'..thisScript().name..'-version.json'
     if doesFileExist(json) then os.remove(json) end
     downloadUrlToFile(json_url, json,
-      function(id, status, p1, p2)
+    function(id, status, p1, p2)
         if status == dlstatus.STATUSEX_ENDDOWNLOAD then
-          if doesFileExist(json) then
-            local f = io.open(json, 'r')
-            if f then
-              local info = decodeJson(f:read('*a'))
-              updatelink = info.admintools.url
-              updateversion = info.admintools.version
-              f:close()
-              os.remove(json)
-              if updateversion > thisScript().version then
-                lua_thread.create(function()
-                  local dlstatus = require('moonloader').download_status
-                  local color = -1
-                  atext('Обнаружено обновление. Пытаюсь обновиться c '..thisScript().version..' на '..updateversion)
-                  wait(250)
-                  downloadUrlToFile(updatelink, thisScript().path,
-                    function(id3, status1, p13, p23)
-                      if status1 == dlstatus.STATUS_DOWNLOADINGDATA then
-                        print(string.format('Загружено %d из %d.', p13, p23))
-                      elseif status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
-                        print('Загрузка обновления завершена.')
-                        atext('Обновление завершено!')
-                        goupdatestatus = true
-                        lua_thread.create(function() wait(500) thisScript():reload() end)
-                      end
-                      if status1 == dlstatus.STATUSEX_ENDDOWNLOAD then
-                        if goupdatestatus == nil then
-                            atext('Обновление прошло неудачно. Запускаю устаревшую версию..')
-                          update = false
-                        end
-                      end
+            if doesFileExist(json) then
+                local f = io.open(json, 'r')
+                if f then
+                    local info = decodeJson(f:read('*a'))
+                    updatelink = info.admintools.url
+                    updateversion = info.admintools.version
+                    f:close()
+                    os.remove(json)
+                    if updateversion > thisScript().version then
+                        lua_thread.create(function()
+                            local dlstatus = require('moonloader').download_status
+                            local color = -1
+                            atext('Обнаружено обновление. Пытаюсь обновиться c '..thisScript().version..' на '..updateversion)
+                            wait(250)
+                            downloadUrlToFile(updatelink, thisScript().path,
+                            function(id3, status1, p13, p23)
+                                if status1 == dlstatus.STATUS_DOWNLOADINGDATA then
+                                    print(string.format('Загружено %d из %d.', p13, p23))
+                                elseif status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
+                                    print('Загрузка обновления завершена.')
+                                    atext('Обновление завершено!')
+                                    goupdatestatus = true
+                                    lua_thread.create(function() wait(500) thisScript():reload() end)
+                                end
+                                if status1 == dlstatus.STATUSEX_ENDDOWNLOAD then
+                                    if goupdatestatus == nil then
+                                        atext('Обновление прошло неудачно. Запускаю устаревшую версию..')
+                                        update = false
+                                    end
+                                end
+                            end
+                            )
+                        end, prefix
+                        )
+                    else
+                        update = false
+                        print('v'..thisScript().version..': Обновление не требуется.')
                     end
-                  )
-                  end, prefix
-                )
-              else
+                end
+            else
+                print('v'..thisScript().version..': Не могу проверить обновление. Смиритесь или проверьте самостоятельно на '..url)
                 update = false
-                print('v'..thisScript().version..': Обновление не требуется.')
-              end
             end
-          else
-            print('v'..thisScript().version..': Не могу проверить обновление. Смиритесь или проверьте самостоятельно на '..url)
-            update = false
-          end
         end
-      end
+    end
     )
     while update ~= false do wait(100) end
     end)
@@ -965,7 +965,6 @@ function split(str, delim, plain)
     until not pos
     return lines
 end
-
 function text_notify_connect(msg, color)
     if not msg then return end
     local displayDuration = math.max(#msg * 0.065, 3)
@@ -1081,7 +1080,17 @@ function main()
     if cfg.other.autoupdate then autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", '[Admin Tools]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439") end
     lua_thread.create(wh)
     registerFastAnswer()
-    local zapros = https.request('https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admins.txt')
+    asyncHttpRequest("POST", 'https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admins.txt', _,
+    function (response)
+        for line in response.text:gmatch('[^\r\n]+') do
+            table.insert(adminslist, line)
+        end
+        print("Список админов был успешно загружен")
+    end,
+    function (err)
+        print("Не удалось загрузить список админов")
+    end)
+    --[[local zapros = https.request('https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admins.txt')
     if zapros ~= nil then
         for line in zapros:gmatch('[^\r\n]+') do
             table.insert(adminslist, line)
@@ -1089,15 +1098,13 @@ function main()
         print("Список админов был успешно загружен")
     else
         print("Не удалось загрузить список админов")
-    end
+    end]]
     sampRegisterChatCommand("gpc", function()
         local cx, cy = getCursorPos()
         atext(renderGetFontDrawHeight(checkfont))
         atext(("X: %s | Y: %s"):format(cx, cy))
         setClipboardText(("%s, %s"):format(cx, cy))
     end)
-    sampRegisterChatCommand('getcolor', function(pam) setClipboardText(("{%06X}"):format(bit.band(sampGetPlayerColor(tonumber(pam)), 0xFFFFFF))) end)
-    sampfuncsRegisterConsoleCommand('reportbot', function() reportbot = not reportbot sampfuncsLog('{66ff00}REPORT BOT '..tostring(reportbot)) end)
     sampRegisterChatCommand('checkb', checkB)
     sampRegisterChatCommand('aunv', aunv)
     sampRegisterChatCommand('gip', gip)
@@ -1309,12 +1316,12 @@ function main()
     lua_thread.create(admchat)
     lua_thread.create(whon)
     while true do wait(0)
+        if swork then if killlistmode == 1 or killlistmode == 2 then enableKillList(false) elseif killlistmode == 0 then enableKillList(true) end end
         for k, v in ipairs(wrecon) do
             if os.clock() > v["time"] then
                 table.remove(wrecon, k)
             end
         end
-        if swork then if killlistmode == 1 or killlistmode == 2 then enableKillList(false) elseif killlistmode == 0 then enableKillList(true) end end
         if sampGetGamestate() ~= 3 then
             admins_online = {}
             players_online = {}
@@ -2621,41 +2628,41 @@ end
 function getVehicleRotationMatrix(car)
     local entityPtr = getCarPointer(car)
     if entityPtr ~= 0 then
-      local mat = readMemory(entityPtr + 0x14, 4, false)
-      if mat ~= 0 then
-        local rx, ry, rz, fx, fy, fz, ux, uy, uz
-        rx = readFloatArray(mat, 0)
-        ry = readFloatArray(mat, 1)
-        rz = readFloatArray(mat, 2)
+        local mat = readMemory(entityPtr + 0x14, 4, false)
+        if mat ~= 0 then
+            local rx, ry, rz, fx, fy, fz, ux, uy, uz
+            rx = readFloatArray(mat, 0)
+            ry = readFloatArray(mat, 1)
+            rz = readFloatArray(mat, 2)
 
-        fx = readFloatArray(mat, 4)
-        fy = readFloatArray(mat, 5)
-        fz = readFloatArray(mat, 6)
+            fx = readFloatArray(mat, 4)
+            fy = readFloatArray(mat, 5)
+            fz = readFloatArray(mat, 6)
 
-        ux = readFloatArray(mat, 8)
-        uy = readFloatArray(mat, 9)
-        uz = readFloatArray(mat, 10)
-        return rx, ry, rz, fx, fy, fz, ux, uy, uz
-      end
+            ux = readFloatArray(mat, 8)
+            uy = readFloatArray(mat, 9)
+            uz = readFloatArray(mat, 10)
+            return rx, ry, rz, fx, fy, fz, ux, uy, uz
+        end
     end
 end
 function setVehicleRotationMatrix(car, rx, ry, rz, fx, fy, fz, ux, uy, uz)
     local entityPtr = getCarPointer(car)
     if entityPtr ~= 0 then
-      local mat = readMemory(entityPtr + 0x14, 4, false)
-      if mat ~= 0 then
-        writeFloatArray(mat, 0, rx)
-        writeFloatArray(mat, 1, ry)
-        writeFloatArray(mat, 2, rz)
+        local mat = readMemory(entityPtr + 0x14, 4, false)
+        if mat ~= 0 then
+            writeFloatArray(mat, 0, rx)
+            writeFloatArray(mat, 1, ry)
+            writeFloatArray(mat, 2, rz)
 
-        writeFloatArray(mat, 4, fx)
-        writeFloatArray(mat, 5, fy)
-        writeFloatArray(mat, 6, fz)
+            writeFloatArray(mat, 4, fx)
+            writeFloatArray(mat, 5, fy)
+            writeFloatArray(mat, 6, fz)
 
-        writeFloatArray(mat, 8, ux)
-        writeFloatArray(mat, 9, uy)
-        writeFloatArray(mat, 10, uz)
-      end
+            writeFloatArray(mat, 8, ux)
+            writeFloatArray(mat, 9, uy)
+            writeFloatArray(mat, 10, uz)
+        end
     end
 end
 function displayVehicleName(x, y, gxt)
@@ -2676,21 +2683,21 @@ function createPointMarker(x, y, z)
 end
 function removePointMarker()
     if pointMarker then
-      removeUser3dMarker(pointMarker)
-      pointMarker = nil
+        removeUser3dMarker(pointMarker)
+        pointMarker = nil
     end
 end
 function getCarFreeSeat(car)
     if doesCharExist(getDriverOfCar(car)) then
-      local maxPassengers = getMaximumNumberOfPassengers(car)
-      for i = 0, maxPassengers do
-        if isCarPassengerSeatFree(car, i) then
-          return i + 1
+        local maxPassengers = getMaximumNumberOfPassengers(car)
+        for i = 0, maxPassengers do
+            if isCarPassengerSeatFree(car, i) then
+                return i + 1
+            end
         end
-      end
-      return nil
+        return nil
     else
-      return 0
+        return 0
     end
 end
 function jumpIntoCar(car)
@@ -2704,32 +2711,32 @@ function jumpIntoCar(car)
 end
 function teleportPlayer(x, y, z)
     if isCharInAnyCar(playerPed) then
-      setCharCoordinates(playerPed, x, y, z)
+        setCharCoordinates(playerPed, x, y, z)
     end
     setCharCoordinatesDontResetAnim(playerPed, x, y, z)
 end
 function setCharCoordinatesDontResetAnim(char, x, y, z)
     if doesCharExist(char) then
-      local ptr = getCharPointer(char)
-      setEntityCoordinates(ptr, x, y, z)
+        local ptr = getCharPointer(char)
+        setEntityCoordinates(ptr, x, y, z)
     end
 end
 function setEntityCoordinates(entityPtr, x, y, z)
     if entityPtr ~= 0 then
-      local matrixPtr = readMemory(entityPtr + 0x14, 4, false)
-      if matrixPtr ~= 0 then
-        local posPtr = matrixPtr + 0x30
-        writeMemory(posPtr + 0, 4, representFloatAsInt(x), false)
-        writeMemory(posPtr + 4, 4, representFloatAsInt(y), false)
-        writeMemory(posPtr + 8, 4, representFloatAsInt(z), false)
-      end
+        local matrixPtr = readMemory(entityPtr + 0x14, 4, false)
+        if matrixPtr ~= 0 then
+            local posPtr = matrixPtr + 0x30
+            writeMemory(posPtr + 0, 4, representFloatAsInt(x), false)
+            writeMemory(posPtr + 4, 4, representFloatAsInt(y), false)
+            writeMemory(posPtr + 8, 4, representFloatAsInt(z), false)
+        end
     end
 end
 function showCursorF(toggle)
     if toggle then
-      sampSetCursorMode(CMODE_LOCKCAM)
+        sampSetCursorMode(CMODE_LOCKCAM)
     else
-      sampToggleCursor(false)
+        sampToggleCursor(false)
     end
     funcsStatus.ClickWarp = toggle
 end
@@ -2772,18 +2779,22 @@ function clickF()
                                 local hoffs             = renderGetFontDrawHeight(font)
                                 sy = sy - 2
                                 sx = sx - 2
-                                renderFontDrawText(font, string.format("%0.2fm", dist), sx, sy - hoffs, 0xEEEEEEEE)
+                                if colpoint.entityType ~= 2 then renderFontDrawText(font, string.format("%0.2fm", dist), sx, sy - hoffs, 0xEEEEEEEE) end
                                 local tpIntoCar = nil
                                 if colpoint.entityType == 2 then
                                     local car = getVehiclePointerHandle(colpoint.entity)
                                     if doesVehicleExist(car) and (not isCharInAnyCar(playerPed) or storeCarCharIsInNoSave(playerPed) ~= car) then
-                                        displayVehicleName(sx, sy - hoffs * 2, getNameOfVehicleModel(getCarModel(car)))
+                                        local carx, cary, carz = getCarCoordinates(car)
+                                        local scarx, scary = convert3DCoordsToScreen(carx, cary, carz)
+                                        renderFontDrawText(font,'TP: '..tCarsName[getCarModel(car)-399],scarx, scary,-1)
+                                        --displayVehicleName(sx, sy - hoffs * 2, getNameOfVehicleModel(getCarModel(car)))
                                         local color = 0xAAFFFFFF
                                         tpIntoCar = car
                                         color = 0xFFFFFFFF
                                     end
+                                    removePointMarker()
                                 end
-                                createPointMarker(pos.x, pos.y, pos.z)
+                                if colpoint.entityType ~= 2 then createPointMarker(pos.x, pos.y, pos.z) end
                                 if isKeyDown(key.VK_LBUTTON) then
                                     if tpIntoCar then
                                         if not jumpIntoCar(tpIntoCar) then
@@ -2812,10 +2823,11 @@ function clickF()
         removePointMarker()
     end
 end
-function onScriptTerminate(scr)
+function onScriptTerminate(scr, quit)
     if scr == script.this then
         if killlistmode == 1 then enableKillList(true) end
-        nameTagOn()
+        nameTag = true
+        if not quit then nameTagOn() end
         showCursor(false)
         removePointMarker()
         if fonts_loaded then
@@ -2850,6 +2862,7 @@ function sampev.onConnectionRejected(reason)
 end
 function sampev.onUnoccupiedSync(id, data)
     if data.roll.x >= 10000.0 or data.roll.y >= 10000.0 or data.roll.z >= 10000.0 or data.roll.x <= -10000.0 or data.roll.y <= -10000.0 or data.roll.z <= -10000.0 then
+        cwid = id
         local pcol = ("%06X"):format(bit.band(sampGetPlayerColor(id), 0xFFFFFF))
         sampAddChatMessage(("<Warning>{ffffff} Игрок {%s}%s [%s]{ffffff} возможно использует крашер"):format(pcol, sampGetPlayerNickname(id), id), 0xFF2424)
         return false
@@ -2860,6 +2873,7 @@ function sampev.onTrailerSync(playerId, data)
 		local veh = storeCarCharIsInNoSave(PLAYER_PED)
 		local _, v = sampGetVehicleIdByCarHandle(veh) 
         if data.trailerId == v then
+            cwid = playerId
             local pcol = ("%06X"):format(bit.band(sampGetPlayerColor(playerId), 0xFFFFFF))
             sampAddChatMessage(("<Warning>{ffffff} Игрок {%s}%s [%s]{ffffff} возможно использует крашер"):format(pcol, sampGetPlayerNickname(id), id), 0xFF2424)
 			return false
@@ -3377,19 +3391,30 @@ function sampev.onTextDrawSetString(id, text)
             imtextnick = text:match('(.+)~n~ID:')
             reafk = false
         end
-        reid = text:match('.+~n~ID%: (%d+)')
-        traceid = tonumber(reid)
+        --reid = text:match('.+~n~ID%: (%d+)')
+        --traceid = tonumber(reid)
     end
 end
 function sampev.onShowTextDraw(id, textdraw)
     if id == 2173 then reconstate = true end
-    if cfg.crecon.enable then
-        if id == 2174 then recon.v = true return false end
-        if id == 2173 then return false end
-        if id == 2172 then return false end
-        if id == 2168 then return false end
-        if id == 2169 then return false end
+    if id == 2174 then --nick
+        lua_thread.create(function()
+            while sampTextdrawGetString(id) == '' do wait(0) end
+            if reid ~= sampTextdrawGetString(id):match('.+~n~ID%: (%d+)') then
+                reid = sampTextdrawGetString(id):match('.+~n~ID%: (%d+)')
+                traceid = tonumber(reid)
+            end
+            if cfg.crecon.enable then
+                recon.v = true
+                sampTextdrawDelete(id)
+                return false 
+            end
+        end)
     end
+    if id == 2173 then return false end
+    if id == 2172 then return false end
+    if id == 2168 then return false end
+    if id == 2169 then return false end
 end
 function sampev.onTextDrawHide(id)
     if id == 2173 then reconstate = false end
@@ -3570,7 +3595,7 @@ function renders()
                     end
                 end
             end
-            renderFontDrawText(hudfont, ('%s %s %s [%s %s] [FPS: %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, hposint, hfps), 1, screeny-hudheight-2, -1)
+            renderFontDrawText(hudfont, ('%s %s %s [%s %s] [FPS: %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', hpos, hposint, hfps), 0, screeny-hudheight, -1)
             if cfg.admchecker.enable then
                 renderFontDrawText(checkfont, "{00ff00}Админы онлайн ["..#admins_online.."]:", cfg.admchecker.posx, admrenderPosY-#admins_online*checkerheight, -1)
                 for k, v in ipairs(admins_online) do
@@ -3832,10 +3857,10 @@ function wh()
                                 if doesCharExist(cped) and isCharOnScreen(cped) then
                                     local wcolor = ("%06X"):format(bit.band(sampGetPlayerColor(wi), 0xFFFFFF))
                                     local cpos1X, cpos1Y, cpos1Z = getBodyPartCoordinates(6, cped)
-                                    local wcpedx, cpedy, cpedz = getCharCoordinates(cped)
+                                    local wcpedx, wcpedy, wcpedz = getCharCoordinates(cped)
                                     local wnick = sampGetPlayerNickname(wi)
-                                    local wscreencoordx, wscreencoordy = convert3DCoordsToScreen(cpedx, cpedy, cpedz)
                                     local wheadposx, wheadposy = convert3DCoordsToScreen(cpos1X, cpos1Y, cpos1Z)
+                                    local wcposx, wcposy = convert3DCoordsToScreen(wcpedx, wcpedy, wcpedz)
                                     local wisAfk = sampIsPlayerPaused(wi)
                                     local wcpedHealth = sampGetPlayerHealth(wi)
                                     local hp2 = wcpedHealth
@@ -3851,7 +3876,14 @@ function wh()
                                     local color = join_argb(255, rr, gg, bb)
                                     local wposy = wheadposy - 40
                                     local wposx = wheadposx - 60
-                                    local wsdsd = wposy
+                                    --[[if wheadposy - (wcposy - 200) > 119 then
+                                        wposy = wheadposy - 40
+                                        wposx = wheadposx - 60
+                                    else
+                                        wposy = wcposy - 200
+                                        wposx = wcposx
+                                    end
+                                    print(sampGetPlayerNickname(wi), wheadposy-wcposy, wheadposy, wcposy, wposy, wheadposy - (wcposy - 200))]]
                                     for _, v in ipairs(nametagCoords) do
                                         if v["pos_y"] > wposy-whhight*2.33 and v["pos_y"] < wposy+whhight*2.33 and v["pos_x"] > wposx-whlenght and v["pos_x"] < wposx+whlenght then
                                             wposy = v["pos_y"] - whhight*2.33
@@ -3861,7 +3893,7 @@ function wh()
                                         pos_y = wposy,
                                         pos_x = wposx
                                     }
-                                    renderFontDrawText(whfont, string.format('{%s}%s [%s] %s', wcolor, wnick, wi, wisAfk and '{cccccc}[AFK]' or ''), wposx, wposy, -1)
+                                    renderFontDrawText(whfont, string.format('{%s}%s [%s]', wcolor, wnick, wi), wposx, wposy, -1)
                                     if wcpedHealth > 100 then wcpedHealth = 100 end
                                     if wcpedArmor > 100 then wcpedArmor = 100 end
                                     renderDrawBoxWithBorder(wposx+1, wposy+whhight*1.33, math.floor(100 / 2) + 2, whhight/3+1, 0x80000000, 1, 0xFF000000)
@@ -3903,6 +3935,7 @@ function wh()
     end
 end
 function nameTagOn()
+    nameTag = true
     local pStSet = sampGetServerSettingsPtr();
     NTdist = mem.getfloat(pStSet + 39)
     NTwalls = mem.getint8(pStSet + 47)
@@ -3910,7 +3943,15 @@ function nameTagOn()
     mem.setfloat(pStSet + 39, 36.0)
     mem.setint8(pStSet + 47, 1)
     mem.setint8(pStSet + 56, 1)
-    nameTag = true
+end
+function whon1()
+    local pStSet = sampGetServerSettingsPtr();
+    NTdist = mem.getfloat(pStSet + 39)
+    NTwalls = mem.getint8(pStSet + 47)
+    NTshow = mem.getint8(pStSet + 56)
+    mem.setfloat(pStSet + 39, 36.0)
+    mem.setint8(pStSet + 47, 1)
+    mem.setint8(pStSet + 56, 1)
 end
 function sampGetDeathReason(id)
 	local names = {
@@ -3969,17 +4010,17 @@ function sampGetDeathReason(id)
 	return names[id]
 end
 function nameTagOff()
+    nameTag = false
 	local pStSet = sampGetServerSettingsPtr();
 	mem.setfloat(pStSet + 39, NTdist)
 	mem.setint8(pStSet + 47, NTwalls)
 	mem.setint8(pStSet + 56, NTshow)
-    nameTag = false
 end
 function whoff()
-	local pStSet = sampGetServerSettingsPtr()
+    local pStSet = sampGetServerSettingsPtr();
 	mem.setfloat(pStSet + 39, NTdist)
 	mem.setint8(pStSet + 47, NTwalls)
-	mem.setint8(pStSet + 56, NTshow)
+    mem.setint8(pStSet + 56, NTshow)
 end
 function getBodyPartCoordinates(id, handle)
     local pedptr = getCharPointer(handle)
@@ -4051,12 +4092,12 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
         end
         if warnst then
 			if title == 'Статистика персонажа' then
-	            wbfrak = text:match('.+Организация%:%s+(.+)%s+Ранг')
-	            wbrang = text:match('.+Ранг%:%s+(.+)%s+Работа')
+            wbfrak = text:match('.+Организация%:%s+(.+)%s+Ранг')
+            wbrang = text:match('.+Ранг%:%s+(.+)%s+Работа')
 				wbstyle = 1
-	            sampSendDialogResponse(id, 1, 1, nil)
-	            checkstatdone = true
-	            return false
+                sampSendDialogResponse(id, 1, 1, nil)
+                checkstatdone = true
+                return false
 			elseif title == '{FFFFFF}Статистика | {ae433d}Администрирование' then
 				wbfrak = text:match('.+Организация\t(.+)\nДолжность')
 				wbrang = text:match('.+Должность\t.+%[(.+)%]\nРабота')
@@ -4499,109 +4540,42 @@ function cip2(pam)
     local rdata = {}
 end
 function cip(pam)
-    lua_thread.create(function()
-        local rdata = {}
-        if #ips == 2 then
-            local dlstatus = require('moonloader').download_status
-	        local fpath = getWorkingDirectory() .. '\\'..thisScript().name..'-cip.json'
-            atext('Идет проверка IP адресов. Ожидайте..')
-            for ik, iv in pairs(ips) do
-                downloadUrlToFile('http://free.ipwhois.io/json/'..iv..'?lang=ru', fpath, function(id, status, p1, p2)
-                    lua_thread.create(function()
-                        if status == dlstatus.STATUS_ENDDOWNLOADDATA then
-                            local f = io.open(fpath, 'r')
-                            if f then
-                                local info = decodeJson(f:read('*a'))
-                                f:close()
-                                os.remove(fpath)
-                                table.insert(rdata, {country = info.country, city = info.city, isp = info.isp, query = info.ip, lat = info.latitude, lon = info.longitude, status = info.success})
-                            end
-                        end
-                    end)
-                end)
-                wait(400)
-            end
-            while #rdata ~= 2 do wait(0) end
-            if rdata[1]["status"] and rdata[2]["status"] then
-                if rdata[1]['query'] ~= ips[1] then
-                    local distances1 = distance_cord(rdata[2]["lat"], rdata[2]["lon"], rdata[1]["lat"], rdata[1]["lon"])
-                    if tonumber(pam) == nil then
-                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(u8:decode(rdata[2]["country"]), u8:decode(rdata[2]["city"]), u8:decode(rdata[2]["isp"]), u8:decode(rdata[2]["query"])), -1)
-                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(u8:decode(rdata[1]["country"]), u8:decode(rdata[1]["city"]), u8:decode(rdata[1]["isp"]), u8:decode(rdata[1]["query"])), -1)
-                        sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s'):format(math.floor(distances1), rnick), -1)
-                    else
-                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(u8:decode(rdata[2]["country"]), u8:decode(rdata[2]["city"]), u8:decode(rdata[2]["isp"]), u8:decode(rdata[2]["query"])), -1)
-                        wait(cfg.other.delay)
-                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(u8:decode(rdata[1]["country"]), u8:decode(rdata[1]["city"]), u8:decode(rdata[1]["isp"]), u8:decode(rdata[1]["query"])), -1)
-                        wait(cfg.other.delay)
-                        sampSendChat(('/a Расстояние: %s км. | Ник: %s'):format(math.floor(distances1), rnick), -1)
-                    end
-                else
-                    local distances1 = distance_cord(rdata[2]["lat"], rdata[2]["lon"], rdata[1]["lat"], rdata[1]["lon"])
-                    if tonumber(pam) == nil then
-                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(u8:decode(rdata[1]["country"]), u8:decode(rdata[1]["city"]), u8:decode(rdata[1]["isp"]), u8:decode(rdata[1]["query"])), -1)
-                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(u8:decode(rdata[2]["country"]), u8:decode(rdata[2]["city"]), u8:decode(rdata[2]["isp"]), u8:decode(rdata[2]["query"])), -1)
-                        sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s'):format(math.floor(distances1), rnick), -1)
-                    else
-                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(u8:decode(rdata[1]["country"]), u8:decode(rdata[1]["city"]), u8:decode(rdata[1]["isp"]), u8:decode(rdata[1]["query"])), -1)
-                        wait(cfg.other.delay)
-                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(u8:decode(rdata[2]["country"]), u8:decode(rdata[2]["city"]), u8:decode(rdata[2]["isp"]), u8:decode(rdata[2]["query"])), -1)
-                        wait(cfg.other.delay)
-                        sampSendChat(('/a Расстояние: %s км. | Ник: %s'):format(math.floor(distances1), rnick), -1)
-                    end
-                end
-            else
-                atext('Произошла ошибка проверки IP адресов')
-            end
-        else
-            atext('Не найдено IP адресов для сравнения')
-        end
-    end)
-end
---[[function cip(pam)
-    local checkstatus = false
-    cipst = lua_thread.create(function()
-        local rdata = {}
-        if #ips == 2 then
-            atext('Идет проверка IP адресов. Ожидайте..')
-            for ik, iv in pairs(ips) do
-                checkstatus = true
-                local zapros = https.request('http://free.ipwhois.io/json/8.8.8.8')
-                if zapros then
-                    local info = decodeJson(zapros)
-                    if info then
-                        table.insert(rdata, {country = info.country, city = info.city, isp = info.isp, query = info.ip, lat = info.latitude, lon = info.longitude, status = info.success})
-                        checkstatus = false
-                    else
-                        atext('Произошла ошибка проверки IP адресов')
-                        print(zapros)
-                    end
-                else
-                    atext('Произошла ошибка проверки IP адресов')
-                end
-                while checkstatus do wait(0) end
-            end
-            if rdata[1]["status"] and rdata[2]["status"] then
-                local distances1 = distance_cord(rdata[2]["lat"], rdata[2]["lon"], rdata[1]["lat"], rdata[1]["lon"])
+    local rdata = {}
+    if #ips == 2 then
+        atext('Идет проверка IP адресов. Ожидайте..')
+        local site = "http://f0294620.xsph.ru/?ip1="..ips[1].."&ip2="..ips[2]
+        asyncHttpRequest("GET", site, _,
+        function (response)
+            local rdata = decodeJson(response.text)
+            if rdata.ipone.success and rdata.iptwo.success then
+                local distances2 = distance_cord(rdata.ipone.latitude, rdata.ipone.longitude,rdata.iptwo.latitude, rdata.iptwo.longitude)
                 if tonumber(pam) == nil then
-                    sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(u8:decode(rdata[1]["country"]), u8:decode(rdata[1]["city"]), u8:decode(rdata[1]["isp"]), u8:decode(rdata[1]["query"])), -1)
-                    sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(u8:decode(rdata[2]["country"]), u8:decode(rdata[2]["city"]), u8:decode(rdata[2]["isp"]), u8:decode(rdata[2]["query"])), -1)
-                    sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s'):format(math.floor(distances1), rnick), -1)
+                    sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(u8:decode(rdata.ipone.country), u8:decode(rdata.ipone.city), u8:decode(rdata.ipone.isp), u8:decode(rdata.ipone.ip)), -1)
+                    sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(u8:decode(rdata.iptwo.country), u8:decode(rdata.iptwo.city), u8:decode(rdata.iptwo.isp), u8:decode(rdata.iptwo.ip)), -1)
+                    sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s %s'):format(math.floor(distances2), rnick, sampGetPlayerIdByNickname(rnick) and '['..sampGetPlayerIdByNickname(rnick)..']' or ''), -1)
                 else
-                    sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(u8:decode(rdata[1]["country"]), u8:decode(rdata[1]["city"]), u8:decode(rdata[1]["isp"]), u8:decode(rdata[1]["query"])), -1)
-                    wait(cfg.other.delay)
-                    sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(u8:decode(rdata[2]["country"]), u8:decode(rdata[2]["city"]), u8:decode(rdata[2]["isp"]), u8:decode(rdata[2]["query"])), -1)
-                    wait(cfg.other.delay)
-                    sampSendChat(('/a Расстояние: %s км. | Ник: %s'):format(math.floor(distances1), rnick), -1)
+                    lua_thread.create(function()
+                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(u8:decode(rdata.ipone.country), u8:decode(rdata.ipone.city), u8:decode(rdata.ipone.isp), u8:decode(rdata.ipone.ip)))
+                        wait(cfg.other.delay)
+                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(u8:decode(rdata.iptwo.country), u8:decode(rdata.iptwo.city), u8:decode(rdata.iptwo.isp), u8:decode(rdata.iptwo.ip)))
+                        wait(cfg.other.delay)
+                        sampSendChat(('/a Расстояние: %s км. | Ник: %s %s'):format(math.floor(distances2), rnick, sampGetPlayerIdByNickname(rnick) and '['..sampGetPlayerIdByNickname(rnick)..']' or ''))
+                    end)
                 end
             else
                 atext('Произошла ошибка проверки IP адресов')
             end
-        else
-            atext('Не найдено IP адресов для сравнения')
+        end,
+        function (err)
+            atext('Произошла ошибка проверки IP адресов')
+            print(err)
         end
-    end)
-end]]
+        )
+    else
+        atext('Не найдено IP адресов для сравнения')
+    end
+    local rdata = {}
+end
 function givehb(pam)
     lua_thread.create(function()
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
@@ -4826,174 +4800,62 @@ function pban(pam)
             atext('Введите: /ban [id] [причина]')
         end
 end
+
 function punish()
     lua_thread.create(function()
-        atext('Выдача наказаний по жалобам начата')
-        for line in io.lines(os.getenv('TEMP')..'\\Punishment.txt') do
-            if line:match('%[W%] Ник: .+ Количество дней: %d+ Причина: .+') then
-                local pnick, pdays, preason = line:match('%[W%] Ник: (.+) Количество дней: (%d+) Причина: (.+)')
-                local pnick = pnick:gsub(' ', '_')
-                if sampGetPlayerIdByNickname(pnick) ~= nil then
-                    pwarn(('%s %s %s'):format(sampGetPlayerIdByNickname(pnick), pdays, preason))
+        if doesFileExist(os.getenv('TEMP')..'\\Punishment.txt') then
+            atext(os.getenv('TEMP')..'\\Punishment.txt')
+            atext('Выдача наказаний по жалобам начата')
+            for line in io.lines(os.getenv('TEMP')..'\\Punishment.txt') do
+                local type, nick, hour, reason = line:match("(.+) Ник: (.+) Количество %S+: (%d+) Причина: (.+)")
+                if nick:match(".+%s") then nick = nick:match("(.+)%s") end
+                local nick = nick:gsub(" ", '_')
+                if sampGetPlayerIdByNickname(nick) ~= nil then
+                    if type == "[W]" then pwarn(("%s %s %s"):format(sampGetPlayerIdByNickname(nick), hour, reason))
+                    elseif type == "[B]" then pban(("%s %s"):format(sampGetPlayerIdByNickname(nick), reason))
+                    elseif type == '[M]' then sampSendChat(('/mute %s %s %s'):format(sampGetPlayerIdByNickname(nick), hour, reason))
+                    elseif type == '[P]' then sampSendChat(("/prison %s %s %s"):format(sampGetPlayerIdByNickname(nick), hour, reason))
+                    elseif type == '[IB]' then sampSendChat(("/iban %s %s"):format(sampGetPlayerIdByNickname(nick), reason))
+                    end
                 else
-                    sampSendChat(('/offwarn %s %s %s'):format(pnick, pdays, preason))
+                    if type == '[W]' then sampSendChat(("/offwarn %s %s %s"):format(nick, hour, reason))
+                    elseif type == '[B]' then sampSendChat(("/offban %s %s"):format(nick, reason))
+                    elseif type == '[M]' then sampSendChat(("/offmute %s %s %s"):format(nick, reason:gsub(" ", '_'), hour))
+                    elseif type == '[P]' then sampSendChat(("/offprison %s %s %s"):format(nick, reason:gsub(" ", '_'), hour))
+                    elseif type == '[IB]' then sampSendChat(("/ioffban %s %s"):format(nick, reason))
+                    end
                 end
-                local pnick, pdays, preason = nil, nil, nil
                 wait(cfg.other.delay)
             end
-            if line:match('%[B%] Ник: .+ Количество дней:  Причина: .+') then
-                local pnick, preason = line:match('%[B%] Ник: (.+) Количество дней:  Причина: (.+)')
-                local pnick = pnick:gsub(' ', '_')
-                if sampGetPlayerIdByNickname(pnick) ~= nil then
-                    pban(('%s %s'):format(sampGetPlayerIdByNickname(pnick), preason))
-                else
-                    sampSendChat(('/offban %s %s'):format(pnick, preason))
-                end
-                local pnick, preason = nil, nil
-                wait(cfg.other.delay)
+            atext('Выдача наказаний по жалобам окончена')
+            local pfile = io.open('moonloader/Admin Tools/punishjb.txt', 'a')
+            pfile:write('\n')
+            pfile:write(os.date()..'\n')
+            for line in io.lines(os.getenv('TEMP')..'\\Punishment.txt') do
+                pfile:write(line..'\n')
             end
-            if line:match('%[P%] Ник: .+ Количество минут: %d+ Причина: .+') then
-                local pnick, pminutes, preason = line:match('%[P%] Ник: (.+) Количество минут: (%d+) Причина: (.+)')
-                local pnick = pnick:gsub(' ', '_')
-                if sampGetPlayerIdByNickname(pnick) ~= nil then
-                    sampSendChat(('/prison %s %s %s'):format(sampGetPlayerIdByNickname(pnick), pminutes, preason))
-                else
-                    sampSendChat(('/offprison %s %s %s'):format(pnick, preason, pminutes))
-                end
-                local pnick, pminutes, preason = nil, nil, nil
-                wait(cfg.other.delay)
-            end
-            if line:match('%[M%] Ник: .+ Количество минут: %d+ Причина: .+') then
-                local pnick, pminutes, preason = line:match('%[M%] Ник: (.+) Количество минут: (%d+) Причина: (.+)')
-                local pnick = pnick:gsub(' ', '_')
-                if sampGetPlayerIdByNickname(pnick) ~= nil then
-                    sampSendChat(('/mute %s %s %s'):format(sampGetPlayerIdByNickname(pnick), pminutes, preason))
-                else
-                    sampSendChat(('/offmute %s %s %s'):format(pnick, preason, pminutes))
-                end
-                local pnick, pminutes, preason = nil, nil, nil
-                wait(cfg.other.delay)
-            end
-            if line:match('%[IB%] Ник: .+ Количество дней: 2038 Причина: .+') then
-                local pnick, preason = line:match('%[IB%] Ник: (.+) Количество дней: 2038 Причина: (.+)')
-                local pnick = pnick:gsub(' ', '_')
-                if sampGetPlayerIdByNickname(pnick) ~= nil then
-                    sampSendChat(('/iban %s %s'):format(sampGetPlayerIdByNickname(pnick), preason))
-                else
-                    sampSendChat(('/ioffban %s %s'):format(pnick, preason))
-                end
-                local pnick, preason = nil, nil
-                wait(cfg.other.delay)
-            end
+            pfile:close()
+            local ppfile = io.open(os.getenv('TEMP')..'\\Punishment.txt', 'w')
+            ppfile:close()
         end
-        atext('Выдача наказаний по жалобам окончена')
-        local pfile = io.open('moonloader/Admin Tools/punishjb.txt', 'a')
-        pfile:write('\n')
-        pfile:write(os.date()..'\n')
-        for line in io.lines(os.getenv('TEMP')..'\\Punishment.txt') do
-            pfile:write(line..'\n')
-        end
-        pfile:close()
-        local ppfile = io.open(os.getenv('TEMP')..'\\Punishment.txt', 'w')
-        ppfile:close()
     end)
 end
+
 function punishlog(text)
+    local triggers = {'OffBan', "забанил (.+) Причина", 'SBan', 'IOffBan', 'выдал warn', "получил предупреждение до", "кикнул .+ Причина", "поместил в ДеМорган", "посажен в prison", "заблокировал чат игрока", "OffMute", "забанил IP", "выдал затычку на репорт", "Вы посадили .+ в тюрьму"}
     local mynick = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
-    if text:match('^ .+ получил предупреждение до .+ от .+') then
-        local nick = text:match('^ .+ получил предупреждение до .+ от (.+)')
-        if nick == mynick then
-            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
-            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
-            file:close()
-        end
-    end
-    if text:match('^ Администратор .+ поместил в ДеМорган .+ на %d+ минут. Причина: .+') then
-        local nick = text:match('^ Администратор (.+) поместил в ДеМорган .+ на %d+ минут. Причина: .+')
-        if nick == mynick then
-            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
-            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
-            file:close()
-        end
-    end
-    if text:match('^ Администратор: .+ выдал warn .+. Причина: .+') then
-        local nick = text:match('^ Администратор: (.+) выдал warn .+. Причина: .+')
-        if nick == mynick then
-            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
-            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
-            file:close()
-        end
-    end
-    if text:match('^ Администратор: .+ забанил .+. Причина: .+') then
-        local nick = text:match('^ Администратор: (.+) забанил .+. Причина: .+ ')
-        if nick == mynick then
-            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
-            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
-            file:close()
-        end
-    end
-    if text:match('^ IOffBan%[забанил: .+%]%[забанен: .+%]%[Причина: .+%]%[.+%]') then
-        local nick = text:match('^ IOffBan%[забанил: (.+)%]%[забанен: .+%]%[Причина: .+%]%[.+%]')
-        if nick == mynick then
-            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
-            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
-            file:close()
-        end
-    end
-    if text:match('^ OffBan%[забанил: .+%]%[забанен: .+%]%[Причина: .+%]%[дней: %d+%]%[.+%]') then
-        local nick = text:match('^ OffBan%[забанил: (.+)%]%[забанен: .+%]%[Причина: .+%]%[дней: %d+%]%[.+%]')
-        if nick == mynick then
-            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
-            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
-            file:close()
-        end
-    end
-    if text:match('^ .+ посажен в prison на %d+ минут. Администратор: .+. Причина: .+') then
-        local nick = text:match('^ .+ посажен в prison на %d+ минут. Администратор: (.+). Причина: .+')
-        if nick == mynick then
-            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
-            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
-            file:close()
-        end
-    end
-    if text:match('^ OffMute%[Заткнул: .+%]%[Заткнут: .+%]%[Причина: .+%]%[минут: %d+%]') then
-        local nick = text:match('^ OffMute%[Заткнул: (.+)%]%[Заткнут: .+%]%[Причина: .+%]%[минут: %d+%]')
-        if nick == mynick then
-            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
-            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
-            file:close()
-        end
-    end
-    if text:match('^ Администратор .+ заблокировал чат игрока .+, на %d+ минут. Причина: .+') then
-        local nick = text:match('^ Администратор (.+) заблокировал чат игрока .+, на %d+ минут. Причина: .+')
-        if nick == mynick then
-            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
-            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
-            file:close()
-        end
-    end
-    if text:match('^ Вы посадили .+ в тюрьму на %d+ минут') then
-        local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
-        file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
-        file:close()
-    end
-    if text:match('^ Администратор: .+ кикнул .+. Причина: .+') then
-        local nick = text:match('^ Администратор: (.+) кикнул .+. Причина: .+')
-        if nick == mynick then
-            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
-            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
-            file:close()
-        end
-    end
-    if text:match('^ SBan%[забанил: .+%]%[забанен: .+%]%[причина: .+%]%[.+%]') then
-        local nick = text:match('^ SBan%[забанил: (.+)%]%[забанен: .+%]%[причина: .+%]%[.+%]')
-        if nick == mynick then
-            local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
-            file:write(('[%s || %s] %s\n'):format(os.date('%H:%M:%S'), os.date('%d.%m.%Y'), text))
-            file:close()
+    if text:find(mynick) then
+        for k, v in pairs(triggers) do
+            if text:match(v) then
+                local time = localTime()
+                local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
+                file:write(('[%s || %s] %s\n'):format(os.date('%d.%m.%Y'), ("%s:%s:%s.%s"):format(time.wHour, time.wMinute, time.wSecond, time.wMilliseconds), text))
+                file:close()
+            end
         end
     end
 end
+
 function getlvl(pam)
         lua_thread.create(function()
         local t = {}

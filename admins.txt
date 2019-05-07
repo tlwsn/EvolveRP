@@ -11,7 +11,6 @@ Maks_Wirense
 Angel_Espejo
 Laurence_Lawson
 Diego_Hudson
-Vito_Scalleto
 Chrisstian_Norton
 Snoop_Noop
 Thomas_Lawson
@@ -20,17 +19,18 @@ Jay_Rise
 Vincento_Lapazzii
 Mihail_Klimov
 Daniel_Molotkov
-Gentile_Rofler
 Sam_Teller
 Hike_Galante
 Skezz_Miller
 Vladislav_Melentyev
 Kirill_Martins
 Adolf_Esposito
-Fernando_Haizenberg
+Chester_James
 Vladimir_DeMont
 Ernesto_Gilmore
-Chester_James
+Fernando_Haizenberg
+Alberto_Clemente
+Giuseppe_Roell
 Butcher_Wezers
 Gosha_Fantom
 Laymont_Breezy
@@ -67,7 +67,6 @@ Castiel_Galante
 Emilie_Rouse
 Darth_Revan
 Alexander_Almazov
-Scrappy_Morrar
 Zmey_Cayenne
 Fernando_Barrowman
 Carl_Miller
@@ -78,3 +77,6 @@ Artem_Karasev
 Ernest_Kolfak
 Xavi_Santana
 Cady_Cash
+Konstantin_Striker
+Looney_Peers
+Alexandr_Flores
