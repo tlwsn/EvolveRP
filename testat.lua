@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('2.3')
+script_version('2.31')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -3411,10 +3411,12 @@ function sampev.onShowTextDraw(id, textdraw)
             end
         end)
     end
-    if id == 2173 then return false end
-    if id == 2172 then return false end
-    if id == 2168 then return false end
-    if id == 2169 then return false end
+    if cfg.crecon.enable then
+        if id == 2173 then return false end
+        if id == 2172 then return false end
+        if id == 2168 then return false end
+        if id == 2169 then return false end
+    end
 end
 function sampev.onTextDrawHide(id)
     if id == 2173 then reconstate = false end
@@ -4874,7 +4876,7 @@ function getlvl(pam)
             if result and button ==  1 then
                 local text = sampGetListboxItemText(list)
                 local id = text:match("(%S+) %[(%d+)%]")
-                sampSendChat("/re "..id)
+                sampSendChat(("/re %s"):format(id))
             end
         else
             atext('¬ведите: /getlvl [уровень]')
