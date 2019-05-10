@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.999999993')
+script_version('1.999999994')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -46,11 +46,10 @@ local punishignor = {}
 local adminslist = {}
 local nop = 0x90
 local killlistmode = 0
-local font_test = 1
 local cursorenb = false
 local u8 = encoding.UTF8
 local airspeed = nil
-local reid = nil
+local reid = -1
 local cwid = nil
 local check = false
 local admins = {}
@@ -683,7 +682,7 @@ function transform2d(x, y, z)
     ny = view[1] * x + view[5] * y + view[9] * z + view[13] * 1
     nz = view[2] * x + view[6] * y + view[10] * z + view[14] * 1
 
-    return nx * sx / nz, ny * sy / nz
+    return nx * sx / nz, ny * sy / nz, nz
 end
 function calcScreenCoors(fX,fY,fZ)
 	local dwM = 0xB6FA2C
@@ -720,31 +719,6 @@ function calcScreenCoors(fX,fY,fZ)
     return frX, frY, frZ
 end
 ffi.cdef[[
-struct stKillEntry
-{
-	char					szKiller[25];
-	char					szVictim[25];
-	uint32_t				clKillerColor; // D3DCOLOR
-	uint32_t				clVictimColor; // D3DCOLOR
-	uint8_t					byteType;
-} __attribute__ ((packed));
-
-struct stKillInfo
-{
-	int						iEnabled;
-	struct stKillEntry		killEntry[5];
-	int 					iLongestNickLength;
-  	int 					iOffsetX;
-  	int 					iOffsetY;
-	void			    	*pD3DFont; // ID3DXFont
-	void		    		*pWeaponFont1; // ID3DXFont
-	void		   	    	*pWeaponFont2; // ID3DXFont
-	void					*pSprite;
-	void					*pD3DDevice;
-	int 					iAuxFontInited;
-    void 		    		*pAuxFont1; // ID3DXFont
-    void 			    	*pAuxFont2; // ID3DXFont
-} __attribute__ ((packed));
 bool DwmEnableComposition(int uCompositionAction);
 ]]
 ffi.cdef [[
@@ -899,62 +873,39 @@ function string.rupper(s)
     end
     return output
 end
-function autoupdate(json_url, prefix, url)
-    lua_thread.create(function()
-    local dlstatus = require('moonloader').download_status
-    local json = getWorkingDirectory() .. '\\'..thisScript().name..'-version.json'
-    if doesFileExist(json) then os.remove(json) end
-    downloadUrlToFile(json_url, json,
-    function(id, status, p1, p2)
-        if status == dlstatus.STATUSEX_ENDDOWNLOAD then
-            if doesFileExist(json) then
-                local f = io.open(json, 'r')
-                if f then
-                    local info = decodeJson(f:read('*a'))
-                    updatelink = info.admintools.url
-                    updateversion = info.admintools.version
-                    f:close()
-                    os.remove(json)
-                    if updateversion > thisScript().version then
-                        lua_thread.create(function()
-                            local dlstatus = require('moonloader').download_status
-                            local color = -1
-                            atext('Обнаружено обновление. Пытаюсь обновиться c '..thisScript().version..' на '..updateversion)
-                            wait(250)
-                            downloadUrlToFile(updatelink, thisScript().path,
-                            function(id3, status1, p13, p23)
-                                if status1 == dlstatus.STATUS_DOWNLOADINGDATA then
-                                    print(string.format('Загружено %d из %d.', p13, p23))
-                                elseif status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
-                                    print('Загрузка обновления завершена.')
-                                    atext('Обновление завершено!')
-                                    goupdatestatus = true
-                                    lua_thread.create(function() wait(500) thisScript():reload() end)
-                                end
-                                if status1 == dlstatus.STATUSEX_ENDDOWNLOAD then
-                                    if goupdatestatus == nil then
-                                        atext('Обновление прошло неудачно. Запускаю устаревшую версию..')
-                                        update = false
-                                    end
-                                end
-                            end
-                            )
-                        end, prefix
-                        )
-                    else
-                        update = false
-                        print('v'..thisScript().version..': Обновление не требуется.')
+function autoupdate(json_url, url)
+    asyncHttpRequest("GET", json_url, _, function (response) 
+        local info = decodeJson(response.text)
+        updatelink = info.admintools.url --testat если не исходник
+        updateversion = info.admintools.version
+        if updateversion > thisScript().version then
+            lua_thread.create(function()
+                local dlstatus = require('moonloader').download_status
+                atext(("Обнаружено обновление. Пытаюсь обновиться с %s на %s"):format(thisScript().version, updateversion))
+                downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23) 
+                    if status1 == dlstatus.STATUS_DOWNLOADINGDATA then
+                        print(("Загружено %d из %d."):format(p13, p23))
+                    elseif status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
+                        print("Загрузка обновления завершена.")
+                        atext("Обновление завершено!")
+                        goupdatestatus = true
+                        lua_thread.create(function() wait(500) thisScript():reload() end)
                     end
-                end
-            else
-                print('v'..thisScript().version..': Не могу проверить обновление. Смиритесь или проверьте самостоятельно на '..url)
-                update = false
-            end
-        end
+                    if status1 == dlstatus.STATUSEX_ENDDOWNLOAD then
+                        if not goupdatestatus then
+                            atext("Обновление прошло неудачно. Запускаю устаревшую версию.")
+                        end
+                    end
+                end)
+            end)
+        else
+            print(("v%s: Обновление не требуется"):format(thisScript().version))
+        end        
+    end, 
+    function (err) 
+        print(("v%s: Не могу проверить обновление. Смиритесь или проверьте самостоятельно на %s"):format(thisScript().version, url))
     end
     )
-    while update ~= false do wait(100) end
-    end)
 end
 function split(str, delim, plain)
     local lines, pos, plain = {}, 1, not (plain == false)
@@ -1077,7 +1028,7 @@ function main()
     DWMAPI.DwmEnableComposition(1)
     repeat wait(0) until isSampAvailable()
     if #tostring(cfg.other.adminpass) >=6 and cfg.other.apassb then autoal() end
-    if cfg.other.autoupdate then autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", '[Admin Tools]', "https://evolve-rp.su/viewtopic.php?f=21&t=151439") end
+    if cfg.other.autoupdate then autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", "https://evolve-rp.su/viewtopic.php?f=21&t=151439") end
     lua_thread.create(wh)
     registerFastAnswer()
     asyncHttpRequest("POST", 'https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admins.txt', _,
@@ -1090,15 +1041,6 @@ function main()
     function (err)
         print("Не удалось загрузить список админов")
     end)
-    --[[local zapros = https.request('https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admins.txt')
-    if zapros ~= nil then
-        for line in zapros:gmatch('[^\r\n]+') do
-            table.insert(adminslist, line)
-        end
-        print("Список админов был успешно загружен")
-    else
-        print("Не удалось загрузить список админов")
-    end]]
     sampRegisterChatCommand("gpc", function()
         local cx, cy = getCursorPos()
         atext(renderGetFontDrawHeight(checkfont))
@@ -1356,11 +1298,11 @@ function main()
         if not isPauseMenuActive() then
 			for i = 1, BulletSync.maxLines do
                 if BulletSync[i].enable == true and BulletSync[i].time >= oTime then
-					local sx, sy, sz = calcScreenCoors(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
-                    local fx, fy, fz = calcScreenCoors(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)
-                    --local sx, sy = transform2d(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
-                    --local fx, fy = transform2d(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)
-					if sz > 1 and fz > 1 then
+					--[[local sx, sy, sz = calcScreenCoors(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
+                    local fx, fy, fz = calcScreenCoors(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)]]
+                    local sx, sy, sz = transform2d(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
+                    local fx, fy, fz = transform2d(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)
+					if sz > 0 and fz > 0 then
 						renderDrawLine(sx, sy, fx, fy, 1, bulletTypes[BulletSync[i].tType])
                         renderDrawPolygon(fx, fy-1, 3, 3, 4.0, 10, bulletTypes[BulletSync[i].tType])
 					end
@@ -1796,6 +1738,10 @@ function imgui.OnDrawFrame()
                 imgui.TeleportButton('Армия ЛВ', 209.3503112793, 1916.1086425781, 17.640625, 0)
                 imgui.TeleportButton('Мэрия', 1478.6057128906, -1738.2475585938, 13.546875, 0)
                 imgui.TeleportButton('Автошкола', -2032.9953613281, -84.548896789551, 35.82837677002, 0)
+                imgui.TeleportButton('Медики ЛС', 1188.4862, -1323.5518, 13.5668, 0)
+                imgui.TeleportButton('Медики СФ', -2662.4634, 628.8812, 14.4531, 0)
+                imgui.TeleportButton('Медики ЛВ', 1608.7927, 1827.4063, 10.8203, 0)
+                imgui.TeleportButton('Медики ФК', -315.7561, 1060.4156, 19.7422, 0)
             end
             if imgui.CollapsingHeader(u8 'Гетто') then
                 imgui.TeleportButton('Rifa', 2184.4729003906, -1807.0772705078, 13.372615814209, 0)
@@ -2151,15 +2097,18 @@ function imgui.OnDrawFrame()
                 end
                 if imgui.InputText(u8 'Шрифт кил-листа##hud', killfontb) then cfg.other.killfont = killfontb.v killfont = renderCreateFont(cfg.other.killfont, cfg.other.killsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 if imgui.InputInt(u8 'Размер шрифта кил-листа##hud', killsizeb, 0) then 
-                    cfg.other.killsize = killsizeb.v 
-                    killfont = renderCreateFont(cfg.other.killfont, cfg.other.killsize, 4)
-                    if fonts_loaded then
-                        fonts_loaded = false
-                        font_gtaweapon3.vtbl.Release(font_gtaweapon3)
-                    end 
-                    font_gtaweapon3 = d3dxfont_create('gtaweapon3', cfg.other.killsize+16, 2) 
-                    fonts_loaded = true
-                    saveData(cfg, 'moonloader/config/Admin Tools/config.json')
+                    lua_thread.create(function()
+                        cfg.other.killsize = killsizeb.v 
+                        killfont = renderCreateFont(cfg.other.killfont, cfg.other.killsize, 4)
+                        if fonts_loaded then
+                            fonts_loaded = false
+                            font_gtaweapon3.vtbl.Release(font_gtaweapon3)
+                        end 
+                        while renderGetFontDrawHeight(killfont) == 0 do wait(0) end
+                        font_gtaweapon3 = d3dxfont_create('gtaweapon3', cfg.other.killsize*1.35, 4)
+                        fonts_loaded = true
+                        saveData(cfg, 'moonloader/config/Admin Tools/config.json')
+                    end)
                 end
                 if imgui.Button(u8 'Изменить местоположения кил-листа') then data.imgui.killlist = true mainwindow.v = false end
                 if creconB.v then
@@ -2602,8 +2551,11 @@ function initializeRender()
 	checkfont = renderCreateFont(cfg.other.checkfont, cfg.other.checksize, 4)
     hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4)
     killfont = renderCreateFont(cfg.other.killfont, cfg.other.killsize, 4)
-    font_gtaweapon3 = d3dxfont_create('gtaweapon3', cfg.other.hudsize+16, 2)
-    fonts_loaded = true
+    lua_thread.create(function()
+        while renderGetFontDrawHeight(killfont) == 0 do wait(0) end
+        font_gtaweapon3 = d3dxfont_create('gtaweapon3', cfg.other.killsize*1.35, 4)
+        fonts_loaded = true
+    end)
 end
 function rotateCarAroundUpAxis(car, vec)
     local mat = Matrix3X3(getVehicleRotationMatrix(car))
@@ -2854,11 +2806,15 @@ frakcolor = {
     ['Mongols MC'] = '{333333}Mongols MC{ffffff}',
     ['Pagans MC'] = '{2C9197}Pagans MC{ffffff}'
 }
-function sampev.onConnectionRejected(reason)
-    temp_checker_online = {}
-    admins_online = {}
-    players_online = {}
-    leader_checker_online = {}
+function sampev.onSpectatePlayer(id, type)
+    reid = id
+    traceid = id
+end
+function sampev.onTogglePlayerSpectating(state)
+    if not state then
+        reid = -1
+        traceid = -1
+    end
 end
 function sampev.onUnoccupiedSync(id, data)
     if data.roll.x >= 10000.0 or data.roll.y >= 10000.0 or data.roll.z >= 10000.0 or data.roll.x <= -10000.0 or data.roll.y <= -10000.0 or data.roll.z <= -10000.0 then
@@ -2875,7 +2831,7 @@ function sampev.onTrailerSync(playerId, data)
         if data.trailerId == v then
             cwid = playerId
             local pcol = ("%06X"):format(bit.band(sampGetPlayerColor(playerId), 0xFFFFFF))
-            sampAddChatMessage(("<Warning>{ffffff} Игрок {%s}%s [%s]{ffffff} возможно использует крашер"):format(pcol, sampGetPlayerNickname(id), id), 0xFF2424)
+            sampAddChatMessage(("<Warning>{ffffff} Игрок {%s}%s [%s]{ffffff} возможно использует крашер"):format(pcol, sampGetPlayerNickname(playerId), playerId), 0xFF2424)
 			return false
 		end
 	end
@@ -2946,7 +2902,11 @@ function sampev.onServerMessage(color, text)
 		local file = io.open('moonloader/Admin Tools/chatlog_all.txt', 'a')
 		file:write(('[%s || %s] %s\n'):format(os.date('%d.%m.%Y'), ("%s:%s:%s.%s"):format(time.wHour, time.wMinute, time.wSecond, time.wMilliseconds), text))
 		file:close()
-		file = nil
+    else
+        local time = localTime()
+        local file = io.open('moonloader/Admin Tools/chatlog_all.txt', 'w')
+		file:write(('[%s || %s] %s\n'):format(os.date('%d.%m.%Y'), ("%s:%s:%s.%s"):format(time.wHour, time.wMinute, time.wSecond, time.wMilliseconds), text))
+        file:close()
     end
     if text:match('^ Ответ от .+%[%d+%] к .+%[%d+%]:') then
         local color = '0x'..config_colors.anschat.color..'FF'
@@ -3397,7 +3357,7 @@ function sampev.onTextDrawSetString(id, text)
 end
 function sampev.onShowTextDraw(id, textdraw)
     if id == 2173 then reconstate = true end
-    if id == 2174 then --nick
+    --[[if id == 2174 then --nick
         lua_thread.create(function()
             while sampTextdrawGetString(id) == '' do wait(0) end
             if reid ~= sampTextdrawGetString(id):match('.+~n~ID%: (%d+)') then
@@ -3410,8 +3370,9 @@ function sampev.onShowTextDraw(id, textdraw)
                 return false 
             end
         end)
-    end
+    end]]
     if cfg.crecon.enable then
+        if id == 2174 then recon.v = true return false end
         if id == 2173 then return false end
         if id == 2172 then return false end
         if id == 2168 then return false end
@@ -3420,7 +3381,7 @@ function sampev.onShowTextDraw(id, textdraw)
 end
 function sampev.onTextDrawHide(id)
     if id == 2173 then reconstate = false end
-    if cfg.crecon.enable then if id == 2173 then recon.v = false; reid = nil traceid = -1 end end
+    if cfg.crecon.enable then if id == 2173 then recon.v = false end end
 end
 function sampev.onPlayerQuit(id, reason)
     local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
@@ -3453,17 +3414,17 @@ function sampev.onPlayerQuit(id, reason)
     end
 end
 function sampev.onPlayerDeathNotification(killerId, killedId, reason)
-	local kill = ffi.cast('struct stKillInfo*', sampGetKillInfoPtr())
+	--[[local kill = ffi.cast('struct stKillInfo*', sampGetKillInfoPtr())
     local _, myid = sampGetPlayerIdByCharHandle(playerPed)
-    local killercolor = ("%06X"):format(bit.band(sampGetPlayerColor(killerId), 0xFFFFFF))
-    local killedcolor = ("%06X"):format(bit.band(sampGetPlayerColor(killedId), 0xFFFFFF))
 	local n_killer = ( sampIsPlayerConnected(killerId) or killerId == myid ) and sampGetPlayerNickname(killerId) or nil
 	local n_killed = ( sampIsPlayerConnected(killedId) or killedId == myid ) and sampGetPlayerNickname(killedId) or nil
 	lua_thread.create(function()
 		wait(0)
 		if n_killer then kill.killEntry[4].szKiller = ffi.new('char[25]', ( n_killer .. '[' .. killerId .. ']' ):sub(1, 24) ) end
 		if n_killed then kill.killEntry[4].szVictim = ffi.new('char[25]', ( n_killed .. '[' .. killedId .. ']' ):sub(1, 24) ) end
-    end)
+    end)]]
+    local killercolor = ("%06X"):format(bit.band(sampGetPlayerColor(killerId), 0xFFFFFF))
+    local killedcolor = ("%06X"):format(bit.band(sampGetPlayerColor(killedId), 0xFFFFFF))
     table.insert(tkills, ('{'..("%06X"):format(bit.band(sampGetPlayerColor(killerId), 0xFFFFFF))..'}%s[%s]\t{'..("%06X"):format(bit.band(sampGetPlayerColor(killedId), 0xFFFFFF))..'}%s[%s]\t{ffffff}%s'):format(sampGetPlayerNickname(killerId),killerId, sampGetPlayerNickname(killedId),killedId, sampGetDeathReason(reason)))
     table.insert(tkilllist, {killer = ('{%s}%s [%s]'):format(killercolor, sampGetPlayerNickname(killerId), killerId), killed = ('{%s} %s [%s]'):format(killedcolor, sampGetPlayerNickname(killedId), killedId), reason = reason})
     if #tkilllist > 5 then table.remove(tkilllist, 1) end
@@ -3489,7 +3450,7 @@ function sampev.onBulletSync(playerid, data)
 	end
 end
 function sampev.onPlayerJoin(id, clist, isNPC, nick)
-    text_notify_connect('{00ff00}Подключился: {ffffff}'..nick..' ['..id..']')
+    text_notify_connect(('{00ff00}Подключился: {ffffff}%s [%s]'):format(nick, id))
 	for i, v in ipairs(wrecon) do
 		if v["nick"] == nick then
 			if (os.time() - v["time"]) < 5 and (os.time() - v["time"]) > 0 then
@@ -3529,11 +3490,11 @@ function onD3DPresent()
     local sw, sh = getScreenResolution()
     if #tkilllist ~= 0 and fonts_loaded and not isPauseMenuActive() and swork then
         if killlistmode == 1 then
-            local killsy = cfg.killlist.posy-5
+            local killsy = cfg.killlist.posy + cfg.other.killsize/4
             for k, v in ipairs(tkilllist) do
                 d3dxfont_draw(font_gtaweapon3, 'G', {cfg.killlist.posx ,killsy, sw, sh}, 0xFF000000, 0x10)
                 d3dxfont_draw(font_gtaweapon3, string.char(RenderGun[v['reason']]), {cfg.killlist.posx ,killsy, sw, sh}, 0xFFFFFFFF, 0x10)
-                killsy = killsy + cfg.other.killsize+19
+                killsy = killsy + renderGetFontDrawHeight(killfont)
             end
         end
     end
@@ -3556,6 +3517,7 @@ function renders()
             local hsx, hsy = getScreenResolution()
             local checkerheight = renderGetFontDrawHeight(checkfont)
             local hudheight = renderGetFontDrawHeight(hudfont)
+            local killheight = renderGetFontDrawHeight(killfont)
             if killlistmode == 1 then
                 local killsy = cfg.killlist.posy
                 for k, v in ipairs(tkilllist) do
@@ -3563,8 +3525,8 @@ function renders()
                     local gunlenght = renderGetFontDrawTextLength(gunfont, v['reason'])
                     local deathlenght = renderGetFontDrawTextLength(killfont,v['killed'])
                     renderFontDrawText(killfont, v['killer'], cfg.killlist.posx-killlenght-3, killsy, -1)
-                    renderFontDrawText(killfont, v['killed'], cfg.killlist.posx+cfg.other.killsize+19 ,killsy, -1)
-                    killsy = killsy + cfg.other.killsize+19
+                    renderFontDrawText(killfont, v['killed'], cfg.killlist.posx+cfg.other.killsize*1.35 ,killsy, -1)
+                    killsy = killsy + killheight
                 end
             end
             if cfg.joinquit.enable then
@@ -3870,7 +3832,7 @@ function wh()
                                     local wcpedlvl = sampGetPlayerScore(wi)
                                     local whhight = renderGetFontDrawHeight(whfont)
                                     local whhphight = renderGetFontDrawHeight(whhpfont)
-                                    local whlenght = renderGetFontDrawTextLength(whfont,string.format('{%s}%s [%s] %s', wcolor, wnick, wi, wisAfk and '{cccccc}[AFK]' or ''))
+                                    local whlenght = renderGetFontDrawTextLength(whfont,string.format('{%s}%s [%s]', wcolor, wnick, wi))
                                     local lvllenght = renderGetFontDrawTextLength(whfont, 'LVL: '..wcpedlvl)
                                     local hplenght = renderGetFontDrawTextLength(whfont, ('%s'):format(wcpedHealth))
                                     local color = sampGetPlayerColor(wi)
@@ -3895,7 +3857,7 @@ function wh()
                                         pos_y = wposy,
                                         pos_x = wposx
                                     }
-                                    renderFontDrawText(whfont, string.format('{%s}%s [%s]', wcolor, wnick, wi), wposx, wposy, -1)
+                                    renderFontDrawText(whfont, string.format('{%s}%s [%s] %s', wcolor, wnick, wi, wisAfk and '{cccccc}[AFK]' or ''), wposx, wposy, -1)
                                     if wcpedHealth > 100 then wcpedHealth = 100 end
                                     if wcpedArmor > 100 then wcpedArmor = 100 end
                                     renderDrawBoxWithBorder(wposx+1, wposy+whhight*1.33, math.floor(100 / 2) + 2, whhight/3+1, 0x80000000, 1, 0xFF000000)
@@ -4809,7 +4771,7 @@ function punish()
             atext(os.getenv('TEMP')..'\\Punishment.txt')
             atext('Выдача наказаний по жалобам начата')
             for line in io.lines(os.getenv('TEMP')..'\\Punishment.txt') do
-                local type, nick, hour, reason = line:match("(.+) Ник: (.+) Количество %S+: (%d+) Причина: (.+)")
+                local type, nick, hour, reason = line:match("(.+) Ник: (.+) Количество %S+: (%d*) Причина: (.+)")
                 if nick:match(".+%s") then nick = nick:match("(.+)%s") end
                 local nick = nick:gsub(" ", '_')
                 if sampGetPlayerIdByNickname(nick) ~= nil then
