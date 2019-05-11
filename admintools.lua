@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.999999994')
+script_version('1.999999995')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 require 'lib.moonloader'
@@ -3351,7 +3351,7 @@ function sampev.onTextDrawSetString(id, text)
             imtextnick = text:match('(.+)~n~ID:')
             reafk = false
         end
-        --reid = text:match('.+~n~ID%: (%d+)')
+        reid = text:match('.+~n~ID%: (%d+)')
         --traceid = tonumber(reid)
     end
 end
@@ -4768,7 +4768,6 @@ end
 function punish()
     lua_thread.create(function()
         if doesFileExist(os.getenv('TEMP')..'\\Punishment.txt') then
-            atext(os.getenv('TEMP')..'\\Punishment.txt')
             atext('Выдача наказаний по жалобам начата')
             for line in io.lines(os.getenv('TEMP')..'\\Punishment.txt') do
                 local type, nick, hour, reason = line:match("(.+) Ник: (.+) Количество %S+: (%d*) Причина: (.+)")
