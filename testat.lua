@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('2.5')
+script_version('2.51')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -1123,7 +1123,7 @@ function main()
         atext(("X: %s | Y: %s"):format(cx, cy))
         setClipboardText(("%s, %s"):format(cx, cy))
     end)
-    sampRegisterChatCommand("atp", function() atpstate = not atpstate end)
+    sampRegisterChatCommand("atp", function() tpwindow.v = not tpwindow.v end)
     sampRegisterChatCommand("arules", function() arul.v = not arul.v end)
     sampRegisterChatCommand('mnarko', mnarko)
     sampRegisterChatCommand('mcbug', mcbug)
@@ -1484,7 +1484,7 @@ function main()
             mainwindow.v = true
             saveData(cfg, 'moonloader/config/Admin Tools/config.json')
         end
-        imgui.Process = mainwindow.v or recon.v or arul.v or atpstate
+        imgui.Process = mainwindow.v or recon.v or arul.v or tpwindow.v
     end
 end
 function imgui.TextQuestion(text)
@@ -1570,7 +1570,7 @@ function imgui.OnDrawFrame()
     imgui.ShowCursor = mainwindow.v or arul.v
     local btn_size = imgui.ImVec2(-0.1, 0)
     local ir, ig, ib, ia = rainbow(1, 1)
-    if (tpwindow.v and mainwindow.v) or atpstate then
+    if tpwindow.v then
         imgui.ShowCursor = true
         imgui.SetNextWindowPos(imgui.ImVec2(screenx/2+350, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
         imgui.SetNextWindowSize(imgui.ImVec2(300, 300), imgui.Cond.FirstUseEver)
@@ -2287,7 +2287,8 @@ function imgui.OnDrawFrame()
                 if imadd.ToggleButton(u8 'Чатлог в консоли##11', conschat) then cfg.other.chatconsole = conschat.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Чатлог в консоли')
                 if imadd.ToggleButton(u8 'joinquit##11', joinquitb) then cfg.joinquit.enable = joinquitb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Лог подключившися/отключивашися игроков')
                 if imadd.ToggleButton(u8 'autoupd##11', autoupdateb) then cfg.other.autoupdate = autoupdateb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автообновление скрипта')
-                if imadd.ToggleButton(u8 'killlist##11', killlistb) then cfg.killlist.startenable = killlistb.v
+                if imadd.ToggleButton(u8 'killlist##11', killlistb) then cfg.killlist.startenable = killlistb.v end; imgui.SameLine(); imgui.Text(u8 'Замененный кил-лист при входе в игру')
+                if imadd.ToggleButton(u8 'socrpm', socrmpb) then cfg.other.socrpm = socrmpb.v
                     if cfg.other.socrpm then
                         registerFastAnswer()
                     else
@@ -2298,9 +2299,9 @@ function imgui.OnDrawFrame()
                             end
                         end
                     end
-                    saveData(cfg, 'moonloader/config/Admin Tools/config.json')
-                end; imgui.SameLine(); imgui.Text(u8 'Замененный кил-лист при входе в игру')
-                if imadd.ToggleButton(u8 'socrpm', socrmpb) then cfg.other.socrpm = socrmpb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Сокращеные команды на ответы (заполнять в файл moonloader/config/Admin Tools/fa.txt команда = текст)')
+                    saveData(cfg, 'moonloader/config/Admin Tools/config.json') 
+                end
+                imgui.SameLine(); imgui.Text(u8 'Сокращеные команды на ответы (заполнять в файл moonloader/config/Admin Tools/fa.txt команда = текст)')
                 if imgui.InputInt(u8 'Настройка задержки', delayb, 0) then cfg.other.delay = delayb.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 if imgui.Button(u8 'Проверка задержки') then 
                     lua_thread.create(function()
