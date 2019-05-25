@@ -1,28 +1,27 @@
 script_name('Admin Tools')
-script_version('1.999999995')
+script_version('1.999999996')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
+script_properties('work-in-pause')
 require 'lib.moonloader'
 require 'lib.sampfuncs'
-local weapons = require 'game.weapons'
-local sampev = require 'lib.samp.events'
+local lweapons, weapons = pcall(require, 'game.weapons')
+local lsampev, sampev = pcall(require, 'lib.samp.events')
 local encoding = require 'encoding'
-local key = require 'vkeys'
+local lkey, key = pcall(require, 'vkeys')
 local Matrix3X3 = require 'matrix3x3'
 local Vector3D = require 'vector3d'
 local ffi = require 'ffi'
 local d3dx9_43 = ffi.load('d3dx9_43.dll')
-local effil = require 'effil'
+local leffil, effil = pcall(require, 'effil')
+local lrequests, requests = pcall(require, 'requests')
 local getBonePosition = ffi.cast("int (__thiscall*)(void*, float*, int, bool)", 0x5E4280)
 local mem = require 'memory'
 local wm = require 'lib.windows.message'
 local screenx, screeny = getScreenResolution()
 encoding.default = 'CP1251'
-local imgui = require 'imgui'
-local res, https = pcall(require, 'ssl.https')
-assert(res, 'Library ssl.https not found')
-imgui.HotKey = require('imgui_addons').HotKey
-imgui.ToggleButton = require('imgui_addons').ToggleButton
+local limgui, imgui = pcall(require, 'imgui')
+local limadd, imadd = pcall(require, 'imgui_addons')
 local rkeys = require 'rkeys'
 local mainwindow = imgui.ImBool(false)
 local settingwindows = imgui.ImBool(false)
@@ -34,6 +33,7 @@ local bMainWindow = imgui.ImBool(false)
 local sInputEdit = imgui.ImBuffer(256)
 local bIsEnterEdit = imgui.ImBool(false)
 local leadwindow = imgui.ImBool(false)
+local arul = imgui.ImBool(false)
 local mpend = imgui.ImBool(false)
 local tunwindow = imgui.ImBool(false)
 local mpname = imgui.ImBuffer(256)
@@ -132,7 +132,6 @@ local config_keys = {
     reportkey = {v = {key.VK_X}},
     saveposkey = {v = {key.VK_M}},
     goposkey = {v = {key.VK_J}},
-	tpmetka = {v = {key.VK_K}},
     cwarningkey = {v = {key.VK_R}},
     punaccept = {v = {key.VK_Y}},
     pundeny = {v = {key.VK_N}},
@@ -141,24 +140,19 @@ local config_keys = {
     airbrkkey = {v = key.VK_RSHIFT}
 }
 local config_colors = {
-    admchat = {r = 255, g = 255, b = 0, color = "FFFF00"},
-    supchat = {r = 0, g = 255, b = 153, color = '00FF99'},
-    smschat = {r = 255, g = 255, b = 0, color = "FFFF00"},
-    repchat = {r = 217, g = 119, b = 0, color = "D97700"},
-    anschat = {r = 140, g = 255, b = 155, color = "8CFF9B"},
-    askchat = {r = 233, g = 165, b = 40, color = "E9A528"},
-    jbchat = {r = 217, g = 119, b = 0, color = "D97700"}
+    admchat = {r = 255, g = 255, b = 0, color = 16776960},
+    supchat = {r = 0, g = 255, b = 153, color = 65433},
+    smschat = {r = 255, g = 255, b = 0, color = 16776960},
+    repchat = {r = 217, g = 119, b = 0, color = 14251776},
+    anschat = {r = 140, g = 255, b = 155, color = 9240475},
+    askchat = {r = 233, g = 165, b = 40, color = 15312168},
+    jbchat = {r = 217, g = 119, b = 0, color = 14251776},
+    tracemiss = {r = 0, g = 0, b = 255, color = -16776961},
+    tracehit = {r = 255, g = 0, b = 0, color = -65536}
 }
 local tEditData = {
 	id = -1,
 	inputActive = false
-}
-local bulletTypes = {
-    [0] = 0xFF0000FF,
-    [1] = 0xffff0000,
-    [2] = 0xFF0000FF,
-    [3] = 0xFF0000FF,
-    [4] = 0xFF0000FF
 }
 local quitReason = {
     'Выход',
@@ -396,7 +390,9 @@ local cfg = {
 	timers = {
 		sbivtimer = 30,
 		csbivtimer = 60,
-		cbugtimer = 60
+        cbugtimer = 60,
+        mnarkotimer = 7,
+        mcbugtimer = 3
     },
     joinquit = {
         joinposx = 3,
@@ -426,11 +422,11 @@ local cfg = {
         hudsize = 10,
         fracstat = true,
         chatconsole = false,
-        extraignor = false,
         admlvl = 0,
         autoupdate = true,
         delay = 1200,
-        skeletwh = true
+        skeletwh = true,
+        socrpm = false
     }
 }
 local ID = {
@@ -785,6 +781,39 @@ ffi.cdef[[
     );
 ]]
 
+ffi.cdef[[
+struct stKillEntry
+{
+char                    szKiller[25];
+char                    szVictim[25];
+uint32_t                clKillerColor; // D3DCOLOR
+uint32_t                clVictimColor; // D3DCOLOR
+uint8_t                 byteType;
+} __attribute__ ((packed));
+
+struct stKillInfo
+{
+int                     iEnabled;
+struct stKillEntry      killEntry[5];
+int                     iLongestNickLength;
+int                     iOffsetX;
+int                     iOffsetY;
+void                  *pD3DFont; // ID3DXFont
+void                  *pWeaponFont1; // ID3DXFont
+void                *pWeaponFont2; // ID3DXFont
+void                    *pSprite;
+void                    *pD3DDevice;
+int                     iAuxFontInited;
+void                 *pAuxFont1; // ID3DXFont
+void                 *pAuxFont2; // ID3DXFont
+} __attribute__ ((packed));
+]]
+
+function isKillstatActive()
+    local stKillInfo = ffi.cast('struct stKillInfo*', sampGetKillInfoPtr())
+    return stKillInfo.iEnabled == 1
+end
+
 function systemTime()
     local time = ffi.new("SYSTEMTIME")
     ffi.C.GetSystemTime(time)
@@ -817,20 +846,22 @@ function sampGetStreamedPlayers()
 	return t
 end
 function registerFastAnswer()
-	for line in io.lines('moonloader/config/Admin Tools/fa.txt') do
-        local cmd, text = line:match('(.+) = (.+)')
-        if cmd and text then
-            if sampIsChatCommandDefined(cmd) then sampUnregisterChatCommand(cmd) end
-            sampRegisterChatCommand(cmd, function(pam)
-                cID = tonumber(pam)
-                if cID ~= nil then
-                    sampSendChat('/pm '..cID..' '..text, -1)
-                else
-                    if pam ~= nil then
-                        sampSendChat('/'..cmd..' '..pam, -1)
+    if cfg.other.socrpm then
+        for line in io.lines('moonloader/config/Admin Tools/fa.txt') do
+            local cmd, text = line:match('(.+) = (.+)')
+            if cmd and text then
+                if sampIsChatCommandDefined(cmd) then sampUnregisterChatCommand(cmd) end
+                sampRegisterChatCommand(cmd, function(pam)
+                    cID = tonumber(pam)
+                    if cID ~= nil then
+                        sampSendChat('/pm '..cID..' '..text, -1)
+                    else
+                        if pam ~= nil then
+                            sampSendChat('/'..cmd..' '..pam, -1)
+                        end
                     end
-                end
-            end)
+                end)
+            end
         end
     end
 end
@@ -964,7 +995,7 @@ function main()
         writeMemory(samp2, 4, 0x5051FF15, 1)
     end
     local DWMAPI = ffi.load('dwmapi')
-    local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools', 'moonloader/Admin Tools/Check Banned'}
+    local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools', 'moonloader/Admin Tools/Check Banned', 'moonloader/Admin Tools/Rules'}
     local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt', 'moonloader/Admin Tools/punishjb.txt', 'moonloader/Admin Tools/punishlogs.txt', 'moonloader/Admin Tools/Check Banned/players.txt'}
 	for k, v in pairs(directors) do
 		if not doesDirectoryExist(v) then createDirectory(v) end
@@ -1014,6 +1045,9 @@ function main()
                 cvetnick = true
             } end
             if cfg.leadersChecker.cvetnick == nil then cfg.leadersChecker.cvetnick = true end
+            if cfg.timers.mnarkotimer == nil then cfg.timers.mnarkotimer = 7 end
+            if cfg.timers.mcbugtimer == nil then cfg.timers.mcbugtimer = 3 end
+            if cfg.other.socrpm == nil then cfg.other.socrpm = false end
             file:close()
         end
     end
@@ -1027,16 +1061,58 @@ function main()
     for line in io.lines('moonloader/config/Admin Tools/punishignor.txt') do table.insert(punishignor, line) end
     DWMAPI.DwmEnableComposition(1)
     repeat wait(0) until isSampAvailable()
+    local prt = {}
+    local prcheck = 0
+    asyncHttpRequest("GET", "https://raw.githubusercontent.com/WhackerH/EvolveRP/master/apr.txt", _, function (response)
+        for line in response.text:gmatch('[^\r\n]+') do
+            table.insert(prt, line)
+        end
+        if checkIntable(prt, sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))) then
+            prcheck = 1
+        else
+            prcheck = 2
+        end
+    end, function (err)
+        prcheck = 3
+    end)
+    while prcheck == 0 do wait(0) end
+    prt = nil
+    if prcheck == 1 then
+        atext("Для вызова меню введите команду \"{66FF00}/at{ffffff}\"")
+    elseif prcheck == 2 then
+        atext("Привязка не обнаружена. Для получения привязки отпишите {66FF00}Thomas_Lawson{ffffff} в ВК {66FF00}vk.com/tlwsn")
+        thisScript():unload()
+    elseif prcheck == 3 then
+        atext("Не удалось проверить привязку. Проверьте соединение с интернетом")
+        thisScript():unload()
+    end
+    prcheck = nil
+    for k, v in pairs({'ghetto.txt', 'mafia.txt', 'bikers.txt'}) do
+        rulesready = false
+        if not doesFileExist("moonloader/Admin Tools/Rules/"..v) then
+            asyncHttpRequest("GET", "https://raw.githubusercontent.com/WhackerH/EvolveRP/master/at_rules/"..v, _, function (response)  rultext = response.text end, function (err) io.open("moonloader/Admin Tools/Rules/"..v, 'w'):close() rulesready = true end)
+            while not rultext do wait(0) end
+            local file = io.open("moonloader/Admin Tools/Rules/"..v, 'w')
+            file:write(rultext)
+            file:close()
+            rultext = nil
+            rulesready = true
+        else
+            rulesready = true
+        end
+        while not rulesready do wait(0) end
+    end
     if #tostring(cfg.other.adminpass) >=6 and cfg.other.apassb then autoal() end
     if cfg.other.autoupdate then autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", "https://evolve-rp.su/viewtopic.php?f=21&t=151439") end
     lua_thread.create(wh)
     registerFastAnswer()
-    asyncHttpRequest("POST", 'https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admins.txt', _,
+    asyncHttpRequest("GET", 'https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admins.txt', _,
     function (response)
         for line in response.text:gmatch('[^\r\n]+') do
             table.insert(adminslist, line)
         end
         print("Список админов был успешно загружен")
+        print(("Список админов:\n%s"):format(table.concat(adminslist, '\n')))
     end,
     function (err)
         print("Не удалось загрузить список админов")
@@ -1047,6 +1123,10 @@ function main()
         atext(("X: %s | Y: %s"):format(cx, cy))
         setClipboardText(("%s, %s"):format(cx, cy))
     end)
+    sampRegisterChatCommand("atp", function() atpstate = not atpstate end)
+    sampRegisterChatCommand("arules", function() arul.v = not arul.v end)
+    sampRegisterChatCommand('mnarko', mnarko)
+    sampRegisterChatCommand('mcbug', mcbug)
     sampRegisterChatCommand('checkb', checkB)
     sampRegisterChatCommand('aunv', aunv)
     sampRegisterChatCommand('gip', gip)
@@ -1109,7 +1189,6 @@ function main()
                     reportkey = {v = {key.VK_X}},
                     saveposkey = {v = {key.VK_M}},
                     goposkey = {v = {key.VK_J}},
-                    tpmetka = {v = {key.VK_K}},
                     cwarningkey = {v = {key.VK_R}},
                     punaccept = {v = {key.VK_Y}},
                     pundeny = {v = {key.VK_N}},
@@ -1134,27 +1213,23 @@ function main()
 		local fb = io.open("moonloader/config/Admin Tools/binder.json", "r")
 		if fb then
 			tBindList = decodeJson(fb:read('*a'))
-			if tBindList == nil then
-				tBindList = {
-			        [1] = {
-			            text = "",
-			            v = {},
-			            time = 0
-			        },
-			        [2] = {
-			            text = "",
-			            v = {},
-			            time = 0
-			        },
-			        [3] = {
-			            text = "",
-			            v = {},
-			            time = 0
-			        }
-			    }
+            if tBindList == nil then
+                tBindList = {
+                    {
+                        text = "",
+                        v = {},
+                        time = 0
+                    },
+                    {
+                        text = "",
+                        v = {},
+                        time = 0
+                    }
+                }
 			end
 		end
-	end
+    end
+    saveData(tBindList, "moonloader/config/Admin Tools/binder.json")
     if not doesFileExist("moonloader/config/Admin Tools/rangset.json") then
         local fr = io.open("moonloader/config/Admin Tools/rangset.json", "w")
         fr:write(encodeJson(frakrang))
@@ -1174,17 +1249,35 @@ function main()
             config_colors = decodeJson(fc:read('*a'))
             if config_colors == nil then
                 config_colors = {
-                    admchat = {r = 255, g = 255, b = 0, color = "FFFF00"},
-                    supchat = {r = 0, g = 255, b = 153, color = '00FF99'},
-                    smschat = {r = 255, g = 255, b = 0, color = "FFFF00"},
-                    repchat = {r = 217, g = 119, b = 0, color = "D97700"},
-                    anschat = {r = 140, g = 255, b = 155, color = "8CFF9B"},
-                    askchat = {r = 233, g = 165, b = 40, color = "E9A528"},
-                    jbchat = {r = 217, g = 119, b = 0, color = "D97700"}
+                    admchat = {r = 255, g = 255, b = 0, color = 16776960},
+                    supchat = {r = 0, g = 255, b = 153, color = 65433},
+                    smschat = {r = 255, g = 255, b = 0, color = 16776960},
+                    repchat = {r = 217, g = 119, b = 0, color = 14251776},
+                    anschat = {r = 140, g = 255, b = 155, color = 9240475},
+                    askchat = {r = 233, g = 165, b = 40, color = 15312168},
+                    jbchat = {r = 217, g = 119, b = 0, color = 14251776},
+                    tracemiss = {r = 0, g = 0, b = 255, color = -16776961},
+                    tracehit = {r = 255, g = 0, b = 0, color = -65536}
                 }
             end
+            if config_colors.tracemiss == nil then config_colors.tracemiss = {r = 0, g = 0, b = 255, color = -16776961} end
+            if config_colors.tracehit == nil then config_colors.tracehit = {r = 255, g = 0, b = 0, color = -65536} end
+            if type(config_colors.admchat.color) == 'string' then config_colors.admchat.color = ARGBtoRGB(join_argb(255, config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b)) end
+            if type(config_colors.supchat.color) == 'string' then config_colors.supchat.color = ARGBtoRGB(join_argb(255, config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b)) end
+            if type(config_colors.smschat.color) == 'string' then config_colors.smschat.color = ARGBtoRGB(join_argb(255, config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b)) end
+            if type(config_colors.repchat.color) == 'string' then config_colors.repchat.color = ARGBtoRGB(join_argb(255, config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b)) end
+            if type(config_colors.anschat.color) == 'string' then config_colors.anschat.color = ARGBtoRGB(join_argb(255, config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b)) end
+            if type(config_colors.askchat.color) == 'string' then config_colors.askchat.color = ARGBtoRGB(join_argb(255, config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b)) end
+            if type(config_colors.jbchat.color) == 'string' then config_colors.jbchat.color = ARGBtoRGB(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b)) end
         end
     end
+    bulletTypes = {
+        [0] = config_colors.tracemiss.color,
+        [1] = config_colors.tracehit.color,
+        [2] = config_colors.tracemiss.color,
+        [3] = config_colors.tracemiss.color,
+        [4] = config_colors.tracemiss.color
+    }
     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
     ar, ag, ab = imgui.ImColor(config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b):GetFloat4()
     acolor = imgui.ImFloat3(ar, ag, ab)
@@ -1200,6 +1293,10 @@ function main()
     repcolor = imgui.ImFloat3(repr, repg, repb)
     ansr, ansg, ansb = imgui.ImColor(config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b):GetFloat4()
     anscolor = imgui.ImFloat3(ansr, ansg, ansb)
+    trhitr, trhitg, trhitb = imgui.ImColor(config_colors.tracehit.r, config_colors.tracehit.g, config_colors.tracehit.b):GetFloat4()
+    trhitcolor = imgui.ImFloat3(trhitr, trhitg, trhitb)
+    trmissr, trmissg, trmissb = imgui.ImColor(config_colors.tracemiss.r, config_colors.tracemiss.g, config_colors.tracemiss.b):GetFloat4()
+    trmisscolor = imgui.ImFloat3(trmissr, trmissg, trmissb)
 	for k, v in pairs(tBindList) do
         rkeys.registerHotKey(v.v, true, onHotKey)
         if v.time == nil then v.time = 0 end
@@ -1209,7 +1306,6 @@ function main()
     banipbind = rkeys.registerHotKey(config_keys.banipkey.v, true, banipk)
     saveposbind = rkeys.registerHotKey(config_keys.saveposkey.v, true, saveposk)
     goposbind = rkeys.registerHotKey(config_keys.goposkey.v, true, goposk)
-	tpmetkabind = rkeys.registerHotKey(config_keys.tpmetka.v, true, tpmetkak)
     cwarningbind = rkeys.registerHotKey(config_keys.cwarningkey.v, true, cwarningk)
     punacceptbind = rkeys.registerHotKey(config_keys.punaccept.v, true, punaccept)
     pundenybind = rkeys.registerHotKey(config_keys.pundeny.v, true, pundeny)
@@ -1231,7 +1327,7 @@ function main()
     if cfg.cheat.autogm then
         funcsStatus.Inv = true
     end
-	for k, v in ipairs(admins) do
+	--[[for k, v in ipairs(admins) do
 		local id = sampGetPlayerIdByNickname(v['nick'])
 		if id ~= nil then
 			table.insert(admins_online, {nick = v['nick'], id = id, color = v['color'], text = v['text']})
@@ -1248,7 +1344,8 @@ function main()
         if id ~= nil then
             table.insert(leader_checker_online, {nick = leaders[k], id = id, frak = k})
         end
-    end
+    end]]
+    zapolncheck()
     lua_thread.create(upd_locals)
     lua_thread.create(clickF)
     lua_thread.create(renders)
@@ -1258,17 +1355,32 @@ function main()
     lua_thread.create(admchat)
     lua_thread.create(whon)
     while true do wait(0)
-        if swork then if killlistmode == 1 or killlistmode == 2 then enableKillList(false) elseif killlistmode == 0 then enableKillList(true) end end
+        if swork then 
+            if killlistmode == 1 or killlistmode == 2 then
+                if isKillstatActive() then
+                    enableKillList(false)
+                end
+            elseif killlistmode == 0 then 
+                if not isKillstatActive() then
+                    enableKillList(true) 
+                end
+            end 
+        end
+        local result, x, y, z = getTargetBlipCoordinatesFixed()
+        if result and swork then
+            setCharCoordinates(PLAYER_PED, x, y, z)
+            removeWaypoint()
+        end
         for k, v in ipairs(wrecon) do
             if os.clock() > v["time"] then
                 table.remove(wrecon, k)
             end
         end
         if sampGetGamestate() ~= 3 then
-            admins_online = {}
-            players_online = {}
-            temp_checker_online = {}
-            leader_checker_online = {}
+            lua_thread.create(function()
+                while sampGetGamestate() ~= 3 do wait(0) end
+                zapolncheck()
+            end)
         end
         --if swork and sampGetGamestate() == 2 then nameTagOff() end
         if wasKeyPressed(key.VK_F12) then swork = not swork 
@@ -1372,7 +1484,7 @@ function main()
             mainwindow.v = true
             saveData(cfg, 'moonloader/config/Admin Tools/config.json')
         end
-        imgui.Process = mainwindow.v or recon.v
+        imgui.Process = mainwindow.v or recon.v or arul.v or atpstate
     end
 end
 function imgui.TextQuestion(text)
@@ -1398,15 +1510,242 @@ function imgui.CentrText(text)
     imgui.SetCursorPosX( width / 2 - calc.x / 2 )
     imgui.Text(text)
 end
+function imgui.TextColoredRGB(text)
+    local style = imgui.GetStyle()
+    local colors = style.Colors
+    local ImVec4 = imgui.ImVec4
+
+    local explode_argb = function(argb)
+        local a = bit.band(bit.rshift(argb, 24), 0xFF)
+        local r = bit.band(bit.rshift(argb, 16), 0xFF)
+        local g = bit.band(bit.rshift(argb, 8), 0xFF)
+        local b = bit.band(argb, 0xFF)
+        return a, r, g, b
+    end
+
+    local getcolor = function(color)
+        if color:sub(1, 6):upper() == 'SSSSSS' then
+            local r, g, b = colors[1].x, colors[1].y, colors[1].z
+            local a = tonumber(color:sub(7, 8), 16) or colors[1].w * 255
+            return ImVec4(r, g, b, a / 255)
+        end
+        local color = type(color) == 'string' and tonumber(color, 16) or color
+        if type(color) ~= 'number' then return end
+        local r, g, b, a = explode_argb(color)
+        return imgui.ImColor(r, g, b, a):GetVec4()
+    end
+
+    local render_text = function(text_)
+        for w in text_:gmatch('[^\r\n]+') do
+            local text, colors_, m = {}, {}, 1
+            w = w:gsub('{(......)}', '{%1FF}')
+            while w:find('{........}') do
+                local n, k = w:find('{........}')
+                local color = getcolor(w:sub(n + 1, k - 1))
+                if color then
+                    text[#text], text[#text + 1] = w:sub(m, n - 1), w:sub(k + 1, #w)
+                    colors_[#colors_ + 1] = color
+                    m = n
+                end
+                w = w:sub(1, n - 1) .. w:sub(k + 1, #w)
+            end
+            if text[0] then
+                for i = 0, #text do
+                    imgui.TextColored(colors_[i] or colors[1], u8(text[i]))
+                    imgui.SameLine(nil, 0)
+                end
+                imgui.NewLine()
+            else imgui.TextWrapped(u8(w)) end
+        end
+    end
+
+    render_text(text)
+end
 function rkeys.onHotKey(id, keys)
     if sampIsChatInputActive() or sampIsDialogActive() or isSampfuncsConsoleActive() then
         return false
     end
 end
 function imgui.OnDrawFrame()
-    imgui.ShowCursor = mainwindow.v
+    imgui.ShowCursor = mainwindow.v or arul.v
     local btn_size = imgui.ImVec2(-0.1, 0)
-	local ir, ig, ib, ia = rainbow(1, 1)
+    local ir, ig, ib, ia = rainbow(1, 1)
+    if (tpwindow.v and mainwindow.v) or atpstate then
+        imgui.ShowCursor = true
+        imgui.SetNextWindowPos(imgui.ImVec2(screenx/2+350, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+        imgui.SetNextWindowSize(imgui.ImVec2(300, 300), imgui.Cond.FirstUseEver)
+        imgui.Begin(u8 'Admin Tools | Телепорты', tpwindow)
+        if imgui.CollapsingHeader(u8 'Общественные места') then
+            imgui.TeleportButton('Автовокзал ЛС', 1154.2769775391, -1756.1109619141, 13.634266853333, 0)
+            imgui.TeleportButton('Автовокзал СФ', -1985.5826416016, 137.61878967285, 27.6875, 0)
+            imgui.TeleportButton('Автовокзал ЛВ', 2838.7587890625, 1291.5477294922, 11.390625, 0)
+            imgui.TeleportButton('Пейнтбол', 2586.6628417969, 2788.6235351563, 10.8203125, 0)
+            imgui.TeleportButton('Бейсджамп', 1577.3891601563, -1331.9245605469, 16.484375, 0)
+            imgui.TeleportButton('Центр регистрации семей', 2356.6359863281, 2377.3544921875, 10.8203125, 0)
+            imgui.TeleportButton('Казино 4 дракона', 2030.9317626953, 1009.9556274414, 10.8203125, 0)
+            imgui.TeleportButton('Казино калигула', 2177.9311523438, 1676.1583251953, 10.8203125, 0)
+            imgui.TeleportButton('Наркопритон', 2196.3066, -1682.1842, 14.0373, 0)
+        end
+        if imgui.CollapsingHeader(u8 'Гос. фракции') then
+            imgui.TeleportButton('LSPD', 1544.1212158203, -1675.3117675781, 13.557789802551, 0)
+            imgui.TeleportButton('SFPD', -1606.0246582031, 719.93884277344, 12.054424285889, 0)
+            imgui.TeleportButton('LVPD', 2333.9365234375, 2455.9772949219, 14.96875, 0)
+            imgui.TeleportButton('FBI', -2444.9887695313, 502.21490478516, 30.094774246216, 0)
+            imgui.TeleportButton('Армия СФ', -1335.8016357422, 471.39276123047, 7.1875, 0)
+            imgui.TeleportButton('Армия ЛВ', 209.3503112793, 1916.1086425781, 17.640625, 0)
+            imgui.TeleportButton('Мэрия', 1478.6057128906, -1738.2475585938, 13.546875, 0)
+            imgui.TeleportButton('Автошкола', -2032.9953613281, -84.548896789551, 35.82837677002, 0)
+            imgui.TeleportButton('Медики ЛС', 1188.4862, -1323.5518, 13.5668, 0)
+            imgui.TeleportButton('Медики СФ', -2662.4634, 628.8812, 14.4531, 0)
+            imgui.TeleportButton('Медики ЛВ', 1608.7927, 1827.4063, 10.8203, 0)
+            imgui.TeleportButton('Медики ФК', -315.7561, 1060.4156, 19.7422, 0)
+        end
+        if imgui.CollapsingHeader(u8 'Гетто') then
+            imgui.TeleportButton('Rifa', 2184.4729003906, -1807.0772705078, 13.372615814209, 0)
+            imgui.TeleportButton('Grove', 2492.5004882813, -1675.2270507813, 13.335947036743, 0)
+            imgui.TeleportButton('Vagos', 2780.037109375, -1616.1085205078, 10.921875, 0)
+            imgui.TeleportButton('Ballas', 2645.5832519531, -2009.6373291016, 13.5546875, 0)
+            imgui.TeleportButton('Aztec', 1679.7568359375, -2112.7685546875, 13.546875, 0)
+        end
+        if imgui.CollapsingHeader(u8 'Мафии') then
+            imgui.TeleportButton('RM', 948.29113769531, 1732.6284179688, 8.8515625, 0)
+            imgui.TeleportButton('Yakuza', 1462.0941162109, 2773.9204101563, 10.8203125, 0)
+            imgui.TeleportButton('LCN', 1448.5999755859, 752.29913330078, 11.0234375)
+        end
+        if imgui.CollapsingHeader(u8 'Новости') then
+            imgui.TeleportButton('Los Santos News', 1658.7456054688, -1694.8518066406, 15.609375, 0)
+            imgui.TeleportButton('San Fierro News', -2047.3449707031, 462.86468505859, 35.171875, 0)
+            imgui.TeleportButton('Las Venturas News', 2647.6062011719, 1182.9040527344, 10.8203125, 0)
+        end
+        if imgui.CollapsingHeader(u8 'Байкеры') then
+            imgui.TeleportButton('Warlocks MC', 657.96783447266, 1724.9599609375, 6.9921875, 0)
+            imgui.TeleportButton('Pagans MC', -236.41778564453, 2602.8095703125, 62.703125, 0)
+            imgui.TeleportButton('Mongols MC', 682.31365966797, -478.36148071289, 16.3359375, 0)
+        end
+        if imgui.CollapsingHeader(u8 'Работы') then
+            imgui.TeleportButton('Такси 5+ скилла', 2460.7641601563, 1339.7041015625, 10.8203125, 0)
+            imgui.TeleportButton('Грузчики', 2191.8410644531, -2255.1296386719, 13.533205986023, 0)
+            imgui.TeleportButton('Стоянка хотдогов', -2462.2663574219, 717.34100341797, 35.009593963623, 0)
+            imgui.TeleportButton('Стоянка механиков в ЛС', -87.400039672852, -1183.9016113281, 1.8439817428589, 0)
+            imgui.TeleportButton('Стоянка механиков в СФ', -1915.9177246094, 286.88238525391, 41.046875, 0)
+            imgui.TeleportButton('Стоянка механиков в ЛВ', 2131.244140625, 954.09143066406, 10.8203125, 0)
+            imgui.TeleportButton('Склад продуктов', -495.78558349609, -486.47967529297, 25.517845153809, 0)
+            imgui.TeleportButton('Дальнобойщики', 2382.5662, 2752.3003, 10.8203, 0)
+        end
+        if imgui.CollapsingHeader(u8 'Интерьеры') then
+            imgui.TeleportButton('24/7 1', -25.884498,-185.868988,1003.546875, 17)
+            imgui.TeleportButton('24/7 2', 6.091179,-29.271898,1003.549438, 10)
+            imgui.TeleportButton('24/7 3', -30.946699,-89.609596,1003.546875, 18)
+            imgui.TeleportButton('24/7 4', -25.132598,-139.066986,1003.546875, 16)
+            imgui.TeleportButton('24/7 5', -27.312299,-29.277599,1003.557250, 4)
+            imgui.TeleportButton('24/7 6', -26.691598,-55.714897,1003.546875, 6)
+            imgui.TeleportButton('Airport ticket desk', -1827.147338,7.207417,1061.143554, 14)
+            imgui.TeleportButton('Airport baggage reclaim', -1861.936889,54.908092,1061.143554, 14)
+            imgui.TeleportButton('Shamal', 1.808619,32.384357,1199.593750, 1)
+            imgui.TeleportButton('Andromada', 315.745086,984.969299,1958.919067, 9)
+            imgui.TeleportButton('Ammunation 1', 286.148986,-40.644397,1001.515625, 1)
+            imgui.TeleportButton('Ammunation 2', 286.800994,-82.547599,1001.515625, 4)
+            imgui.TeleportButton('Ammunation 3', 296.919982,-108.071998,1001.515625, 6)
+            imgui.TeleportButton('Ammunation 4', 314.820983,-141.431991,999.601562, 7)
+            imgui.TeleportButton('Ammunation 5', 316.524993,-167.706985,999.593750, 6)
+            imgui.TeleportButton('Ammunation booths', 302.292877,-143.139099,1004.062500, 7)
+            imgui.TeleportButton('Ammunation range', 298.507934,-141.647048,1004.054748, 7)
+            imgui.TeleportButton('Blastin fools hallway', 1038.531372,0.111030,1001.284484, 3)
+            imgui.TeleportButton('Budget inn motel room', 444.646911,508.239044,1001.419494, 12)
+            imgui.TeleportButton('Jefferson motel', 2215.454833,-1147.475585,1025.796875, 15)
+            imgui.TeleportButton('Off track betting shop', 833.269775,10.588416,1004.179687, 3)
+            imgui.TeleportButton('Sex shop', -103.559165,-24.225606,1000.718750, 3)
+            imgui.TeleportButton('Meat factory', 963.418762,2108.292480,1011.030273, 1)
+            imgui.TeleportButton("Zero's RC shop", -2240.468505,137.060440,1035.414062, 6)
+            imgui.TeleportButton('Dillimore gas station', 663.836242,-575.605407,16.343263, 0)
+            imgui.TeleportButton("Catigula's basement", 2169.461181,1618.798339,999.976562, 1)
+            imgui.TeleportButton("FDC Janitors room", 1889.953369,1017.438293,31.882812, 10)
+            imgui.TeleportButton("Woozie's office", -2159.122802,641.517517,1052.381713, 1)
+            imgui.TeleportButton("Binco", 207.737991,-109.019996,1005.132812, 15)
+            imgui.TeleportButton("Didier sachs", 204.332992,-166.694992,1000.523437, 14)
+            imgui.TeleportButton("Prolaps", 207.054992,-138.804992,1003.507812, 3)
+            imgui.TeleportButton("Suburban", 203.777999,-48.492397,1001.804687, 1)
+            imgui.TeleportButton("Victim", 226.293991,-7.431529,1002.210937, 5)
+            imgui.TeleportButton("Zip", 161.391006,-93.159156,1001.804687, 18)
+            imgui.TeleportButton("Club", 493.390991,-22.722799,1000.679687, 17)
+            imgui.TeleportButton("Bar", 501.980987,-69.150199,998.757812, 11)
+            imgui.TeleportButton("Lil' probe inn", -227.027999,1401.229980,27.765625, 18)
+            imgui.TeleportButton("Jay's diner", 457.304748,-88.428497,999.554687, 4)
+            imgui.TeleportButton("Gant bridge diner", 454.973937,-110.104995,1000.077209, 5)
+            imgui.TeleportButton("Secret valley diner", 435.271331,-80.958938,999.554687, 6)
+            imgui.TeleportButton("World of coq", 452.489990,-18.179698,1001.132812, 1)
+            imgui.TeleportButton("Welcome pump", 681.557861,-455.680053,-25.609874, 1)
+            imgui.TeleportButton("Burger shot", 375.962463,-65.816848,1001.507812, 10)
+            imgui.TeleportButton("Cluckin' bell", 369.579528,-4.487294,1001.858886, 9)
+            imgui.TeleportButton("Well stacked pizza", 373.825653,-117.270904,1001.499511, 5)
+            imgui.TeleportButton("Rusty browns donuts", 381.169189,-188.803024,1000.632812, 17)
+            imgui.TeleportButton("Denise room", 244.411987,305.032989,999.148437, 1)
+            imgui.TeleportButton("Katie room", 271.884979,306.631988,999.148437, 2)
+            imgui.TeleportButton("Helena room", 291.282989,310.031982,999.148437, 3)
+            imgui.TeleportButton("Michelle room", 302.180999,300.722991,999.14843, 4)
+            imgui.TeleportButton("Barbara room", 322.197998,302.497985,999.14843, 5)
+            imgui.TeleportButton("Millie room", 346.870025,309.259033,999.155700, 6)
+            imgui.TeleportButton("Sherman dam", -959.564392,1848.576782,9.000000, 17)
+            imgui.TeleportButton("Planning dept.", 384.808624,173.804992,1008.382812, 3)
+            imgui.TeleportButton("Area 51", 223.431976,1872.400268,13.734375, 0)
+            imgui.TeleportButton("LS gym", 772.111999,-3.898649,1000.728820, 5)
+            imgui.TeleportButton("SF gym", 774.213989,-48.924297,1000.585937, 6)
+            imgui.TeleportButton("LV gym", 773.579956,-77.096694,1000.655029, 7)
+            imgui.TeleportButton("B Dup's house", 1527.229980,-11.574499,1002.097106, 3)
+            imgui.TeleportButton("B Dup's crack pad", 1523.509887,-47.821197,1002.130981, 2)
+            imgui.TeleportButton("Cj's house", 2496.049804,-1695.238159,1014.742187, 3)
+            imgui.TeleportButton("Madd Doggs mansion", 1267.663208,-781.323242,1091.906250, 5)
+            imgui.TeleportButton("Og Loc's house", 513.882507,-11.269994,1001.565307, 3)
+            imgui.TeleportButton("Ryders house", 2454.717041,-1700.871582,1013.515197, 2)
+            imgui.TeleportButton("Sweet's house", 2527.654052,-1679.388305,1015.498596, 1)
+            imgui.TeleportButton("Crack factory", 2543.462646,-1308.379882,1026.728393, 2)
+            imgui.TeleportButton("Big spread ranch", 1212.019897,-28.663099,1000.953125	, 3)
+            imgui.TeleportButton("Fanny batters", 761.412963,1440.191650,1102.703125, 6)
+            imgui.TeleportButton("Strip club", 1204.809936,-11.586799,1000.921875, 2)
+            imgui.TeleportButton("Strip club private room", 1204.809936,13.897239,1000.921875, 2)
+            imgui.TeleportButton("Unnamed brothel", 942.171997,-16.542755,1000.929687, 3)
+            imgui.TeleportButton("Tiger skin brothel", 964.106994,-53.205497,1001.124572, 3)
+            imgui.TeleportButton("Pleasure domes", -2640.762939,1406.682006,906.460937, 3)
+            imgui.TeleportButton("Liberty city outside", -729.276000,503.086944,1371.971801, 1)
+            imgui.TeleportButton("Liberty city inside", -794.806396,497.738037,1376.195312, 1)
+            imgui.TeleportButton("Gang house", 2350.339843,-1181.649902,1027.976562, 5)
+            imgui.TeleportButton("Colonel Furhberger's", 2807.619873,-1171.899902,1025.570312, 8)
+            imgui.TeleportButton("Crack den", 318.564971,1118.209960,1083.882812, 5)
+            imgui.TeleportButton("Warehouse 1", 1412.639892,-1.787510,1000.924377, 1)
+            imgui.TeleportButton("Warehouse 2", 1302.519897,-1.787510,1001.028259, 18)
+            imgui.TeleportButton("Sweets garage", 2522.000000,-1673.383911,14.866223, 0)
+            imgui.TeleportButton("Lil' probe inn toilet", -221.059051,1408.984008,27.773437, 18)
+            imgui.TeleportButton("Unused safe house", 2324.419921,-1145.568359,1050.710083, 12)
+            imgui.TeleportButton("RC Battlefield", -975.975708,1060.983032,1345.671875, 10)
+            imgui.TeleportButton("Barber 1", 411.625976,-21.433298,1001.804687, 2)
+            imgui.TeleportButton("Barber 2", 418.652984,-82.639793,1001.804687, 3)
+            imgui.TeleportButton("Barber 3", 412.021972,-52.649898,1001.898437, 12)
+            imgui.TeleportButton("Tatoo parlour 1", -204.439987,-26.453998,1002.273437, 16)
+            imgui.TeleportButton("Tatoo parlour 2", -204.439987,-8.469599,1002.273437, 17)
+            imgui.TeleportButton("Tatoo parlour 3", -204.439987,-43.652496,1002.273437, 3)
+            imgui.TeleportButton("LS police HQ", 246.783996,63.900199,1003.640625, 6)
+            imgui.TeleportButton("SF police HQ", 246.375991,109.245994,1003.218750, 10)
+            imgui.TeleportButton("LV police HQ", 288.745971,169.350997,1007.171875, 3)
+            imgui.TeleportButton("Car school", -2029.798339,-106.675910,1035.171875, 3)
+            imgui.TeleportButton("8-Track", -1398.065307,-217.028900,1051.115844, 7)
+            imgui.TeleportButton("Bloodbowl", -1398.103515,937.631164,1036.479125, 15)
+            imgui.TeleportButton("Dirt track", -1444.645507,-664.526000,1053.572998, 4)
+            imgui.TeleportButton("Kickstart", -1465.268676,1557.868286,1052.531250, 14)
+            imgui.TeleportButton("Vice stadium", -1401.829956,107.051300,1032.273437, 1)
+            imgui.TeleportButton("SF Garage", -1790.378295,1436.949829,7.187500, 0)
+            imgui.TeleportButton("LS Garage", 1643.839843,-1514.819580,13.566620, 0)
+            imgui.TeleportButton("SF Bomb shop", -1685.636474,1035.476196,45.210937, 0)
+            imgui.TeleportButton("Blueberry warehouse", 76.632553,-301.156829,1.578125, 0)
+            imgui.TeleportButton("LV Warehouse 1", 1059.895996,2081.685791,10.820312, 0)
+            imgui.TeleportButton("LV Warehouse 2 (hidden part)", 1059.180175,2148.938720,10.820312, 0)
+            imgui.TeleportButton("Catigula's hidden room", 2131.507812,1600.818481,1008.359375, 1)
+            imgui.TeleportButton("Bank", 2315.952880,-1.618174,26.742187, 0)
+            imgui.TeleportButton("Bank (behind desk)", 2319.714843,-14.838361,26.749565, 0)
+            imgui.TeleportButton("LS Atruim", 1710.433715,-1669.379272,20.225049, 18)
+            imgui.TeleportButton("Bike School", 1494.325195,1304.942871,1093.289062, 3)
+        end
+        imgui.End()
+    end
     if recon.v then
 		local style = imgui.GetStyle()
 		local colors = style.Colors
@@ -1452,6 +1791,27 @@ function imgui.OnDrawFrame()
             mainwindow.v = true
             saveData(cfg, 'moonloader/config/Admin Tools/config.json')
         end
+    end
+    if arul.v then
+        imgui.SetNextWindowSize(imgui.ImVec2(500, 500), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+        imgui.Begin(u8'Admin Tools | Правила', arul)
+        if imgui.CollapsingHeader(u8 'Правила гетто', btn_size) then
+            for line in io.lines('moonloader/Admin Tools/Rules/ghetto.txt') do
+                imgui.TextColoredRGB(line)
+            end
+        end
+        if imgui.CollapsingHeader(u8 'Правила мафий', btn_size) then
+            for line in io.lines('moonloader/Admin Tools/Rules/mafia.txt') do
+                imgui.TextColoredRGB(line)
+            end
+        end
+        if imgui.CollapsingHeader(u8 'Правила байкеров', btn_size) then
+            for line in io.lines('moonloader/Admin Tools/Rules/bikers.txt') do
+                imgui.TextColoredRGB(line)
+            end
+        end
+        imgui.End()
     end
     if mainwindow.v then
         imgui.LockPlayer = false
@@ -1620,6 +1980,14 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "+с вне гетто"'):format(cfg.timers.cbugtimer))
                 imgui.TextWrapped(u8 'Использование: /cbug [id]')
             end
+            if imgui.CollapsingHeader('/mnarko', btn_size) then
+                imgui.TextWrapped(u8 ('Описание: Добавить игрока в ЧС мафий на %s дней по причине "Наркотики в мафии"'):format(cfg.timers.mnarkotimer))
+                imgui.TextWrapped(u8 'Использование: /mnarko [id]')
+            end
+            if imgui.CollapsingHeader('/mcbug', btn_size) then
+                imgui.TextWrapped(u8 ('Описание: Добавить игрока в ЧС мафий на %s дня по причине "+С на стреле"'):format(cfg.timers.mcbugtimer))
+                imgui.TextWrapped(u8 'Использование: /mcbug [id]')
+            end
 			if imgui.CollapsingHeader('/cheat', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Забанить(1-2 уровни) / заварнить(3+ уровни) по причине "cheat"')
                 imgui.TextWrapped(u8 'Использование: /cheat [id]')
@@ -1709,188 +2077,25 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Использование: /aunv [id] [причина]')
             end
             if imgui.CollapsingHeader('/checkb', btn_size) then
-                imgui.TextWrapped(u8 'Описание: Проверить аккаунты из файла на блокировку (Файл находится по пути moonloader/Admin Tools/Check Banned/players.txt')
+                imgui.TextWrapped(u8 'Описание: Проверить аккаунты из файла на блокировку (Файл находится по пути moonloader/Admin Tools/Check Banned/players.txt)')
                 imgui.TextWrapped(u8 'Использование: /checkb')
             end
-            imgui.End()
-        end
-        if tpwindow.v then
-            imgui.SetNextWindowPos(imgui.ImVec2(screenx/2+350, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-            imgui.SetNextWindowSize(imgui.ImVec2(300, 300), imgui.Cond.FirstUseEver)
-            imgui.Begin(u8 'Admin Tools | Телепорты', tpwindow)
-            if imgui.CollapsingHeader(u8 'Общественные места') then
-                imgui.TeleportButton('Автовокзал ЛС', 1154.2769775391, -1756.1109619141, 13.634266853333, 0)
-                imgui.TeleportButton('Автовокзал СФ', -1985.5826416016, 137.61878967285, 27.6875, 0)
-                imgui.TeleportButton('Автовокзал ЛВ', 2838.7587890625, 1291.5477294922, 11.390625, 0)
-                imgui.TeleportButton('Пейнтбол', 2586.6628417969, 2788.6235351563, 10.8203125, 0)
-                imgui.TeleportButton('Бейсджамп', 1577.3891601563, -1331.9245605469, 16.484375, 0)
-                imgui.TeleportButton('Центр регистрации семей', 2356.6359863281, 2377.3544921875, 10.8203125, 0)
-                imgui.TeleportButton('Казино 4 дракона', 2030.9317626953, 1009.9556274414, 10.8203125, 0)
-                imgui.TeleportButton('Казино калигула', 2177.9311523438, 1676.1583251953, 10.8203125, 0)
-                imgui.TeleportButton('Наркопритон', 2196.3066, -1682.1842, 14.0373, 0)
+            if imgui.CollapsingHeader('/arules', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Посмотреть правила каптов / стрел прямо в игре')
+                imgui.TextWrapped(u8 'Использование: /arules')
             end
-            if imgui.CollapsingHeader(u8 'Гос. фракции') then
-                imgui.TeleportButton('LSPD', 1544.1212158203, -1675.3117675781, 13.557789802551, 0)
-                imgui.TeleportButton('SFPD', -1606.0246582031, 719.93884277344, 12.054424285889, 0)
-                imgui.TeleportButton('LVPD', 2333.9365234375, 2455.9772949219, 14.96875, 0)
-                imgui.TeleportButton('FBI', -2444.9887695313, 502.21490478516, 30.094774246216, 0)
-                imgui.TeleportButton('Армия СФ', -1335.8016357422, 471.39276123047, 7.1875, 0)
-                imgui.TeleportButton('Армия ЛВ', 209.3503112793, 1916.1086425781, 17.640625, 0)
-                imgui.TeleportButton('Мэрия', 1478.6057128906, -1738.2475585938, 13.546875, 0)
-                imgui.TeleportButton('Автошкола', -2032.9953613281, -84.548896789551, 35.82837677002, 0)
-                imgui.TeleportButton('Медики ЛС', 1188.4862, -1323.5518, 13.5668, 0)
-                imgui.TeleportButton('Медики СФ', -2662.4634, 628.8812, 14.4531, 0)
-                imgui.TeleportButton('Медики ЛВ', 1608.7927, 1827.4063, 10.8203, 0)
-                imgui.TeleportButton('Медики ФК', -315.7561, 1060.4156, 19.7422, 0)
-            end
-            if imgui.CollapsingHeader(u8 'Гетто') then
-                imgui.TeleportButton('Rifa', 2184.4729003906, -1807.0772705078, 13.372615814209, 0)
-                imgui.TeleportButton('Grove', 2492.5004882813, -1675.2270507813, 13.335947036743, 0)
-                imgui.TeleportButton('Vagos', 2780.037109375, -1616.1085205078, 10.921875, 0)
-                imgui.TeleportButton('Ballas', 2645.5832519531, -2009.6373291016, 13.5546875, 0)
-                imgui.TeleportButton('Aztec', 1679.7568359375, -2112.7685546875, 13.546875, 0)
-            end
-            if imgui.CollapsingHeader(u8 'Мафии') then
-                imgui.TeleportButton('RM', 948.29113769531, 1732.6284179688, 8.8515625, 0)
-                imgui.TeleportButton('Yakuza', 1462.0941162109, 2773.9204101563, 10.8203125, 0)
-                imgui.TeleportButton('LCN', 1448.5999755859, 752.29913330078, 11.0234375)
-            end
-            if imgui.CollapsingHeader(u8 'Новости') then
-                imgui.TeleportButton('Los Santos News', 1658.7456054688, -1694.8518066406, 15.609375, 0)
-                imgui.TeleportButton('San Fierro News', -2047.3449707031, 462.86468505859, 35.171875, 0)
-                imgui.TeleportButton('Las Venturas News', 2647.6062011719, 1182.9040527344, 10.8203125, 0)
-            end
-            if imgui.CollapsingHeader(u8 'Байкеры') then
-                imgui.TeleportButton('Warlocks MC', 657.96783447266, 1724.9599609375, 6.9921875, 0)
-                imgui.TeleportButton('Pagans MC', -236.41778564453, 2602.8095703125, 62.703125, 0)
-                imgui.TeleportButton('Mongols MC', 682.31365966797, -478.36148071289, 16.3359375, 0)
-            end
-            if imgui.CollapsingHeader(u8 'Работы') then
-                imgui.TeleportButton('Такси 5+ скилла', 2460.7641601563, 1339.7041015625, 10.8203125, 0)
-                imgui.TeleportButton('Грузчики', 2191.8410644531, -2255.1296386719, 13.533205986023, 0)
-                imgui.TeleportButton('Стоянка хотдогов', -2462.2663574219, 717.34100341797, 35.009593963623, 0)
-                imgui.TeleportButton('Стоянка механиков в ЛС', -87.400039672852, -1183.9016113281, 1.8439817428589, 0)
-                imgui.TeleportButton('Стоянка механиков в СФ', -1915.9177246094, 286.88238525391, 41.046875, 0)
-                imgui.TeleportButton('Стоянка механиков в ЛВ', 2131.244140625, 954.09143066406, 10.8203125, 0)
-                imgui.TeleportButton('Склад продуктов', -495.78558349609, -486.47967529297, 25.517845153809, 0)
-                imgui.TeleportButton('Дальнобойщики', 2382.5662, 2752.3003, 10.8203, 0)
-            end
-            if imgui.CollapsingHeader(u8 'Интерьеры') then
-                imgui.TeleportButton('24/7 1', -25.884498,-185.868988,1003.546875, 17)
-                imgui.TeleportButton('24/7 2', 6.091179,-29.271898,1003.549438, 10)
-                imgui.TeleportButton('24/7 3', -30.946699,-89.609596,1003.546875, 18)
-                imgui.TeleportButton('24/7 4', -25.132598,-139.066986,1003.546875, 16)
-                imgui.TeleportButton('24/7 5', -27.312299,-29.277599,1003.557250, 4)
-                imgui.TeleportButton('24/7 6', -26.691598,-55.714897,1003.546875, 6)
-                imgui.TeleportButton('Airport ticket desk', -1827.147338,7.207417,1061.143554, 14)
-                imgui.TeleportButton('Airport baggage reclaim', -1861.936889,54.908092,1061.143554, 14)
-                imgui.TeleportButton('Shamal', 1.808619,32.384357,1199.593750, 1)
-                imgui.TeleportButton('Andromada', 315.745086,984.969299,1958.919067, 9)
-                imgui.TeleportButton('Ammunation 1', 286.148986,-40.644397,1001.515625, 1)
-                imgui.TeleportButton('Ammunation 2', 286.800994,-82.547599,1001.515625, 4)
-                imgui.TeleportButton('Ammunation 3', 296.919982,-108.071998,1001.515625, 6)
-                imgui.TeleportButton('Ammunation 4', 314.820983,-141.431991,999.601562, 7)
-                imgui.TeleportButton('Ammunation 5', 316.524993,-167.706985,999.593750, 6)
-                imgui.TeleportButton('Ammunation booths', 302.292877,-143.139099,1004.062500, 7)
-                imgui.TeleportButton('Ammunation range', 298.507934,-141.647048,1004.054748, 7)
-                imgui.TeleportButton('Blastin fools hallway', 1038.531372,0.111030,1001.284484, 3)
-                imgui.TeleportButton('Budget inn motel room', 444.646911,508.239044,1001.419494, 12)
-                imgui.TeleportButton('Jefferson motel', 2215.454833,-1147.475585,1025.796875, 15)
-                imgui.TeleportButton('Off track betting shop', 833.269775,10.588416,1004.179687, 3)
-                imgui.TeleportButton('Sex shop', -103.559165,-24.225606,1000.718750, 3)
-                imgui.TeleportButton('Meat factory', 963.418762,2108.292480,1011.030273, 1)
-                imgui.TeleportButton("Zero's RC shop", -2240.468505,137.060440,1035.414062, 6)
-                imgui.TeleportButton('Dillimore gas station', 663.836242,-575.605407,16.343263, 0)
-                imgui.TeleportButton("Catigula's basement", 2169.461181,1618.798339,999.976562, 1)
-                imgui.TeleportButton("FDC Janitors room", 1889.953369,1017.438293,31.882812, 10)
-                imgui.TeleportButton("Woozie's office", -2159.122802,641.517517,1052.381713, 1)
-                imgui.TeleportButton("Binco", 207.737991,-109.019996,1005.132812, 15)
-                imgui.TeleportButton("Didier sachs", 204.332992,-166.694992,1000.523437, 14)
-                imgui.TeleportButton("Prolaps", 207.054992,-138.804992,1003.507812, 3)
-                imgui.TeleportButton("Suburban", 203.777999,-48.492397,1001.804687, 1)
-                imgui.TeleportButton("Victim", 226.293991,-7.431529,1002.210937, 5)
-                imgui.TeleportButton("Zip", 161.391006,-93.159156,1001.804687, 18)
-                imgui.TeleportButton("Club", 493.390991,-22.722799,1000.679687, 17)
-                imgui.TeleportButton("Bar", 501.980987,-69.150199,998.757812, 11)
-                imgui.TeleportButton("Lil' probe inn", -227.027999,1401.229980,27.765625, 18)
-                imgui.TeleportButton("Jay's diner", 457.304748,-88.428497,999.554687, 4)
-                imgui.TeleportButton("Gant bridge diner", 454.973937,-110.104995,1000.077209, 5)
-                imgui.TeleportButton("Secret valley diner", 435.271331,-80.958938,999.554687, 6)
-                imgui.TeleportButton("World of coq", 452.489990,-18.179698,1001.132812, 1)
-                imgui.TeleportButton("Welcome pump", 681.557861,-455.680053,-25.609874, 1)
-                imgui.TeleportButton("Burger shot", 375.962463,-65.816848,1001.507812, 10)
-                imgui.TeleportButton("Cluckin' bell", 369.579528,-4.487294,1001.858886, 9)
-                imgui.TeleportButton("Well stacked pizza", 373.825653,-117.270904,1001.499511, 5)
-                imgui.TeleportButton("Rusty browns donuts", 381.169189,-188.803024,1000.632812, 17)
-                imgui.TeleportButton("Denise room", 244.411987,305.032989,999.148437, 1)
-                imgui.TeleportButton("Katie room", 271.884979,306.631988,999.148437, 2)
-                imgui.TeleportButton("Helena room", 291.282989,310.031982,999.148437, 3)
-                imgui.TeleportButton("Michelle room", 302.180999,300.722991,999.14843, 4)
-                imgui.TeleportButton("Barbara room", 322.197998,302.497985,999.14843, 5)
-                imgui.TeleportButton("Millie room", 346.870025,309.259033,999.155700, 6)
-                imgui.TeleportButton("Sherman dam", -959.564392,1848.576782,9.000000, 17)
-                imgui.TeleportButton("Planning dept.", 384.808624,173.804992,1008.382812, 3)
-                imgui.TeleportButton("Area 51", 223.431976,1872.400268,13.734375, 0)
-                imgui.TeleportButton("LS gym", 772.111999,-3.898649,1000.728820, 5)
-                imgui.TeleportButton("SF gym", 774.213989,-48.924297,1000.585937, 6)
-                imgui.TeleportButton("LV gym", 773.579956,-77.096694,1000.655029, 7)
-                imgui.TeleportButton("B Dup's house", 1527.229980,-11.574499,1002.097106, 3)
-                imgui.TeleportButton("B Dup's crack pad", 1523.509887,-47.821197,1002.130981, 2)
-                imgui.TeleportButton("Cj's house", 2496.049804,-1695.238159,1014.742187, 3)
-                imgui.TeleportButton("Madd Doggs mansion", 1267.663208,-781.323242,1091.906250, 5)
-                imgui.TeleportButton("Og Loc's house", 513.882507,-11.269994,1001.565307, 3)
-                imgui.TeleportButton("Ryders house", 2454.717041,-1700.871582,1013.515197, 2)
-                imgui.TeleportButton("Sweet's house", 2527.654052,-1679.388305,1015.498596, 1)
-                imgui.TeleportButton("Crack factory", 2543.462646,-1308.379882,1026.728393, 2)
-                imgui.TeleportButton("Big spread ranch", 1212.019897,-28.663099,1000.953125	, 3)
-                imgui.TeleportButton("Fanny batters", 761.412963,1440.191650,1102.703125, 6)
-                imgui.TeleportButton("Strip club", 1204.809936,-11.586799,1000.921875, 2)
-                imgui.TeleportButton("Strip club private room", 1204.809936,13.897239,1000.921875, 2)
-                imgui.TeleportButton("Unnamed brothel", 942.171997,-16.542755,1000.929687, 3)
-                imgui.TeleportButton("Tiger skin brothel", 964.106994,-53.205497,1001.124572, 3)
-                imgui.TeleportButton("Pleasure domes", -2640.762939,1406.682006,906.460937, 3)
-                imgui.TeleportButton("Liberty city outside", -729.276000,503.086944,1371.971801, 1)
-                imgui.TeleportButton("Liberty city inside", -794.806396,497.738037,1376.195312, 1)
-                imgui.TeleportButton("Gang house", 2350.339843,-1181.649902,1027.976562, 5)
-                imgui.TeleportButton("Colonel Furhberger's", 2807.619873,-1171.899902,1025.570312, 8)
-                imgui.TeleportButton("Crack den", 318.564971,1118.209960,1083.882812, 5)
-                imgui.TeleportButton("Warehouse 1", 1412.639892,-1.787510,1000.924377, 1)
-                imgui.TeleportButton("Warehouse 2", 1302.519897,-1.787510,1001.028259, 18)
-                imgui.TeleportButton("Sweets garage", 2522.000000,-1673.383911,14.866223, 0)
-                imgui.TeleportButton("Lil' probe inn toilet", -221.059051,1408.984008,27.773437, 18)
-                imgui.TeleportButton("Unused safe house", 2324.419921,-1145.568359,1050.710083, 12)
-                imgui.TeleportButton("RC Battlefield", -975.975708,1060.983032,1345.671875, 10)
-                imgui.TeleportButton("Barber 1", 411.625976,-21.433298,1001.804687, 2)
-                imgui.TeleportButton("Barber 2", 418.652984,-82.639793,1001.804687, 3)
-                imgui.TeleportButton("Barber 3", 412.021972,-52.649898,1001.898437, 12)
-                imgui.TeleportButton("Tatoo parlour 1", -204.439987,-26.453998,1002.273437, 16)
-                imgui.TeleportButton("Tatoo parlour 2", -204.439987,-8.469599,1002.273437, 17)
-                imgui.TeleportButton("Tatoo parlour 3", -204.439987,-43.652496,1002.273437, 3)
-                imgui.TeleportButton("LS police HQ", 246.783996,63.900199,1003.640625, 6)
-                imgui.TeleportButton("SF police HQ", 246.375991,109.245994,1003.218750, 10)
-                imgui.TeleportButton("LV police HQ", 288.745971,169.350997,1007.171875, 3)
-                imgui.TeleportButton("Car school", -2029.798339,-106.675910,1035.171875, 3)
-                imgui.TeleportButton("8-Track", -1398.065307,-217.028900,1051.115844, 7)
-                imgui.TeleportButton("Bloodbowl", -1398.103515,937.631164,1036.479125, 15)
-                imgui.TeleportButton("Dirt track", -1444.645507,-664.526000,1053.572998, 4)
-                imgui.TeleportButton("Kickstart", -1465.268676,1557.868286,1052.531250, 14)
-                imgui.TeleportButton("Vice stadium", -1401.829956,107.051300,1032.273437, 1)
-                imgui.TeleportButton("SF Garage", -1790.378295,1436.949829,7.187500, 0)
-                imgui.TeleportButton("LS Garage", 1643.839843,-1514.819580,13.566620, 0)
-                imgui.TeleportButton("SF Bomb shop", -1685.636474,1035.476196,45.210937, 0)
-                imgui.TeleportButton("Blueberry warehouse", 76.632553,-301.156829,1.578125, 0)
-                imgui.TeleportButton("LV Warehouse 1", 1059.895996,2081.685791,10.820312, 0)
-                imgui.TeleportButton("LV Warehouse 2 (hidden part)", 1059.180175,2148.938720,10.820312, 0)
-                imgui.TeleportButton("Catigula's hidden room", 2131.507812,1600.818481,1008.359375, 1)
-                imgui.TeleportButton("Bank", 2315.952880,-1.618174,26.742187, 0)
-                imgui.TeleportButton("Bank (behind desk)", 2319.714843,-14.838361,26.749565, 0)
-                imgui.TeleportButton("LS Atruim", 1710.433715,-1669.379272,20.225049, 18)
-                imgui.TeleportButton("Bike School", 1494.325195,1304.942871,1093.289062, 3)
+            if imgui.CollapsingHeader('/atp', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Открыть меню телепорта')
+                imgui.TextWrapped(u8 'Использование: /atp')
             end
             imgui.End()
         end
         if settingwindows.v then
-            imgui.LockPlayer = true
+            if not reconstate then
+                imgui.LockPlayer = true
+            else
+                imgui.LockPlayer = false
+            end
             imgui.SetNextWindowPos(imgui.ImVec2(screenx / 2, screeny / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(15,6))
             imgui.Begin(u8 'Admin Tools | Настройки', settingwindows, imgui.WindowFlags.NoResize)
             imgui.BeginChild('##set', imgui.ImVec2(200, 400), true)
@@ -1913,43 +2118,38 @@ function imgui.OnDrawFrame()
 			if imgui.Selectable(u8 'Остальные настройки', data.imgui.menu == 5) then data.imgui.menu = 5 end
             imgui.EndChild()
             imgui.SameLine()
-            imgui.BeginChild('##set1', imgui.ImVec2(740, 400), true)
+            imgui.BeginChild('##set1', imgui.ImVec2(840, 400), true)
             if data.imgui.menu == 1 then
-                if imgui.HotKey('##warningkey', config_keys.warningkey, tLastKeys, 100) then
+                if imadd.HotKey('##warningkey', config_keys.warningkey, tLastKeys, 100) then
                     rkeys.changeHotKey(warningbind, config_keys.warningkey.v)
 					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                 end
                 imgui.SameLine(); imgui.Text(u8 'Клавиша перехода по серверным варнингам')
-				if imgui.HotKey('##warningkey1', config_keys.cwarningkey, tLastKeys, 100) then
+				if imadd.HotKey('##warningkey1', config_keys.cwarningkey, tLastKeys, 100) then
                     rkeys.changeHotKey(cwarningbind, config_keys.cwarningkey.v)
 					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                 end
                 imgui.SameLine(); imgui.Text(u8 'Клавиша перехода по клиентским варнингам')
-                if imgui.HotKey('##reportkey', config_keys.reportkey, tLastKeys, 100) then
+                if imadd.HotKey('##reportkey', config_keys.reportkey, tLastKeys, 100) then
                     rkeys.changeHotKey(reportbind, config_keys.reportkey.v)
 					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                 end
                 imgui.SameLine(); imgui.Text(u8 'Клавиша перехода по репорту')
-                if imgui.HotKey('##banipkey', config_keys.banipkey, tLastKeys, 100) then
+                if imadd.HotKey('##banipkey', config_keys.banipkey, tLastKeys, 100) then
                     rkeys.changeHotKey(banipbind, config_keys.banipkey.v)
 					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                 end
                 imgui.SameLine(); imgui.Text(u8 'Клавиша бана IP адреса')
-                if imgui.HotKey('##saveposkey', config_keys.saveposkey, tLastKeys, 100) then
+                if imadd.HotKey('##saveposkey', config_keys.saveposkey, tLastKeys, 100) then
                     rkeys.changeHotKey(saveposbind, config_keys.saveposkey.v)
 					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                 end
                 imgui.SameLine(); imgui.Text(u8 'Клавиша сохранения координат')
-                if imgui.HotKey('##goposkey', config_keys.goposkey, tLastKeys, 100) then
+                if imadd.HotKey('##goposkey', config_keys.goposkey, tLastKeys, 100) then
                     rkeys.changeHotKey(goposbind, config_keys.goposkey.v)
 					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                 end
                 imgui.SameLine(); imgui.Text(u8 'Клавиша телепорта на сохраненные координаты')
-                if imgui.HotKey('##metkatp', config_keys.tpmetka, tLastKeys, 100) then
-                    rkeys.changeHotKey(tpmetkabind, config_keys.tpmetka.v)
-					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
-                end
-                imgui.SameLine(); imgui.Text(u8 'Клавиша телепорта на метку')
             elseif data.imgui.menu == 2 then
                 if data.imgui.cheat == 1 then
 					local airfloat = imgui.ImFloat(cfg.cheat.airbrkspeed)
@@ -1961,20 +2161,20 @@ function imgui.OnDrawFrame()
                     local godModeB = imgui.ImBool(cfg.cheat.autogm)
                     imgui.CentrText(u8 'GodMode')
                     imgui.Separator()
-                    if imgui.ToggleButton(u8 'Включить гмм##11', godModeB) then cfg.cheat.autogm = godModeB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автоматически включать ГМ при входе в игру')
+                    if imadd.ToggleButton(u8 'Включить гмм##11', godModeB) then cfg.cheat.autogm = godModeB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автоматически включать ГМ при входе в игру')
                 elseif data.imgui.cheat == 3 then
                     local whfontb = imgui.ImBuffer(tostring(cfg.other.whfont), 256)
                     local whsizeb = imgui.ImInt(cfg.other.whsize)
                     local skeletwhb = imgui.ImBool(cfg.other.skeletwh)
                     imgui.CentrText(u8 'WallHack')
                     imgui.Separator()
-                    if imgui.ToggleButton(u8 'ВХ по скелетам', skeletwhb) then cfg.other.skeletwh = skeletwhb.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'ВХ по скелетам')
-                    if imgui.HotKey('##whkey', config_keys.whkey, tLastKeys, 100) then
+                    if imadd.ToggleButton(u8 'ВХ по скелетам', skeletwhb) then cfg.other.skeletwh = skeletwhb.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'ВХ по скелетам')
+                    if imadd.HotKey('##whkey', config_keys.whkey, tLastKeys, 100) then
                         rkeys.changeHotKey(whbind, config_keys.whkey.v)
                         saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                     end
                     imgui.SameLine(); imgui.Text(u8 'Включить / выключить ВХ')
-                    if imgui.HotKey('##whskeletkey', config_keys.skeletwhkey, tLastKeys, 100) then
+                    if imadd.HotKey('##whskeletkey', config_keys.skeletwhkey, tLastKeys, 100) then
                         rkeys.changeHotKey(skeletwhbind, config_keys.skeletwhkey.v)
                         saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                     end
@@ -1989,7 +2189,7 @@ function imgui.OnDrawFrame()
                     local admCheckerB = imgui.ImBool(cfg.admchecker.enable)
                     imgui.CentrText(u8 'Чекер админов')
                     imgui.Separator()
-                    if imgui.ToggleButton(u8 'Включить чекер##1', admCheckerB) then cfg.admchecker.enable = admCheckerB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
+                    if imadd.ToggleButton(u8 'Включить чекер##1', admCheckerB) then cfg.admchecker.enable = admCheckerB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
                     if cfg.admchecker.enable then
                         imgui.Text(u8 'Местоположение чекера')
                         imgui.SameLine()
@@ -1999,7 +2199,7 @@ function imgui.OnDrawFrame()
                     local playerCheckerB = imgui.ImBool(cfg.playerChecker.enable)
                     imgui.CentrText(u8 'Чекер игроков')
                     imgui.Separator()
-                    if imgui.ToggleButton(u8 'Включить чекер##2', playerCheckerB) then cfg.playerChecker.enable = playerCheckerB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
+                    if imadd.ToggleButton(u8 'Включить чекер##2', playerCheckerB) then cfg.playerChecker.enable = playerCheckerB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
                     if cfg.playerChecker.enable then
                         imgui.Text(u8 'Местоположение чекера')
                         imgui.SameLine()
@@ -2009,26 +2209,25 @@ function imgui.OnDrawFrame()
 					local tempChetckerB = imgui.ImBool(cfg.tempChecker.enable)
 					imgui.CentrText(u8 'Временный чекер')
 					imgui.Separator()
-					if imgui.ToggleButton(u8 'Включить чекер##3', tempChetckerB) then cfg.tempChecker.enable = tempChetckerB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
+					if imadd.ToggleButton(u8 'Включить чекер##3', tempChetckerB) then cfg.tempChecker.enable = tempChetckerB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
 					if cfg.tempChecker.enable then
 						local tempWarningB = imgui.ImBool(cfg.tempChecker.wadd)
                         imgui.Text(u8 'Местоположение чекера')
                         imgui.SameLine()
                         if imgui.Button(u8 'Изменить##3') then data.imgui.tempcheckpos = true; mainwindow.v = false end
-						if imgui.ToggleButton(u8 'Добавлять в черер игроков по варнингу', tempWarningB) then cfg.tempChecker.wadd = tempWarningB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Добавлять в черер игроков по варнингу')
+						if imadd.ToggleButton(u8 'Добавлять в черер игроков по варнингу', tempWarningB) then cfg.tempChecker.wadd = tempWarningB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Добавлять в черер игроков по варнингу')
                     end
                 elseif data.imgui.checker == 4 then
                     local leaderCheckerB = imgui.ImBool(cfg.leadersChecker.enable)
                     local colornickb = imgui.ImBool(cfg.leadersChecker.cvetnick)
                     imgui.CentrText(u8 'Чекер лидеров')
                     imgui.Separator()
-                    if imgui.ToggleButton(u8 'Включить чекер##4', leaderCheckerB) then cfg.leadersChecker.enable = leaderCheckerB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
+                    if imadd.ToggleButton(u8 'Включить чекер##4', leaderCheckerB) then cfg.leadersChecker.enable = leaderCheckerB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
                     if cfg.leadersChecker.enable then
                         imgui.Text(u8 'Местоположение чекера')
                         imgui.SameLine()
                         if imgui.Button(u8 'Изменить##2') then data.imgui.leadercheckerpos = true; mainwindow.v = false end
-                        if imgui.ToggleButton(u8 'Цвет ника', colornickb) then cfg.leadersChecker.cvetnick = colornickb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Цвет ника в цвет фракции')
-
+                        if imadd.ToggleButton(u8 'Цвет ника', colornickb) then cfg.leadersChecker.cvetnick = colornickb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Цвет ника в цвет фракции')
                     end
                 end
                 imgui.Separator()
@@ -2038,22 +2237,26 @@ function imgui.OnDrawFrame()
 				local sbivb = imgui.ImInt(cfg.timers.sbivtimer)
 				local csbivb = imgui.ImInt(cfg.timers.csbivtimer)
                 local cbugb = imgui.ImInt(cfg.timers.cbugtimer)
+                local mnarkob = imgui.ImInt(cfg.timers.mnarkotimer)
+                local mcbugb = imgui.ImInt(cfg.timers.mcbugtimer)
                 local fracstatb = imgui.ImBool(cfg.other.fracstat)
 				imgui.CentrText(u8 'Настройка выдачи наказаний')
                 imgui.Separator()
-                if imgui.HotKey('##punaccept', config_keys.punaccept, tLastKeys, 100) then
+                if imadd.HotKey('##punaccept', config_keys.punaccept, tLastKeys, 100) then
                     rkeys.changeHotKey(punacceptbind, config_keys.punaccept.v)
 					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                 end
                 imgui.SameLine(); imgui.Text(u8 'Клавиша выдачи наказания по просьбе в /a')
-                if imgui.HotKey('##pundeny', config_keys.pundeny, tLastKeys, 100) then
+                if imadd.HotKey('##pundeny', config_keys.pundeny, tLastKeys, 100) then
                     rkeys.changeHotKey(pundenybind, config_keys.pundeny.v)
 					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
                 end
                 imgui.SameLine(); imgui.Text(u8 'Клавиша отмены выдачи наказания по просьбе в /a')
 				if imgui.InputInt(u8 'Таймер сбива (/sbiv)', sbivb, 0) then cfg.timers.sbivtimer = sbivb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
 				if imgui.InputInt(u8 'Таймер клео сбива (/csbiv)', csbivb, 0) then cfg.timers.csbivtimer = csbivb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
-                if imgui.InputInt(u8 'Таймер +с вне гетто (/cbug)', cbugb, 0) then cfg.timers.cbugtimer = cbugb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.InputInt(u8 'Таймер +C вне гетто (/cbug)', cbugb, 0) then cfg.timers.cbugtimer = cbugb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.InputInt(u8 'Таймер наркотиков в мафии(дни) (/mnarko)', mnarkob, 0) then cfg.timers.mnarkotimer = mnarkob.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.InputInt(u8 'Таймер +C на стреле(дни) (/mcbug)', mcbugb, 0) then cfg.timers.mcbugtimer = mcbugb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 if imgui.Checkbox(u8 'Проверка статистики при warn / ban', fracstatb) then cfg.other.fracstat = fracstatb.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 imgui.TextWrapped(u8 ('Игнор проверки статистики будет происходить, если причина бана равна: %s'):format(table.concat(punishignor, ', ')))
                 imgui.TextWrapped(u8 'Настроить список игнора можно по пути moonloader/config/Admin Tools/punishingor.txt')
@@ -2064,10 +2267,10 @@ function imgui.OnDrawFrame()
 				local iapassb = imgui.ImBool(cfg.other.apassb)
                 local reconwb = imgui.ImBool(cfg.other.reconw)
                 local conschat = imgui.ImBool(cfg.other.chatconsole)
-                local extraignorb = imgui.ImBool(cfg.other.extraignor)
                 local joinquitb = imgui.ImBool(cfg.joinquit.enable)
                 local autoupdateb = imgui.ImBool(cfg.other.autoupdate)
                 local killlistb = imgui.ImBool(cfg.killlist.startenable)
+                local socrmpb = imgui.ImBool(cfg.other.socrpm)
 				local ipass = imgui.ImBuffer(tostring(cfg.other.password), 256)
                 local iapass = imgui.ImBuffer(tostring(cfg.other.adminpass), 256)
                 local hudfontb = imgui.ImBuffer(tostring(cfg.other.hudfont), 256)
@@ -2077,15 +2280,27 @@ function imgui.OnDrawFrame()
                 local delayb = imgui.ImInt(cfg.other.delay)
 				imgui.CentrText(u8 'Остальное')
                 imgui.Separator()
-				if imgui.ToggleButton(u8 'reconw##1', reconwb) then cfg.other.reconw = reconwb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Варнинги на клео реконнект')
-                if imgui.ToggleButton(u8 'Включить замененный рекон##1', creconB) then cfg.crecon.enable = creconB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить замененный рекон')
-				if imgui.ToggleButton(u8 'Автологин##11', ipassb) then cfg.other.passb = ipassb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автологин')
-                if imgui.ToggleButton(u8 'Автоалогин##11', iapassb) then cfg.other.apassb = iapassb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автоалогин')
-                if imgui.ToggleButton(u8 'Чатлог в консоли##11', conschat) then cfg.other.chatconsole = conschat.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Чатлог в консоли')
-                if imgui.ToggleButton(u8 'Игнор варнингов печени на ExtraWS##11', extraignorb) then cfg.other.extraignor = extraignorb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Игнор варнингов печени на ExtraWS') imgui.SameLine() imgui.TextQuestion(u8 'При переходе в рекон по варнингу будет игнорироваться варнинг на Екстру')
-                if imgui.ToggleButton(u8 'joinquit##11', joinquitb) then cfg.joinquit.enable = joinquitb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Лог подключившися/отключивашися игроков')
-                if imgui.ToggleButton(u8 'autoupd##11', autoupdateb) then cfg.other.autoupdate = autoupdateb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автообновление скрипта')
-                if imgui.ToggleButton(u8 'killlist##11', killlistb) then cfg.killlist.startenable = killlistb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Замененный кил-лист при входе в игру')
+				if imadd.ToggleButton(u8 'reconw##1', reconwb) then cfg.other.reconw = reconwb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Варнинги на клео реконнект')
+                if imadd.ToggleButton(u8 'Включить замененный рекон##1', creconB) then cfg.crecon.enable = creconB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить замененный рекон')
+				if imadd.ToggleButton(u8 'Автологин##11', ipassb) then cfg.other.passb = ipassb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автологин')
+                if imadd.ToggleButton(u8 'Автоалогин##11', iapassb) then cfg.other.apassb = iapassb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автоалогин')
+                if imadd.ToggleButton(u8 'Чатлог в консоли##11', conschat) then cfg.other.chatconsole = conschat.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Чатлог в консоли')
+                if imadd.ToggleButton(u8 'joinquit##11', joinquitb) then cfg.joinquit.enable = joinquitb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Лог подключившися/отключивашися игроков')
+                if imadd.ToggleButton(u8 'autoupd##11', autoupdateb) then cfg.other.autoupdate = autoupdateb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автообновление скрипта')
+                if imadd.ToggleButton(u8 'killlist##11', killlistb) then cfg.killlist.startenable = killlistb.v
+                    if cfg.other.socrpm then
+                        registerFastAnswer()
+                    else
+                        for line in io.lines('moonloader/config/Admin Tools/fa.txt') do
+                            local cmd, text = line:match('(.+) = (.+)')
+                            if cmd and text then
+                                if sampIsChatCommandDefined(cmd) then sampUnregisterChatCommand(cmd) end
+                            end
+                        end
+                    end
+                    saveData(cfg, 'moonloader/config/Admin Tools/config.json')
+                end; imgui.SameLine(); imgui.Text(u8 'Замененный кил-лист при входе в игру')
+                if imadd.ToggleButton(u8 'socrpm', socrmpb) then cfg.other.socrpm = socrmpb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Сокращеные команды на ответы (заполнять в файл moonloader/config/Admin Tools/fa.txt команда = текст)')
                 if imgui.InputInt(u8 'Настройка задержки', delayb, 0) then cfg.other.delay = delayb.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 if imgui.Button(u8 'Проверка задержки') then 
                     lua_thread.create(function()
@@ -2139,48 +2354,88 @@ function imgui.OnDrawFrame()
                 imgui.Separator()
                 if imgui.ColorEdit3(u8 'Админ чат', acolor) then
                     config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b = acolor.v[1] * 255, acolor.v[2] * 255, acolor.v[3] * 255
-                    config_colors.admchat.color = string.format("%06X", ARGBtoRGB(join_argb(255, acolor.v[1] * 255, acolor.v[2] * 255, acolor.v[3] * 255)))
+                    config_colors.admchat.color = ARGBtoRGB(join_argb(255, acolor.v[1] * 255, acolor.v[2] * 255, acolor.v[3] * 255))
                     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
                 end
+                imgui.SameLine(650)
+                if imgui.Button(u8 'Пример строки##1') then sampAddChatMessage(" <ADM-CHAT> Thomas_Lawson [0]: Test", join_argb(255, config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b)) end
                 if imgui.ColorEdit3(u8 'Саппорт чат', scolor) then
                     config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b = scolor.v[1] * 255, scolor.v[2] * 255, scolor.v[3] * 255
-                    config_colors.supchat.color = string.format("%06X", ARGBtoRGB(join_argb(255, scolor.v[1] * 255, scolor.v[2] * 255, scolor.v[3] * 255)))
+                    config_colors.supchat.color = ARGBtoRGB(join_argb(255, scolor.v[1] * 255, scolor.v[2] * 255, scolor.v[3] * 255))
                     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
                 end
+                imgui.SameLine(650)
+                if imgui.Button(u8 'Пример строки##2') then sampAddChatMessage(" <SUPPORT-CHAT> Thomas_Lawson [0]: Test", join_argb(255, config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b)) end
                 if imgui.ColorEdit3(u8 'SMS', smscolor) then
                     config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b = smscolor.v[1] * 255, smscolor.v[2] * 255, smscolor.v[3] * 255
-                    config_colors.smschat.color = string.format("%06X", ARGBtoRGB(join_argb(255, smscolor.v[1] * 255, smscolor.v[2] * 255, smscolor.v[3] * 255)))
+                    config_colors.smschat.color = ARGBtoRGB(join_argb(255, smscolor.v[1] * 255, smscolor.v[2] * 255, smscolor.v[3] * 255))
                     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
                 end
+                imgui.SameLine(650)
+                if imgui.Button(u8 'Пример строки##3') then sampAddChatMessage(" SMS: Test. Отправитель: Thomas_Lawson[0]", join_argb(255, config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b)) end
                 if imgui.ColorEdit3(u8 'Жалоба', jbcolor) then
                     config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b = jbcolor.v[1] * 255, jbcolor.v[2] * 255, jbcolor.v[3] * 255
-                    config_colors.jbchat.color = string.format("%06X", ARGBtoRGB(join_argb(255, jbcolor.v[1] * 255, jbcolor.v[2] * 255, jbcolor.v[3] * 255)))
+                    config_colors.jbchat.color = ARGBtoRGB(join_argb(255, jbcolor.v[1] * 255, jbcolor.v[2] * 255, jbcolor.v[3] * 255))
                     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
                 end
+                imgui.SameLine(650)
+                if imgui.Button(u8 'Пример строки##4') then sampAddChatMessage(" Жалоба от Thomas_Lawson[0] на Thomas_Lawson[0]: Test", join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b)) end
                 if imgui.ColorEdit3(u8 'Репорт', repcolor) then
                     config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b = repcolor.v[1] * 255, repcolor.v[2] * 255, repcolor.v[3] * 255
-                    config_colors.repchat.color = string.format("%06X", ARGBtoRGB(join_argb(255, repcolor.v[1] * 255, repcolor.v[2] * 255, repcolor.v[3] * 255)))
+                    config_colors.repchat.color =ARGBtoRGB(join_argb(255, repcolor.v[1] * 255, repcolor.v[2] * 255, repcolor.v[3] * 255))
                     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
                 end
+                imgui.SameLine(650)
+                if imgui.Button(u8 'Пример строки##5') then sampAddChatMessage(" Репорт от Thomas_Lawson[0]: Test", join_argb(255, config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b)) end
                 if imgui.ColorEdit3(u8 'Вопрос', askcolor) then
                     config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b = askcolor.v[1] * 255, askcolor.v[2] * 255, askcolor.v[3] * 255
-                    config_colors.askchat.color = string.format("%06X", ARGBtoRGB(join_argb(255, askcolor.v[1] * 255, askcolor.v[2] * 255, askcolor.v[3] * 255)))
+                    config_colors.askchat.color = ARGBtoRGB(join_argb(255, askcolor.v[1] * 255, askcolor.v[2] * 255, askcolor.v[3] * 255))
                     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
                 end
+                imgui.SameLine(650)
+                if imgui.Button(u8 'Пример строки##6') then sampAddChatMessage(" ->Вопрос Thomas_Lawson[0]: Test", join_argb(255, config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b)) end
                 if imgui.ColorEdit3(u8 'Ответ', anscolor) then
                     config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b = anscolor.v[1] * 255, anscolor.v[2] * 255, anscolor.v[3] * 255
-                    config_colors.anschat.color = string.format("%06X", ARGBtoRGB(join_argb(255, anscolor.v[1] * 255, anscolor.v[2] * 255, anscolor.v[3] * 255)))
+                    config_colors.anschat.color = ARGBtoRGB(join_argb(255, anscolor.v[1] * 255, anscolor.v[2] * 255, anscolor.v[3] * 255))
+                    saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
+                end
+                imgui.SameLine(650)
+                if imgui.Button(u8 'Пример строки##7') then sampAddChatMessage(" Ответ от Thomas_Lawson[0] к Thomas_Lawson[0]: Test", join_argb(255, config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b)) end
+                if imgui.ColorEdit3(u8 'Попадание в игрока (Трейсера)', trhitcolor) then
+                    config_colors.tracehit.r, config_colors.tracehit.g, config_colors.tracehit.b = trhitcolor.v[1] * 255, trhitcolor.v[2] * 255, trhitcolor.v[3] * 255
+                    config_colors.tracehit.color = join_argb(255, trhitcolor.v[1] * 255, trhitcolor.v[2] * 255, trhitcolor.v[3] * 255)
+                    bulletTypes = {
+                        [0] = config_colors.tracemiss.color,
+                        [1] = config_colors.tracehit.color,
+                        [2] = config_colors.tracemiss.color,
+                        [3] = config_colors.tracemiss.color,
+                        [4] = config_colors.tracemiss.color
+                    }
+                    saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
+                end
+                if imgui.ColorEdit3(u8 'Промах (Трейсера)', trmisscolor) then
+                    config_colors.tracemiss.r, config_colors.tracemiss.g, config_colors.tracemiss.b = trmisscolor.v[1] * 255, trmisscolor.v[2] * 255, trmisscolor.v[3] * 255
+                    config_colors.tracemiss.color = join_argb(255, trmisscolor.v[1] * 255, trmisscolor.v[2] * 255, trmisscolor.v[3] * 255)
+                    bulletTypes = {
+                        [0] = config_colors.tracemiss.color,
+                        [1] = config_colors.tracehit.color,
+                        [2] = config_colors.tracemiss.color,
+                        [3] = config_colors.tracemiss.color,
+                        [4] = config_colors.tracemiss.color
+                    }
                     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
                 end
                 if imgui.Button(u8 'Сбросить цвета') then
                     config_colors = {
-                        admchat = {r = 255, g = 255, b = 0, color = "FFFF00"},
-                        supchat = {r = 0, g = 255, b = 153, color = '00FF99'},
-                        smschat = {r = 255, g = 255, b = 0, color = "FFFF00"},
-                        repchat = {r = 217, g = 119, b = 0, color = "D97700"},
-                        anschat = {r = 140, g = 255, b = 155, color = "8CFF9B"},
-                        askchat = {r = 233, g = 165, b = 40, color = "E9A528"},
-                        jbchat = {r = 217, g = 119, b = 0, color = "D97700"}
+                        admchat = {r = 255, g = 255, b = 0, color = 16776960},
+                        supchat = {r = 0, g = 255, b = 153, color = 65433},
+                        smschat = {r = 255, g = 255, b = 0, color = 16776960},
+                        repchat = {r = 217, g = 119, b = 0, color = 14251776},
+                        anschat = {r = 140, g = 255, b = 155, color = 9240475},
+                        askchat = {r = 233, g = 165, b = 40, color = 15312168},
+                        jbchat = {r = 217, g = 119, b = 0, color = 14251776},
+                        tracemiss = {r = 0, g = 0, b = 255, color = -16776961},
+                        tracehit = {r = 255, g = 0, b = 0, color = -65536}
                     }
                     ar, ag, ab = imgui.ImColor(config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b):GetFloat4()
                     acolor = imgui.ImFloat3(ar, ag, ab)
@@ -2196,6 +2451,17 @@ function imgui.OnDrawFrame()
                     repcolor = imgui.ImFloat3(repr, repg, repb)
                     ansr, ansg, ansb = imgui.ImColor(config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b):GetFloat4()
                     anscolor = imgui.ImFloat3(ansr, ansg, ansb)
+                    trhitr, trhitg, trhitb = imgui.ImColor(config_colors.tracehit.r, config_colors.tracehit.g, config_colors.tracehit.b):GetFloat4()
+                    trhitcolor = imgui.ImFloat3(trhitr, trhitg, trhitb)
+                    trmissr, trmissg, trmissb = imgui.ImColor(config_colors.tracemiss.r, config_colors.tracemiss.g, config_colors.tracemiss.b):GetFloat4()
+                    trmisscolor = imgui.ImFloat3(trmissr, trmissg, trmissb)
+                    bulletTypes = {
+                        [0] = config_colors.tracemiss.color,
+                        [1] = config_colors.tracehit.color,
+                        [2] = config_colors.tracemiss.color,
+                        [3] = config_colors.tracemiss.color,
+                        [4] = config_colors.tracemiss.color
+                    }
                     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
                 end
             end
@@ -2215,7 +2481,7 @@ function imgui.OnDrawFrame()
 			imgui.Separator()
 			imgui.BeginChild("##bindlist", imgui.ImVec2(970, 442))
 			for k, v in ipairs(tBindList) do
-				if imgui.HotKey("##HK" .. k, v, tLastKeys, 100) then
+				if imadd.HotKey("##HK" .. k, v, tLastKeys, 100) then
 					if not rkeys.isHotKeyDefined(v.v) then
 						if rkeys.isHotKeyDefined(tLastKeys.v) then
 							rkeys.unRegisterHotKey(tLastKeys.v)
@@ -2298,10 +2564,9 @@ end
 function getFrak(frak)
     if frak == nil then return nil
     else
-        if frak:match('.+ Gang') then
-            frak = frak:match('(.+) Gang')
-        end
+        if frak:match('.+ Gang') then frak = frak:match('(.+) Gang') end
         if frak == 'Russian Mafia' then frak = 'RM' end
+        if frak:match(".+ MC") then frak = frak:match("(.+) MC") end
         return frak
     end
 end
@@ -2810,6 +3075,7 @@ function sampev.onSpectatePlayer(id, type)
     reid = id
     traceid = id
 end
+
 function sampev.onTogglePlayerSpectating(state)
     if not state then
         reid = -1
@@ -2909,7 +3175,6 @@ function sampev.onServerMessage(color, text)
         file:close()
     end
     if text:match('^ Ответ от .+%[%d+%] к .+%[%d+%]:') then
-        local color = '0x'..config_colors.anschat.color..'FF'
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
         for i = 0, 1000 do
             if sampIsPlayerConnected(i) or i == myid then
@@ -2926,10 +3191,9 @@ function sampev.onServerMessage(color, text)
                 end
             end
         end
-        return {color, text} 
+        return {argb_to_rgba(join_argb(255, config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b)), text} 
     end
     if text:match('^ <ADM%-CHAT> .+: .+') then
-        local color = '0x'..config_colors.admchat.color..'FF'
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
         for i = 0, 1000 do
             if sampIsPlayerConnected(i) or i == myid then
@@ -2946,10 +3210,9 @@ function sampev.onServerMessage(color, text)
                 end
             end
         end
-        return {color, text} 
+        return {argb_to_rgba(join_argb(255, config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b)), text}  
     end
     if text:match('^ <SUPPORT%-CHAT> .+: .+') then
-        local color = '0x'..config_colors.supchat.color..'FF'
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
         for i = 0, 1000 do
             if sampIsPlayerConnected(i) or i == myid then
@@ -2966,7 +3229,7 @@ function sampev.onServerMessage(color, text)
                 end
             end
         end
-        return {color, text} 
+        return {argb_to_rgba(join_argb(255, config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b)), text} 
     end
     if masstpon and text:match('^ SMS: .+ Отправитель: .+%[%d+%]$') then
         local smsid = text:match('^ SMS: .+ Отправитель: .+%[(%d+)%]$')
@@ -2976,7 +3239,6 @@ function sampev.onServerMessage(color, text)
         return false
     end
     if text:match('^ SMS:') then
-        local color = '0x'..config_colors.smschat.color..'FF'
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
         for i = 0, 1000 do
             if sampIsPlayerConnected(i) or i == myid then
@@ -2993,10 +3255,9 @@ function sampev.onServerMessage(color, text)
                 end
             end
         end
-        return {color, text} 
+        return {argb_to_rgba(join_argb(255, config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b)), text} 
     end
     if text:match('^ %->Вопрос .+') then
-        local color = '0x'..config_colors.askchat.color..'FF'
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
         for i = 0, 1000 do
             if sampIsPlayerConnected(i) or i == myid then
@@ -3013,7 +3274,7 @@ function sampev.onServerMessage(color, text)
                 end
             end
         end
-        return {color, text} 
+        return {argb_to_rgba(join_argb(255, config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b)), text}  
     end
     if text:match('^ На складе .+ %d+/%d+') and color == -1 then
         local mfrak, mati, ogran = text:match('^ На складе (.+) (%d+)/(%d+)')
@@ -3231,7 +3492,6 @@ function sampev.onServerMessage(color, text)
         if text == ' ' and color == -1 then return false end
     end
     if text:match("^ Жалоба от .+%[%d+%] на .+%[%d+%]%: .+") then
-        local color = '0x'..config_colors.jbchat.color..'FF'
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
         for i = 0, 1000 do
             if sampIsPlayerConnected(i) or i == myid then
@@ -3249,12 +3509,7 @@ function sampev.onServerMessage(color, text)
             end
         end
         reportid = text:match("Жалоба от .+%[%d+%] на .+%[(%d+)%]%: .+")
-        if reportbot and not reconstate then 
-            local color1 = '0x'..config_colors.jbchat.color
-            sampSendChat('/re '..reportid) 
-            sampAddChatMessage(text, color1) 
-        end
-        return {color, text}
+        return {argb_to_rgba(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b)), text} 
     end
     if text:match("Nik %[.+%]  R%-IP %[.+%]  L%-IP %[.+%]  IP %[(.+)%]") and color == -10270806 then
         local nick, rip, ip = text:match("Nik %[(.+)%]  R%-IP %[(.+)%]  L%-IP %[.+%]  IP %[(.+)%]")
@@ -3273,15 +3528,15 @@ function sampev.onServerMessage(color, text)
         local cnick, ccwid = text:match('<Warning> (.+)%[(%d+)%]%: .+')
 		wid = ccwid
         if cfg.tempChecker.wadd then
-            if not checkIntable(temp_checker, cnick) then
-                table.insert(temp_checker_online, {nick = cnick, id = tonumber(ccwid), color = 'ffffff', text = ''})
+            local result, key = checkInTableChecker(temp_checker, cnick)
+            if not result then
                 table.insert(temp_checker, {{nick = cnick, color = 'ffffff', text = ''}})
+                zapolncheck()
             end
 		end
     end
     if text:match('^ Репорт от .+%[%d+%]%:') then
         reportid = text:match('Репорт от .+%[(%d+)%]%:')
-        local color = '0x'..config_colors.repchat.color..'FF'
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
         for i = 0, 1000 do
             if sampIsPlayerConnected(i) or i == myid then
@@ -3298,11 +3553,10 @@ function sampev.onServerMessage(color, text)
                 end
             end
         end
-        return {color, text}
+        return {argb_to_rgba(join_argb(255, config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b)), text} 
     end
     if text:match('^ Жалоба от%: .+%[%d+%]%:') then
         reportid = text:match('Жалоба от%: .+%[(%d+)%]%:')
-        local color = '0x'..config_colors.jbchat.color..'FF'
         local _, myid = sampGetPlayerIdByCharHandle(playerPed)
         for i = 0, 1000 do
             if sampIsPlayerConnected(i) or i == myid then
@@ -3319,7 +3573,7 @@ function sampev.onServerMessage(color, text)
                 end
             end
         end
-        return {color, text}
+        return {argb_to_rgba(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b)), text} 
     end
 	local _, myid = sampGetPlayerIdByCharHandle(playerPed)
     for i = 0, 1000 do
@@ -3506,7 +3760,7 @@ function upd_locals()
 end
 function renders()
     while true do wait(0)
-        if swork then
+        if swork and not isPauseMenuActive() then
             local admrenderPosY = cfg.admchecker.posy
             local playerRenderPosY = cfg.playerChecker.posy
             local tempRenderPosY = cfg.tempChecker.posy
@@ -3792,10 +4046,10 @@ function tr(pam)
         else
             if sampIsPlayerConnected(idd) then
                 if idd == traceid then
-                    atext(('Трейсера для %s [%s] отключены'):format(sampGetPlayerNickname(idd), idd))
+                    atext(('Трейсера для {66FF00}%s [%s]{ffffff} отключены'):format(sampGetPlayerNickname(idd), idd))
                     traceid = -1
                 else
-                    atext(('Трейсера переключены на %s [%s]'):format(sampGetPlayerNickname(idd), idd))
+                    atext(('Трейсера переключены на {66ff00}%s [%s]'):format(sampGetPlayerNickname(idd), idd))
                     traceid = idd
                 end
             else
@@ -3999,9 +4253,7 @@ function warningsKey()
             cwid = wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[(%d+)%] - .+')
         end
         if wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[%d+%] - .+') and wcolor == 4294967295 and wtext:find('ExtraWS') then
-            if not cfg.other.extraignor then
-                cwid = wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[(%d+)%] - .+')
-            end
+            cwid = wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[(%d+)%] - .+')
         end
         if wcolor == 4294911012 and wtext:match('<Warning> {.+}.+%[%d+%]% .+') and not wtext:match("<Warning> {.+}.+%[%d+%] возможно попал сквозь текстуру в {.+}.+%[%d+%] из .+ %(model: %d+%)") then
             cwid = wtext:match('<Warning> {.+}.+%[(%d+)%]% .+')
@@ -4447,12 +4699,6 @@ function getTargetBlipCoordinatesFixed()
     local bool, x, y, z = getTargetBlipCoordinates()
     return bool, x, y, z
 end
-function tpmetkak()
-	local result, x, y, z = getTargetBlipCoordinatesFixed()
-	if result then
-		setCharCoordinates(PLAYER_PED, x, y, z)
-	end
-end
 function distance_cord(lat1, lon1, lat2, lon2)
 	if lat1 == nil or lon1 == nil or lat2 == nil or lon2 == nil or lat1 == "" or lon1 == "" or lat2 == "" or lon2 == "" then
 		return 0
@@ -4484,13 +4730,11 @@ function cip2(pam)
 					sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
 					sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s'):format(math.floor(distances2), rnick), -1)
 				else
-					lua_thread.create(function()
-						sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
-						wait(cfg.other.delay)
-						sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
-						wait(cfg.other.delay)
-						sampSendChat(('/a Расстояние: %s км. | Ник: %s'):format(math.floor(distances2), rnick), -1)
-					end)
+					sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(rdata[1]["country"], rdata[1]["city"], rdata[1]["isp"], rdata[1]["query"]), -1)
+					wait(cfg.other.delay)
+					sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(rdata[2]["country"], rdata[2]["city"], rdata[2]["isp"], rdata[2]["query"]), -1)
+					wait(cfg.other.delay)
+					sampSendChat(('/a Расстояние: %s км. | Ник: %s'):format(math.floor(distances2), rnick), -1)
 				end
 			end
 		end,
@@ -4518,13 +4762,11 @@ function cip(pam)
                     sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(u8:decode(rdata.iptwo.country), u8:decode(rdata.iptwo.city), u8:decode(rdata.iptwo.isp), u8:decode(rdata.iptwo.ip)), -1)
                     sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s %s'):format(math.floor(distances2), rnick, sampGetPlayerIdByNickname(rnick) and '['..sampGetPlayerIdByNickname(rnick)..']' or ''), -1)
                 else
-                    lua_thread.create(function()
-                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(u8:decode(rdata.ipone.country), u8:decode(rdata.ipone.city), u8:decode(rdata.ipone.isp), u8:decode(rdata.ipone.ip)))
-                        wait(cfg.other.delay)
-                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(u8:decode(rdata.iptwo.country), u8:decode(rdata.iptwo.city), u8:decode(rdata.iptwo.isp), u8:decode(rdata.iptwo.ip)))
-                        wait(cfg.other.delay)
-                        sampSendChat(('/a Расстояние: %s км. | Ник: %s %s'):format(math.floor(distances2), rnick, sampGetPlayerIdByNickname(rnick) and '['..sampGetPlayerIdByNickname(rnick)..']' or ''))
-                    end)
+                    sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(u8:decode(rdata.ipone.country), u8:decode(rdata.ipone.city), u8:decode(rdata.ipone.isp), u8:decode(rdata.ipone.ip)))
+                    wait(cfg.other.delay)
+                    sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(u8:decode(rdata.iptwo.country), u8:decode(rdata.iptwo.city), u8:decode(rdata.iptwo.isp), u8:decode(rdata.iptwo.ip)))
+                    wait(cfg.other.delay)
+                    sampSendChat(('/a Расстояние: %s км. | Ник: %s %s'):format(math.floor(distances2), rnick, sampGetPlayerIdByNickname(rnick) and '['..sampGetPlayerIdByNickname(rnick)..']' or ''))
                 end
             else
                 atext('Произошла ошибка проверки IP адресов')
@@ -4547,7 +4789,7 @@ function givehb(pam)
         if id and pack then
             if sampIsPlayerConnected(id) or tonumber(id) == myid then
                 if doesFileExist('moonloader/Admin Tools/hblist/'..pack..'.txt') then
-                    atext('Начата выдача объектов игроку '..sampGetPlayerNickname(id)..' ['..id..']')
+                    atext('Начата выдача объектов игроку {66FF00}'..sampGetPlayerNickname(id)..' ['..id..']')
                     for line in io.lines('moonloader/Admin Tools/hblist/'..pack..'.txt') do
                         sampSendChat('/hbject '..id..' '..line)
                         wait(cfg.other.delay)
@@ -4846,11 +5088,13 @@ function getlvl(pam)
 end
 function hblist()
     local lfs = require 'lfs'
+    local hlist = {}
     for line in lfs.dir('moonloader/Admin Tools/hblist') do
         if line:match('.+.txt') then
-            atext(line)
+            table.insert(hlist, line)
         end
     end
+    sampShowDialog(3213,'Список объектов',table.concat(hlist, "\n"),'x',_,2)
 end
 function admchecker()
     if not doesFileExist('moonloader/config/Admin Tools/adminlist.txt') then io.open('moonloader/config/Admin Tools/adminlist.txt', 'w'):close() end
@@ -4909,404 +5153,421 @@ function admchecker()
     io.open('moonloader/config/Admin Tools/adminlist.txt', 'w'):close()
     io.open('moonloader/config/Admin Tools/playerlist.txt', 'w'):close()
 end
+
 function addplayer(pam)
-    if pam:match('^(%d+) (%S+) (.+)') then
-        local id, color, text = pam:match('^(%d+) (%S+) (.+)')
-        if color == '-1' then color = 'ffffff' end
-        if sampIsPlayerConnected(tonumber(id)) then
-            table.insert(players, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = text})
-            table.insert(players_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = color, text = text})
-            atext(('Игрок %s [%s] добавлен в чекер игроков'):format(sampGetPlayerNickname(tonumber(id)), id))
+    if pam:match("^%s*(%d+)%s*(%S*)%s*(.*)") then
+        local id, color, text = pam:match("(%d+)%s*(%S*)%s*(.*)")
+        if #color > 0 and #color < 6 then text = color ..' '..text end
+        if #color < 6 then color = 'FFFFFF' end
+        if sampIsPlayerConnected(id) then
+            local nick = sampGetPlayerNickname(id)
+            local result, key = checkInTableChecker(players, nick)
+            if result then
+                players[key] = {
+                    nick = nick,
+                    color = color,
+                    text = text
+                }
+                atext("Информация обновлена")
+            else
+                table.insert(players,{nick = nick, color = color, text = text})
+                atext(("Игрок {66FF00}%s [%s]{ffffff} добавлен в чекер игроков"):format(nick, id))
+            end
         else
-            table.insert(players, {nick = id, color = color, text = text})
-            atext(('Игрок %s добавлен в чекер игроков'):format(id))
+            local result, key = checkInTableChecker(players, id)
+            if result then
+                if #text > 0 then
+                    players[key] = {
+                        nick = nick,
+                        color = color,
+                        text = text
+                    }
+                else
+                    players[key] = {
+                        nick = nick,
+                        color = color
+                    }
+                end
+                atext("Информация обновлена")
+            else
+                table.insert(players,{nick = id, color = color, text = text})
+                atext(("Игрок {66FF00}%s{ffffff} добавлен в чекер игроков"):format(id))
+            end
         end
-    elseif pam:match("^(%S+) (%S+)%s(.+)") then
-        local nick, color, text = pam:match("^(%S+) (%S+) (.+)")
-        if color == '-1' then color = 'ffffff' end
+    elseif pam:match("^%s*(%S+)%s*(%S*)%s*(.*)") then
+        local nick, color, text = pam:match("(%S+)%s*(%S*)%s*(.*)")
         local id = sampGetPlayerIdByNickname(nick)
-        table.insert(players, {nick = nick, color = color, text = text})
+        if #color > 0 and #color < 6 then text = color ..' '..text end
+        if #color < 6 then color = 'FFFFFF' end
         if id ~= nil then
-            table.insert(players_online, {nick = nick, id = id, color = color, text = text})
-            atext(('Игрок %s [%s] добавлен в чекер игроков'):format(nick, id))
+            local result, key = checkInTableChecker(players, nick)
+            if result then
+                if #text > 0 then
+                    players[key] = {
+                        nick = nick,
+                        color = color,
+                        text = text
+                    }
+                else
+                    players[key] = {
+                        nick = nick,
+                        color = color
+                    }
+                end
+                atext("Информация обновлена")
+            else
+                table.insert(players,{nick = nick, color = color, text = text})
+                atext(("Игрок {66FF00}%s [%s]{ffffff} добавлен в чекер игроков"):format(nick, id))
+            end
         else
-            atext(('Игрок %s добавлен в чекер игроков'):format(nick))
+            local result, key = checkInTableChecker(players, nick)
+            if result then
+                players[key] = {
+                    nick = nick,
+                    color = color,
+                    text = text
+                }
+                atext("Информация обновлена")
+            else
+                table.insert(players,{nick = nick, color = color, text = text})
+                atext(("Игрок {66FF00}%s{ffffff} добавлен в чекер игроков"):format(nick))
+            end
         end
-    elseif pam:match("^(%d+) (%S+)") then
-        local id, color = pam:match("^(%d+) (%S+)")
-        if color == '-1' then color = 'FFFFFF' end
-        if sampIsPlayerConnected(tonumber(id)) then
-            table.insert(players, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = ''})
-            table.insert(players_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = color, text = ''})
-            atext(('Игрок %s [%s] добавлен в чекер админов'):format(sampGetPlayerNickname(tonumber(id)), id))
-        else
-            table.insert(players, {nick = id, color = color, text = ''})
-            atext(('Игрок %s добавлен в чекер админов'):format(id))
-        end
-    elseif pam:match("^(%S+) (%S+)") then
-        local nick, color = pam:match("^(%S+) (%S+)")
-        local id = sampGetPlayerIdByNickname(nick)
-        if color == '-1' then color = 'ffffff' end
-        table.insert(players, {nick = nick, color = color, text = ''})
-        if id ~= nil then
-            table.insert(players_online, {nick = nick, id = id, color = color, text = ''})
-            atext(('Игрок %s [%s] добавлен в чекер админов'):format(nick, id))
-        else
-            atext(('Игрок %s добавлен в чекер админов'):format(nick))
-        end
-    elseif pam:match("^(%d+)") then
-        local id = pam:match('^(%d+)')
-        if sampIsPlayerConnected(tonumber(id)) then
-            table.insert(players, {nick = sampGetPlayerNickname(tonumber(id)), color = 'ffffff', text = ''})
-            table.insert(players_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = 'ffffff', text = ''})
-            atext(('Игрок %s [%s] добавлен в чекер игроков'):format(sampGetPlayerNickname(tonumber(id)), id))
-        else
-            table.insert(players, {nick = id, color = 'ffffff', text = ''})
-            atext(('Игрок %s добавлен в чекер игроков'):format(id))
-        end
-    elseif pam:match('^(%S+)') then
-        local nick = pam:match('^(%S+)')
-        local id = sampGetPlayerIdByNickname(nick)
-        table.insert(players, {nick = nick, color = 'ffffff', text = ''})
-        if id ~= nil then
-            table.insert(players_online, {nick = nick, id = id, color = 'ffffff', text = ''})
-            atext(('Игрок %s [%s] добавлен в чекер игроков'):format(nick, id))
-        else
-            atext(('Игрок %s добавлен в чекер игроков'):format(nick))
-        end
-    elseif #pam == 0 or not pam:match('^(%S+)') or not pam:match("^(%d+)") or pam:match("^(%d+) (%S+)") or pam:match("^(%S+) (%S+)") or not pam:match("^(%S+) (%S+) (.+)") or not pam:match('^(%d+) (%S+) (.+)') then
+    else
         atext('Введите: /addplayer [id/nick] [color(Пример: ffffff)/-1] [примечание]')
     end
+    zapolncheck()
     saveData(players, 'moonloader/config/Admin Tools/playerchecker.json')
 end
 function addadm(pam)
-    if pam:match('^(%d+) (%S+) (.+)') then
-        local id, color, text = pam:match('^(%d+) (%S+) (.+)')
-        if color == '-1' then color = 'ffffff' end
-        if sampIsPlayerConnected(tonumber(id)) then
-            table.insert(admins, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = text})
-            table.insert(admins_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = color, text = text})
-            atext(('Игрок %s [%s] добавлен в чекер админов'):format(sampGetPlayerNickname(tonumber(id)), id))
+    if pam:match("^%s*(%d+)%s*(%S*)%s*(.*)") then
+        local id, color, text = pam:match("(%d+)%s*(%S*)%s*(.*)")
+        if #color > 0 and #color < 6 then text = color ..' '..text end
+        if #color < 6 then color = 'FFFFFF' end
+        if sampIsPlayerConnected(id) then
+            local nick = sampGetPlayerNickname(id)
+            local result, key = checkInTableChecker(admins, nick)
+            if result then
+                if #text > 0 then
+                    admins[key] = {
+                        nick = nick,
+                        color = color,
+                        text = text
+                    }
+                else
+                    admins[key] = {
+                        nick = nick,
+                        color = color
+                    }
+                end
+                atext("Информация обновлена")
+            else
+                table.insert(admins,{nick = nick, color = color, text = text})
+                atext(("Игрок {66FF00}%s [%s]{ffffff} добавлен в чекер админов"):format(nick, id))
+            end
         else
-            table.insert(admins, {nick = id, color = color, text = text})
-            atext(('Игрок %s добавлен в чекер админов'):format(id))
+            local result, key = checkInTableChecker(admins, id)
+            if result then
+                if #text > 0 then
+                    admins[key] = {
+                        nick = id,
+                        color = color,
+                        text = text
+                    }
+                else
+                    admins[key] = {
+                        nick = id,
+                        color = color
+                    }
+                end
+                atext("Информация обновлена")
+            else
+                table.insert(admins,{nick = id, color = color, text = text})
+                atext(("Игрок {66FF00}%s{ffffff} добавлен в чекер админов"):format(id))
+            end
         end
-    elseif pam:match("^(%S+) (%S+) (.+)") then
-        local nick, color, text = pam:match("^(%S+) (%S+) (.+)")
-        if color == '-1' then color = 'ffffff' end
+    elseif pam:match("^%s*(%S+)%s*(%S*)%s*(.*)") then
+        local nick, color, text = pam:match("(%S+)%s*(%S*)%s*(.*)")
+        if #color > 0 and #color < 6 then text = color ..' '..text end
+        if #color < 6 then color = 'FFFFFF' end
         local id = sampGetPlayerIdByNickname(nick)
-        table.insert(admins, {nick = nick, color = color, text = text})
         if id ~= nil then
-            table.insert(admins_online, {nick = nick, id = id, color = color, text = text})
-            atext(('Игрок %s [%s] добавлен в чекер админов'):format(nick, id))
+            local result, key = checkInTableChecker(admins, nick)
+            if result then
+                admins[key] = {
+                    nick = nick,
+                    color = color,
+                    text = text
+                }
+                atext("Информация обновлена")
+            else
+                table.insert(admins,{nick = nick, color = color, text = text})
+                atext(("Игрок {66FF00}%s [%s]{ffffff} добавлен в чекер админов"):format(nick, id))
+            end
         else
-            atext(('Игрок %s добавлен в чекер админов'):format(nick))
+            local result, key = checkInTableChecker(admins, nick)
+            if result then
+                admins[key] = {
+                    nick = nick,
+                    color = color,
+                    text = text
+                }
+                atext("Информация обновлена")
+            else
+                table.insert(admins,{nick = nick, color = color, text = text})
+                atext(("Игрок {66FF00}%s{ffffff} добавлен в чекер админов"):format(nick))
+            end
         end
-    elseif pam:match("^(%d+) (%S+)") then
-        local id, color = pam:match("^(%d+) (%S+)")
-        if color == '-1' then color = 'FFFFFF' end
-        if sampIsPlayerConnected(tonumber(id)) then
-            table.insert(admins, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = ''})
-            table.insert(admins_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = color, text = ''})
-            atext(('Игрок %s [%s] добавлен в чекер админов'):format(sampGetPlayerNickname(tonumber(id)), id))
-        else
-            table.insert(admins, {nick = id, color = color, text = ''})
-            atext(('Игрок %s добавлен в чекер админов'):format(id))
-        end
-    elseif pam:match("^(%S+) (%S+)") then
-        local nick, color = pam:match("^(%S+) (%S+)")
-        local id = sampGetPlayerIdByNickname(nick)
-        if color == '-1' then color = 'ffffff' end
-        table.insert(admins, {nick = nick, color = color, text = ''})
-        if id ~= nil then
-            table.insert(admins_online, {nick = nick, id = id, color = color, text = ''})
-            atext(('Игрок %s [%s] добавлен в чекер админов'):format(nick, id))
-        else
-            atext(('Игрок %s добавлен в чекер админов'):format(nick))
-        end
-    elseif pam:match("^(%d+)") then
-        local id = pam:match('^(%d+)')
-        if sampIsPlayerConnected(tonumber(id)) then
-            table.insert(admins, {nick = sampGetPlayerNickname(tonumber(id)), color = 'ffffff', text = ''})
-            table.insert(admins_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = 'ffffff', text = ''})
-            atext(('Игрок %s [%s] добавлен в чекер админов'):format(sampGetPlayerNickname(tonumber(id)), id))
-        else
-            table.insert(players, {nick = id, color = 'ffffff', text = ''})
-            atext(('Игрок %s добавлен в чекер админов'):format(id))
-        end
-    elseif pam:match('^(%S+)') then
-        local nick = pam:match('^(%S+)')
-        local id = sampGetPlayerIdByNickname(nick)
-        table.insert(admins, {nick = nick, color = 'ffffff', text = ''})
-        if id ~= nil then
-            table.insert(admins_online, {nick = nick, id = id, color = 'ffffff', text = ''})
-            atext(('Игрок %s [%s] добавлен в чекер админов'):format(nick, id))
-        else
-            atext(('Игрок %s добавлен в чекер админов'):format(nick))
-        end
-    elseif #pam == 0 or not pam:match('^(%S+)') or not pam:match("^(%d+)") or pam:match("^(%d+) (%S+)") or pam:match("^(%S+) (%S+)") or not pam:match("^(%S+) (%S+) (.+)") or not pam:match('^(%d+) (%S+) (.+)') then
+    else
         atext('Введите: /addadm [id/nick] [color(Пример: ffffff)/-1] [примечание]')
     end
+    zapolncheck()
+    saveData(admins, 'moonloader/config/Admin Tools/admchecker.json')
+end
+function deladm(pam)
+    if pam:match("^(%d+)") then
+        local id = pam:match("^(%d+)")
+        if sampIsPlayerConnected(id) or tonumber(id) == select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)) then
+            local nick = sampGetPlayerNickname(id)
+            local result, key = checkInTableChecker(admins, nick)
+            if result then
+                table.remove(admins, key)
+                atext(("Игрок {66FF00}%s [%s]{ffffff} удален из чекера админов"):format(nick, id))
+            else
+                atext(("Игрок {66FF00}%s [%s]{ffffff} не найден в чекере админов"):format(nick, id))
+            end
+        else
+            local result, key = checkInTableChecker(admins, id)
+            if result then
+                table.remove(admins, key)
+                atext(("Игрок {66FF00}%s{ffffff} удален из чекера админов"):format(id))
+            else
+                atext(("Игрок {66FF00}%s{ffffff} не найден в чекере админов"):format(id))
+            end
+        end
+    elseif pam:match("^(%S+)") then
+        local nick = pam:match("^(%S+)")
+        local id = sampGetPlayerIdByNickname(nick)
+        if id ~= nil then
+            local result, key = checkInTableChecker(admins, nick)
+            if result then
+                table.remove(admins, key)
+                atext(("Игрок {66FF00}%s [%s]{ffffff} удален из чекера админов"):format(nick, id))
+            else
+                atext(("Игрок {66FF00}%s [%s]{ffffff} не найден в чекере админов"):format(nick, id))
+            end
+        else
+            local result, key = checkInTableChecker(admins, nick)
+            if result then
+                table.remove(admins, key)
+                atext(("Игрок {66FF00}%s{ffffff} удален из чекера админов"):format(nick))
+            else
+                atext(("Игрок {66FF00}%s{ffffff} не найден в чекере админов"):format(nick))
+            end
+        end
+    else
+        atext('Введите: /deladm [id/nick]')
+    end
+    zapolncheck()
     saveData(admins, 'moonloader/config/Admin Tools/admchecker.json')
 end
 function delplayer(pam)
-    if pam:match("(%d+)") then
-        local id = pam:match("(%d+)")
-        local i = 1
-        local k = 1
-        if sampIsPlayerConnected(tonumber(id)) then
-            local nick = sampGetPlayerNickname(tonumber(id))
-            while i <= #players_online do
-                if players_online[i]['nick'] == nick then
-                    table.remove(players_online, i)
-                else
-                    i = i + 1
-                end
+    if pam:match("^(%d+)") then
+        local id = pam:match("^(%d+)")
+        if sampIsPlayerConnected(id) or tonumber(id) == select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)) then
+            local nick = sampGetPlayerNickname(id)
+            local result, key = checkInTableChecker(players, nick)
+            if result then
+                table.remove(players, key)
+                atext(("Игрок {66FF00}%s [%s]{ffffff} удален из чекера игроков"):format(nick, id))
+            else
+                atext(("Игрок {66FF00}%s [%s]{ffffff} не найден в чекере игроков"):format(nick, id))
             end
-            while k <= #players do
-                if players[k]['nick'] == nick then
-                    table.remove(players, k)
-                else
-                    k = k + 1
-                end
-            end
-            atext(('Игрок %s [%s] удален из чекера игроков'):format(nick, id))
         else
-            local v = 1
-            while v <= #players do
-                if players[v]['nick'] == id then
-                    table.remove(players, v)
-                else
-                    v = v + 1
-                end
+            local result, key = checkInTableChecker(players, id)
+            if result then
+                table.remove(players, key)
+                atext(("Игрок {66FF00}%s{ffffff} удален из чекера игроков"):format(id))
+            else
+                atext(("Игрок {66FF00}%s{ffffff} не найден в чекере игроков"):format(id))
             end
-            atext(('Игрок %s удален из чекера игроков'):format(id))
         end
-    elseif pam:match('(%S+)') then
-        local nick = pam:match('(%S+)')
-        local i = 1
-        local k = 1
+    elseif pam:match("^(%S+)") then
+        local nick = pam:match("^(%S+)")
         local id = sampGetPlayerIdByNickname(nick)
         if id ~= nil then
-            while i <= #players_online do
-                if players_online[i]['nick'] == nick then
-                    table.remove(players_online, i)
-                else
-                    i = i + 1
-                end
-            end
-            atext(('Игрок %s [%s] удален из чекера игроков'):format(nick, id))
-        else
-            atext(('Игрок %s удален из чекера игроков'):format(nick))
-        end
-        while k <= #players do
-            if players[k]['nick'] == nick then
-                table.remove(players, k)
+            local result, key = checkInTableChecker(players, nick)
+            if result then
+                table.remove(players, key)
+                atext(("Игрок {66FF00}%s [%s]{ffffff} удален из чекера игроков"):format(nick, id))
             else
-                k = k + 1
+                atext(("Игрок {66FF00}%s [%s]{ffffff} не найден в чекере игроков"):format(nick, id))
+            end
+        else
+            local result, key = checkInTableChecker(players, nick)
+            if result then
+                table.remove(players, key)
+                atext(("Игрок {66FF00}%s{ffffff} удален из чекера игроков"):format(nick))
+            else
+                atext(("Игрок {66FF00}%s{ffffff} не найден в чекере игроков"):format(nick))
             end
         end
-    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") then
+    else
         atext('Введите: /delplayer [id/nick]')
     end
+    zapolncheck()
     saveData(players, 'moonloader/config/Admin Tools/playerchecker.json')
 end
-function deladm(pam)
-    if pam:match("(%d+)") then
-        local id = pam:match("(%d+)")
-        local i = 1
-        local k = 1
-        if sampIsPlayerConnected(tonumber(id)) then
-            local nick = sampGetPlayerNickname(tonumber(id))
-            while i <= #admins_online do
-                if admins_online[i]['nick'] == nick then
-                    table.remove(admins_online, i)
-                else
-                    i = i + 1
-                end
-            end
-            while k <= #admins do
-                if admins[k]['nick'] == nick then
-                    table.remove(admins, k)
-                else
-                    k = k + 1
-                end
-            end
-            atext(('Игрок %s [%s] удален из чекера админов'):format(nick, id))
-        else
-            local v = 1
-            while v <= #admins do
-                if admins[v]['nick'] == id then
-                    table.remove(admins, v)
-                else
-                    v = v + 1
-                end
-            end
-            atext(('Игрок %s удален из чекера админов'):format(id))
-        end
-    elseif pam:match('(%S+)') then
-        local nick = pam:match('(%S+)')
-        local i = 1
-        local k = 1
-        local id = sampGetPlayerIdByNickname(nick)
-        if id ~= nil then
-            while i <= #admins_online do
-                if admins_online[i]['nick'] == nick then
-                    table.remove(admins_online, i)
-                else
-                    i = i + 1
-                end
-            end
-            atext(('Игрок %s [%s] удален из чекера админов'):format(nick, id))
-        else
-            atext(('Игрок %s удален из чекера админов'):format(nick))
-        end
-        while k <= #admins do
-            if admins[k]['nick'] == nick then
-                table.remove(admins, k)
-            else
-                k = k + 1
-            end
-        end
-    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") then
-        atext('Введите: /deladm [id/nick]')
-    end
-    saveData(admins, 'moonloader/config/Admin Tools/admchecker.json')
-end
 function addtemp(pam)
-    if pam:match('^(%d+) (%S+) (.+)') then
-        local id, color, text = pam:match('^(%d+) (%S+) (.+)')
-        if color == '-1' then color = 'ffffff' end
-        if sampIsPlayerConnected(tonumber(id)) then
-            table.insert(temp_checker, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = text})
-            table.insert(temp_checker_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = color, text = text})
-            atext(('Игрок %s [%s] добавлен в временный чекер'):format(sampGetPlayerNickname(tonumber(id)), id))
+    if pam:match("^%s*(%d+)%s*(%S*)%s*(.*)") then
+        local id, color, text = pam:match("(%d+)%s*(%S*)%s*(.*)")
+        if #color > 0 and #color < 6 then text = color ..' '..text end
+        if #color < 6 then color = 'FFFFFF' end
+        if sampIsPlayerConnected(id) then
+            local nick = sampGetPlayerNickname(id)
+            local result, key = checkInTableChecker(temp_checker, nick)
+            if result then
+                if #text > 0 then
+                    temp_checker[key] = {
+                        nick = nick,
+                        color = color,
+                        text = text
+                    }
+                else
+                    temp_checker[key] = {
+                        nick = nick,
+                        color = color
+                    }
+                end
+                atext("Информация обновлена")
+            else
+                table.insert(temp_checker,{nick = nick, color = color, text = text})
+                atext(("Игрок {66FF00}%s [%s]{ffffff} добавлен в временный чекер"):format(nick, id))
+            end
         else
-            table.insert(temp_checker, {nick = id, color = color, text = text})
-            atext(('Игрок %s добавлен в временный чекер'):format(id))
+            local result, key = checkInTableChecker(temp_checker, id)
+            if result then
+                if #text > 0 then
+                    temp_checker[key] = {
+                        nick = id,
+                        color = color,
+                        text = text
+                    }
+                else
+                    temp_checker[key] = {
+                        nick = nick,
+                        color = color
+                    }
+                end
+                atext("Информация обновлена")
+            else
+                table.insert(temp_checker,{nick = id, color = color, text = text})
+                atext(("Игрок {66FF00}%s{ffffff} добавлен в временный чекер"):format(id))
+            end
         end
-    elseif pam:match("^(%S+) (%S+) (.+)") then
-        local nick, color, text = pam:match("^(%S+) (%S+) (.+)")
+    elseif pam:match("^%s*(%S+)%s*(%S*)%s*(.*)") then
+        local nick, color, text = pam:match("(%S+)%s*(%S*)%s*(.*)")
         local id = sampGetPlayerIdByNickname(nick)
-        table.insert(temp_checker, {nick = nick, color = color, text = text})
+        if #color > 0 and #color < 6 then text = color ..' '..text end
+        if #color < 6 then color = 'FFFFFF' end
         if id ~= nil then
-            table.insert(temp_checker_online, {nick = nick, id = id, color = color, text = text})
-            atext(('Игрок %s [%s] добавлен в временный чекер'):format(nick, id))
+            local result, key = checkInTableChecker(temp_checker, nick)
+            if result then
+                if #text > 0 then
+                    temp_checker[key] = {
+                        nick = nick,
+                        color = color,
+                        text = text
+                    }
+                else
+                    temp_checker[key] = {
+                        nick = nick,
+                        color = color
+                    }
+                end
+                atext("Информация обновлена")
+            else
+                table.insert(temp_checker,{nick = nick, color = color, text = text})
+                atext(("Игрок {66FF00}%s [%s]{ffffff} добавлен в временный чекер"):format(nick, id))
+            end
         else
-            atext(('Игрок %s добавлен в временный чекер'):format(nick))
+            local result, key = checkInTableChecker(temp_checker, nick)
+            if result then
+                if #text > 0 then
+                    temp_checker[key] = {
+                        nick = nick,
+                        color = color,
+                        text = text
+                    }
+                else
+                    temp_checker[key] = {
+                        nick = nick,
+                        color = color
+                    }
+                end
+                atext("Информация обновлена")
+            else
+                table.insert(temp_checker,{nick = nick, color = color, text = text})
+                atext(("Игрок {66FF00}%s{ffffff} добавлен в временный чекер"):format(nick))
+            end
         end
-    elseif pam:match("^(%S+) (%S+)") then
-        local nick, color = pam:match("^(%S+) (%S+)")
-        local id = sampGetPlayerIdByNickname(nick)
-        if color == '-1' then color = 'ffffff' end
-        table.insert(temp_checker, {nick = nick, color = color, text = ''})
-        if id ~= nil then
-            table.insert(temp_checker_online, {nick = nick, id = id, color = color, text = ''})
-            atext(('Игрок %s [%s] добавлен в чекер админов'):format(nick, id))
-        else
-            atext(('Игрок %s добавлен в чекер админов'):format(nick))
-        end
-    elseif pam:match("^(%d+) (%S+)") then
-        local id, color = pam:match('^(%d+) (%S+)')
-        if color == '-1' then color = 'ffffff' end
-        if sampIsPlayerConnected(tonumber(id)) then
-            table.insert(temp_checker, {nick = sampGetPlayerNickname(tonumber(id)), color = color, text = ''})
-            table.insert(temp_checker_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = color, text = ''})
-            atext(('Игрок %s [%s] добавлен в чекер игроков'):format(sampGetPlayerNickname(tonumber(id)), id))
-        else
-            table.insert(temp_checker, {nick = id, color = 'ffffff', text = ''})
-            atext(('Игрок %s добавлен в чекер игроков'):format(id))
-        end
-    elseif pam:match("^(%d+)") then
-        local id = pam:match('^(%d+)')
-        if sampIsPlayerConnected(tonumber(id)) then
-            table.insert(temp_checker, {nick = sampGetPlayerNickname(tonumber(id)), color = 'ffffff', text = ''})
-            table.insert(temp_checker_online, {nick = sampGetPlayerNickname(tonumber(id)), id = id, color = 'ffffff', text = ''})
-            atext(('Игрок %s [%s] добавлен в временный чекер'):format(sampGetPlayerNickname(tonumber(id)), id))
-        else
-            table.insert(players, {nick = id, color = 'ffffff', text = ''})
-            atext(('Игрок %s добавлен в временный чекер'):format(id))
-        end
-    elseif pam:match('^(%S+)') then
-        local nick = pam:match('^(%S+)')
-        local id = sampGetPlayerIdByNickname(nick)
-        table.insert(temp_checker, {nick = nick, color = 'ffffff', text = ''})
-        if id ~= nil then
-            table.insert(temp_checker_online, {nick = nick, id = id, color = 'ffffff', text = ''})
-            atext(('Игрок %s [%s] добавлен в временный чекер'):format(nick, id))
-        else
-            atext(('Игрок %s добавлен в временный чекер'):format(nick))
-        end
-    elseif #pam == 0 or not pam:match('^(%S+)') or not pam:match("^(%d+)") or pam:match("^(%d+) (%S+)") or pam:match("^(%S+) (%S+)") or not pam:match("^(%S+) (%S+) (.+)") or not pam:match('^(%d+) (%S+) (.+)') then
+    else
         atext('Введите: /addtemp [id/nick] [color(Пример: ffffff)/-1] [примечание]')
     end
+    zapolncheck()
 end
 function deltemp(pam)
-    if pam:match("(%d+)") then
-        local id = pam:match("(%d+)")
-        local i = 1
-        local k = 1
-        if sampIsPlayerConnected(tonumber(id)) then
-            local nick = sampGetPlayerNickname(tonumber(id))
-            while i <= #temp_checker_online do
-                if temp_checker_online[i]['nick'] == nick then
-                    table.remove(temp_checker_online, i)
-                else
-                    i = i + 1
-                end
+    if pam:match("^(%d+)") then
+        local id = pam:match("^(%d+)")
+        if sampIsPlayerConnected(id) or tonumber(id) == select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)) then
+            local nick = sampGetPlayerNickname(id)
+            local result, key = checkInTableChecker(temp_checker, nick)
+            if result then
+                table.remove(temp_checker, key)
+                atext(("Игрок {66FF00}%s [%s]{ffffff} удален из временного чекера"):format(nick, id))
+            else
+                atext(("Игрок {66FF00}%s [%s]{ffffff} не найден в временном чекере"):format(nick, id))
             end
-            while k <= #temp_checker do
-                if temp_checker[k]['nick'] == nick then
-                    table.remove(temp_checker, k)
-                else
-                    k = k + 1
-                end
-            end
-            atext(('Игрок %s [%s] удален из временного чекера'):format(nick, id))
         else
-            local v = 1
-            while v <= #temp_checker do
-                if temp_checker[v]['nick'] == id then
-                    table.remove(temp_checker, v)
-                else
-                    v = v + 1
-                end
+            local result, key = checkInTableChecker(temp_checker, id)
+            if result then
+                table.remove(temp_checker, key)
+                atext(("Игрок {66FF00}%s{ffffff} удален из временного чекера"):format(id))
+            else
+                atext(("Игрок {66FF00}%s{ffffff} не найден в временном чекере"):format(id))
             end
-            atext(('Игрок %s удален из временного чекера'):format(id))
         end
-    elseif pam:match('(%S+)') then
-        local nick = pam:match('(%S+)')
-        local i = 1
-        local k = 1
+    elseif pam:match("^(%S+)") then
+        local nick = pam:match("^(%S+)")
         local id = sampGetPlayerIdByNickname(nick)
         if id ~= nil then
-            while i <= #temp_checker_online do
-                if temp_checker_online[i]['nick'] == nick then
-                    table.remove(temp_checker_online, i)
-                else
-                    i = i + 1
-                end
-            end
-            atext(('Игрок %s [%s] удален из временного чекера'):format(nick, id))
-        else
-            atext(('Игрок %s удален из временного чекера'):format(nick))
-        end
-        while k <= #temp_checker do
-            if temp_checker[k]['nick'] == nick then
-                table.remove(temp_checker, k)
+            local result, key = checkInTableChecker(temp_checker, nick)
+            if result then
+                table.remove(temp_checker, key)
+                atext(("Игрок {66FF00}%s [%s]{ffffff} удален из временного чекера"):format(nick, id))
             else
-                k = k + 1
+                atext(("Игрок {66FF00}%s [%s]{ffffff} не найден в временном чекере"):format(nick, id))
+            end
+        else
+            local result, key = checkInTableChecker(temp_checker, nick)
+            if result then
+                table.remove(temp_checker, key)
+                atext(("Игрок {66FF00}%s{ffffff} удален из временного чекера"):format(nick))
+            else
+                atext(("Игрок {66FF00}%s{ffffff} не найден в временном чекере"):format(nick))
             end
         end
-    elseif #pam == 0 or not pam:match('(%S+)') or not pam:match("(%d+)") then
+    else
         atext('Введите: /deltemp [id/nick]')
     end
+    zapolncheck()
 end
 function admchat()
     while true do wait(0)
         local wtext, wprefix, wcolor, wpcolor = sampGetChatString(99)
         local mynick = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
-        if wcolor == 4294967040 and wtext:match('^ <ADM%-CHAT> .+ %[%d+%]: .+') then
+        local w1color = ("%06X"):format(bit.band(wcolor, 0xFFFFFF))
+        if string.rlower(w1color) == string.match(bit.tohex(config_colors.admchat.color), '00(.+)') and wtext:match('^ <ADM%-CHAT> .+ %[%d+%]: .+') then
             local nick, id, text = wtext:match('^ <ADM%-CHAT> (.+) %[(%d+)%]: (.+)')
             if cfg.other.admlvl > 1 and nick ~= mynick then
                 if text:match('^re %d+') or text:match('^/re %d+') then
@@ -5334,7 +5595,6 @@ function admchat()
                         if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('ban (%d+) .+')))) then
                             punkey.ban.id, punkey.ban.reason = text:match('ban (%d+) (.+)')
                             punkey.ban.admin = nick
-
                             atext(("Администратор %s [%s] хочет забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.ban.id), punkey.ban.id, punkey.ban.reason))
                             atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
                         end
@@ -5508,7 +5768,7 @@ function ml(pam)
     if pam:match("^(%d+) (%d+)") then
         local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
         local id, frak = pam:match("^(%d+) (%d+)")
-        if sampIsPlayerConnected(tonumber(id)) or tonumber(id) == myid then
+        if sampIsPlayerConnected(id) or tonumber(id) == myid then
             sampSendChat(('/makeleader %s %s'):format(id, frak))
         else
             atext('Игрок оффлайн')
@@ -5516,7 +5776,7 @@ function ml(pam)
     elseif pam:match("^(%d+)") then
         local id = pam:match("^(%d+)")
         local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
-        if sampIsPlayerConnected(tonumber(id)) or tonumber(id) == myid then
+        if sampIsPlayerConnected(id) or tonumber(id) == myid then
             lua_thread.create(function()
                 sampShowDialog(23145,("{ffffff}Выдача лидерки игроку: {66FF00}%s [%s]"):format(sampGetPlayerNickname(tonumber(id)), id),'LSPD\nFBI\nSFA\nLCN\nYakuza\nMayor\nSFN\nSFPD\nInstructors\nBallas\nVagos\nRM\nGrove\nLSN\nAztec\nRifa\nLVA\nLVN\nLVPD\nHospital\nMongols\nWarlocks\nPagans','»','x',2)
                 while sampIsDialogActive(23145) do wait(0) end
@@ -5584,7 +5844,7 @@ function gip(pam)
     local id = tonumber(pam)
     if #pam ~= 0 then
         if id ~= nil then
-            if sampIsPlayerConnected(id) then
+            if sampIsPlayerConnected(id) or id == select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)) then
                 sampSendChat('/getip '..sampGetPlayerNickname(id))
             else
                 sampSendChat('/agetip ' ..id)
@@ -5605,7 +5865,7 @@ end
 function aunv(pam)
     local id, reason = pam:match("(%d+) (.+)")
     if id and reason then
-        if sampIsPlayerConnected(tonumber(id)) then
+        if sampIsPlayerConnected(tonumber(id)) or tonumber(id) == select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)) then
             sampSendChat(("/auninvite %s %s"):format(id, reason))
         else
             atext("Игрок оффлайн")
@@ -5655,4 +5915,67 @@ function autoal()
         while not sampIsLocalPlayerSpawned() do wait(0) end
         sampSendChat('/alogin')
     end)
+end
+function zapolncheck()
+    admins_online = {}
+    players_online = {}
+    leader_checker_online = {}
+    temp_checker_online = {}
+    for k, v in ipairs(admins) do
+		local id = sampGetPlayerIdByNickname(v['nick'])
+		if id ~= nil then
+			table.insert(admins_online, {nick = v['nick'], id = id, color = v['color'], text = v['text']})
+		end
+    end
+    for k, v in ipairs(players) do
+		local id = sampGetPlayerIdByNickname(v['nick'])
+		if id ~= nil then
+			table.insert(players_online, {nick = v['nick'], id = id, color = v['color'], text = v['text']})
+		end
+    end
+    for k, v in pairs(leaders) do
+        local id = sampGetPlayerIdByNickname(leaders[k])
+        if id ~= nil then
+            table.insert(leader_checker_online, {nick = leaders[k], id = id, frak = k})
+        end
+    end
+    for k, v in ipairs(temp_checker) do
+        local id = sampGetPlayerIdByNickname(v['nick'])
+		if id ~= nil then
+			table.insert(temp_checker_online, {nick = v['nick'], id = id, color = v['color'], text = v['text']})
+		end
+    end
+end
+
+function checkInTableChecker(table, nick)
+    for k, v in ipairs(table) do
+        if table[k]['nick'] == nick then return true, k end
+    end
+    return false, -1
+end
+function mnarko(pam)
+    local id = tonumber(pam)
+    local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
+    if id ~= nil then
+        if sampIsPlayerConnected(id) or id == myid then
+            sampSendChat(("/addabl %s %s 4 Наркотики в мафии"):format(id, cfg.timers.mnarkotimer))
+        else
+            atext('Игрок оффлайн')
+        end
+    else
+        atext("Введите: /mnarko [id]")
+    end
+end
+function mcbug(pam)
+    local id = tonumber(pam)
+    local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
+    if id ~= nil then
+        if sampIsPlayerConnected(id) or id == myid then
+            sampSendChat(("/addabl %s %s 4 +C на стреле"):format(id, cfg.timers.mcbugtimer))
+        else
+            atext('Игрок оффлайн')
+        end
+    else
+        atext("Введите: /mcbug [id]")
+    end
 end
