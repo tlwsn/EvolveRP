@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('1.999999997')
+script_version('1.999999998')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -36,6 +36,9 @@ local leadwindow = imgui.ImBool(false)
 local arul = imgui.ImBool(false)
 local mpend = imgui.ImBool(false)
 local tunwindow = imgui.ImBool(false)
+local tpname = imgui.ImBuffer(256)
+local tpcoords = imgui.ImInt3(0, 0, 0)
+local newtpname = imgui.ImBuffer(256)
 local mpname = imgui.ImBuffer(256)
 local mpsponsors = imgui.ImBuffer(256)
 local mpwinner = imgui.ImBuffer(256)
@@ -139,6 +142,7 @@ local config_keys = {
     skeletwhkey = {v = {16, 72}},
     airbrkkey = {v = key.VK_RSHIFT}
 }
+local tplist = {}
 local config_colors = {
     admchat = {r = 255, g = 255, b = 0, color = 16776960},
     supchat = {r = 0, g = 255, b = 153, color = 65433},
@@ -159,6 +163,102 @@ local quitReason = {
     'Кик/Бан',
     'Тайм-аут'
 }
+
+local recon = {
+    {
+        name = 'Change',
+        onclick = function() atext("change") end
+    },
+    {
+        name = "Check »",
+        onclick = {
+            {
+                name = 'Check-GM',
+                onclick = function() atext("check-gm") end
+            },
+            {
+                name = 'Check-GM2',
+                onclick = function() atext("check-gm2") end
+            },
+            {
+                name = 'Check-GMCar',
+                onclick = function() atext("check-gmcar") end
+            },
+            {
+                name = 'ResetShot',
+                onclick = function() atext("resetshot") end
+            }
+        }
+    },
+    {
+        name = 'Drop »',
+        onclick = {
+            {
+                name = 'Mute',
+                onclick = function() atext("mute") end
+            },
+            {
+                name = "Slap",
+                onclick = function() atext("Slap") end
+            },
+            {
+                name = "Prison",
+                onclick = function() atext("prison") end
+            },
+            {
+                name = 'Freeze',
+                onclick = function() atext("freeze") end
+            },
+            {
+                name = 'UnFreeze',
+                onclick = function() atext("unfreeze") end
+            }
+        }
+    },
+    {
+        name = "Kick »",
+        onclick = {
+            {
+                name = "SKick",
+                onclick = function() atext("skick") end
+            },
+            {
+                name = 'Kick',
+                onclick = function() atext("kick") end
+            }
+        }
+    },
+    {
+        name = "Warn",
+        onclick = function() atext("warn") end
+    },
+    {
+        name = "Ban »",
+        onclick = {
+            {
+                name = 'Ban',
+                onclick = function() atext("ban") end
+            },
+            {
+                name = "SBan",
+                onclick = function() atext("sban") end
+            },
+            {
+                name = 'IBan',
+                onclick = function() atext("iban") end
+            }
+        }
+    },
+    {
+        name = "Refresh",
+        onclick = function() atext("refresh") end
+    },
+    {
+        name = 'Exit',
+        onclick = function() atext("exit") end
+    }
+}
+
 local frakrang = {
     Mayor = {
         rang_5 = 15,
@@ -427,6 +527,220 @@ local cfg = {
         delay = 1200,
         skeletwh = true,
         socrpm = false
+    }
+}
+local fraklist = {
+    POLICE = {
+        [1] = 'Кадет',
+        [2] = 'Офицер',
+        [3] = 'Мл.Сержант',
+        [4] = 'Сержант',
+        [5] = 'Прапорщик',
+        [6] = 'Ст.Прапорщик',
+        [7] = 'Мл.Лейтенант',
+        [8] = 'Лейтенант',
+        [9] = 'Ст.Лейтенант',
+        [10] = 'Капитан',
+        [11] = 'Майор',
+        [12] = 'Подполковник',
+        [13] = 'Полковник',
+        [14] = 'Шериф'
+    },
+    FBI = {
+        [1] = 'Стажёр',
+        [2] = 'Дежурный',
+        [3] = 'Мл.Агент',
+        [4] = 'Агент DEA',
+        [5] = 'Агент CID',
+        [6] = 'Глава DEA',
+        [7] = 'Глава CID',
+        [8] = 'Инспектор FBI',
+        [9] = 'Зам.Директора FBI',
+        [10] = 'Директор FBI'
+    },
+    ARMY = {
+        [1] = 'Рядовой',
+        [2] = 'Ефрейтор',
+        [3] = 'Мл.Сержант',
+        [4] = 'Сержант',
+        [5] = 'Ст.Сержант',
+        [6] = 'Старшина',
+        [7] = 'Прапорщик',
+        [8] = 'Мл.Лейтенант',
+        [9] = 'Лейтенант',
+        [10] = 'Ст.Лейтенант',
+        [11] = 'Капитан',
+        [12] = 'Майор',
+        [13] = 'Подполковник',
+        [14] = 'Полковник',
+        [15] = 'Генерал'
+    },
+    LCN = {
+        [1] = 'Новицио',
+        [2] = 'Ассосиато',
+        [3] = 'Сомбаттенте',
+        [4] = 'Солдато',
+        [5] = 'Боец',
+        [6] = 'Сотто-Капо',
+        [7] = 'Капо',
+        [8] = 'Младший Босс',
+        [9] = 'Консильери',
+        [10] = 'Дон'
+    },
+    YAKUZA = {
+        [1] = 'Вакасю',
+        [2] = 'Сятей',
+        [3] = 'Кедай',
+        [4] = 'Фуку-Комбуте',
+        [5] = 'Вагакасира',
+        [6] = 'Со-Хомбуте',
+        [7] = 'Камбу',
+        [8] = 'Сайко-Комон',
+        [9] = 'Оядзи',
+        [10] = 'Кумите'
+    },
+    MAYOR = {
+        [1] = 'Секретарь',
+        [2] = 'Охранник',
+        [3] = 'Адвокат',
+        [4] = 'Начальник охраны',
+        [5] = 'Зам. Мэра',
+        [6] = 'Мэр'
+    },
+    NEWS = {
+        [1] = 'Стажер',
+        [2] = 'Звукооператор',
+        [3] = 'Звукорежиссер',
+        [4] = 'Репортер',
+        [5] = 'Ведущий',
+        [6] = 'Редактор',
+        [7] = 'Гл.Редактор',
+        [8] = 'Тех.Директор',
+        [9] = 'Програмный директор',
+        [10] = 'Ген.Директор'
+    },
+    SFPD = {
+        [1] = 'Кадет',
+        [2] = 'Офицер',
+        [3] = 'Мл.Сержант',
+        [4] = 'Сержант',
+        [5] = 'Прапорщик',
+        [6] = 'Ст.Прапорщик',
+        [7] = 'Мл.Лейтенант',
+        [8] = 'Лейтенант',
+        [9] = 'Ст.Лейтенант',
+        [10] = 'Капитан',
+        [11] = 'Майор',
+        [12] = 'Подполковник',
+        [13] = 'Полковник',
+        [14] = 'Шериф'
+    },
+    АШ = {
+        [1] = 'Стажёр',
+        [2] = 'Консультант',
+        [3] = 'Экзаменатор',
+        [4] = 'Мл.Инструктор',
+        [5] = 'Инструктор',
+        [6] = 'Координатор',
+        [7] = 'Мл.Менеджер',
+        [8] = 'Ст.Менеджер',
+        [9] = 'Директор',
+        [10] = 'Управляющий'
+    },
+    BALLAS = {
+        [1] = 'Блайд',
+        [2] = 'Младший Нига',
+        [3] = 'Крэкер',
+        [4] = 'Гун брo',
+        [5] = 'Ап Бро',
+        [6] = 'Гангстер',
+        [7] = 'Федерал Блок',
+        [8] = 'Фолкс',
+        [9] = 'Райч Нига',
+        [10] = 'Биг Вилли'
+    },
+    VAGOS = {
+        [1] = 'Новатто',
+        [2] = 'Ординарио',
+        [3] = 'Локал',
+        [4] = 'Верификадо',
+        [5] = 'Бандито',
+        [6] = 'V.E.G',
+        [7] = 'Ассесино',
+        [8] = 'Лидер V.E.G',
+        [9] = 'Падрино',
+        [10] = 'Падре'
+    },
+    RM = {
+        [1] = 'Шнырь',
+        [2] = 'Фраер',
+        [3] = 'Бык',
+        [4] = 'Барыга',
+        [5] = 'Блатной',
+        [6] = 'Свояк',
+        [7] = 'Браток',
+        [8] = 'Вор',
+        [9] = 'Вор в законе',
+        [10] = 'Авторитер'
+    },
+    GROVE = {
+        [1] = 'Плейа',
+        [2] = 'Хастла',
+        [3] = 'Килла',
+        [4] = 'Йонг',
+        [5] = 'Гангста',
+        [6] = 'О.Г.',
+        [7] = 'Мобста',
+        [8] = 'Де Кинг',
+        [9] = 'Легенд',
+        [10] = 'Мэд Дог'
+    },
+    AZTEC = {
+        [1] = 'Перро',
+        [2] = 'Тирадор',
+        [3] = 'Геттор',
+        [4] = 'Лас Герас',
+        [5] = 'Мирандо',
+        [6] = 'Сабио',
+        [7] = 'Инвасор',
+        [8] = 'Тесореро',
+        [9] = 'Нестро',
+        [10] = 'Падре'
+    },
+    RIFA = {
+        [1] = 'Новато',
+        [2] = 'Ладрон',
+        [3] = 'Амиго',
+        [4] = 'Мачо',
+        [5] = 'Джуниор',
+        [6] = 'Эрмано',
+        [7] = 'Бандидо',
+        [8] = 'Ауторидад',
+        [9] = 'Аджунто',
+        [10] = 'Падре'
+    },
+    MEDIC = {
+        [1] = 'Интерн',
+        [2] = 'Санитар',
+        [3] = 'Мед.Брат',
+        [4] = 'Спасатель',
+        [5] = 'Нарколог',
+        [6] = 'Доктор',
+        [7] = 'Психолог',
+        [8] = 'Хирург',
+        [9] = 'Зам.Глав.Врача',
+        [10] = 'Глав.Врач'
+    },
+    BIKERS = {
+        [1] = 'Support', 
+        [2] = 'Hang around',
+        [3] = 'Prospect',
+        [4] = 'Member',
+        [5] = 'Road captain',
+        [6] = 'Sergeant-at-arms',
+        [7] = 'Treasurer',
+        [8] = 'Вице президент',
+        [9] = 'Президент'
     }
 }
 local ID = {
@@ -1052,7 +1366,24 @@ function main()
         end
     end
     saveData(cfg, 'moonloader/config/Admin Tools/config.json')
-    if cfg.killlist.startenable then killlistmode = 1 end
+    if not doesFileExist("moonloader/config/Admin Tools/tplist.json") then
+        io.open('moonloader/config/Admin Tools/tplist.json', 'w'):close()
+    else
+        local file = io.open('moonloader/config/Admin Tools/tplist.json', 'r')
+        if file then
+            tplist = decodeJson(file:read('*a'))
+        end
+    end
+    saveData(tplist, "moonloader/config/Admin Tools/tplist.json")
+    if not doesFileExist("moonloader/config/Admin Tools/fraklist.json") then
+        io.open('moonloader/config/Admin Tools/fraklist.json', 'w'):close()
+    else
+        local file = io.open('moonloader/config/Admin Tools/fraklist.json', 'r')
+        if file then
+            fraklist = decodeJson(file:read('*a'))
+        end
+    end
+    saveData(fraklist, "moonloader/config/Admin Tools/fraklist.json")
     if not doesFileExist('moonloader/config/Admin Tools/punishignor.txt') then
         local file = io.open('moonloader/config/Admin Tools/punishignor.txt', 'w')
         file:write('1\n!\ndmg')
@@ -1061,6 +1392,7 @@ function main()
     for line in io.lines('moonloader/config/Admin Tools/punishignor.txt') do table.insert(punishignor, line) end
     DWMAPI.DwmEnableComposition(1)
     repeat wait(0) until isSampAvailable()
+    if cfg.killlist.startenable then killlistmode = 1 end
     local prt = {}
     local prcheck = 0
     asyncHttpRequest("GET", "https://raw.githubusercontent.com/WhackerH/EvolveRP/master/apr.txt", _, function (response)
@@ -1113,9 +1445,11 @@ function main()
         end
         print("Список админов был успешно загружен")
         print(("Список админов:\n%s"):format(table.concat(adminslist, '\n')))
+        admload = true
     end,
     function (err)
         print("Не удалось загрузить список админов")
+        admload = true
     end)
     sampRegisterChatCommand("gpc", function()
         local cx, cy = getCursorPos()
@@ -1123,6 +1457,7 @@ function main()
         atext(("X: %s | Y: %s"):format(cx, cy))
         setClipboardText(("%s, %s"):format(cx, cy))
     end)
+    sampRegisterChatCommand("ranks", ranks)
     sampRegisterChatCommand("atp", function() tpwindow.v = not tpwindow.v end)
     sampRegisterChatCommand("arules", function() arul.v = not arul.v end)
     sampRegisterChatCommand('mnarko', mnarko)
@@ -1414,7 +1749,7 @@ function main()
                     local fx, fy, fz = calcScreenCoors(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)]]
                     local sx, sy, sz = transform2d(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
                     local fx, fy, fz = transform2d(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)
-					if sz > 0 and fz > 0 then
+                    if sz > 0 and fz > 0 then
 						renderDrawLine(sx, sy, fx, fy, 1, bulletTypes[BulletSync[i].tType])
                         renderDrawPolygon(fx, fy-1, 3, 3, 4.0, 10, bulletTypes[BulletSync[i].tType])
 					end
@@ -1502,6 +1837,7 @@ function imgui.TeleportButton(text, coordx, coordy, coordz, interior)
         setCharCoordinates(PLAYER_PED, coordx, coordy, coordz)
         setCharInterior(PLAYER_PED, interior)
         setInteriorVisible(interior)
+        sampSendInteriorChange(interior)
     end
 end
 function imgui.CentrText(text)
@@ -1572,8 +1908,8 @@ function imgui.OnDrawFrame()
     local ir, ig, ib, ia = rainbow(1, 1)
     if tpwindow.v then
         imgui.ShowCursor = true
-        imgui.SetNextWindowPos(imgui.ImVec2(screenx/2+350, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-        imgui.SetNextWindowSize(imgui.ImVec2(300, 300), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowPos(imgui.ImVec2(screenx/2+400, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+        imgui.SetNextWindowSize(imgui.ImVec2(500, 300), imgui.Cond.FirstUseEver)
         imgui.Begin(u8 'Admin Tools | Телепорты', tpwindow)
         if imgui.CollapsingHeader(u8 'Общественные места') then
             imgui.TeleportButton('Автовокзал ЛС', 1154.2769775391, -1756.1109619141, 13.634266853333, 0)
@@ -1744,6 +2080,53 @@ function imgui.OnDrawFrame()
             imgui.TeleportButton("LS Atruim", 1710.433715,-1669.379272,20.225049, 18)
             imgui.TeleportButton("Bike School", 1494.325195,1304.942871,1093.289062, 3)
         end
+        if imgui.CollapsingHeader(u8 'Сохраненные места') then
+            for k, v in ipairs(tplist) do
+                imgui.TeleportButton(v['text']..'##'..k, v['coords'][1], v['coords'][2], v['coords'][3], 0)
+                if imgui.BeginPopupContextItem("##menu"..k) then
+                    if imgui.Button(u8 'Удалить##'..k) then
+                        table.remove(tplist, k)
+                        saveData(tplist, "moonloader/config/Admin Tools/tplist.json")
+                    end
+                    if imgui.Button(u8 'Переименовать##'..k) then imgui.OpenPopup("##rename"..k) end
+                    --imgui.SetNextWindowSize(imgui.ImVec2(300, 100))
+                    if imgui.BeginPopupModal('##rename'..k, _, imgui.WindowFlags.AlwaysAutoResize) then
+                        imgui.InputText(u8 'Введите новое название', newtpname)
+                        if imgui.Button(u8 'Изменить##'..k) then
+                            v['text'] = u8:decode(newtpname.v)
+                            newtpname.v = ''
+                            saveData(tplist, "moonloader/config/Admin Tools/tplist.json")
+                            imgui.CloseCurrentPopup()
+                        end
+                        imgui.SameLine()
+                        if imgui.Button(u8 'Отмена##'..k) then
+                            imgui.CloseCurrentPopup()
+                        end
+                        imgui.EndPopup()
+                    end
+                    imgui.EndPopup()
+                end
+            end
+            imgui.Separator()
+            imgui.PushItemWidth(100)
+            imgui.InputText(u8 'Название телепорта', tpname)
+            imgui.PopItemWidth()
+            imgui.PushItemWidth(150)
+            imgui.InputInt3(u8 'Координаты телепорта', tpcoords, 0)
+            imgui.SameLine()
+            if imgui.Button(u8 'Текущие координаты') then
+                local myx, myy, myz = getCharCoordinates(PLAYER_PED)
+                tpcoords.v[1] = myx
+                tpcoords.v[2] = myy
+                tpcoords.v[3] = myz
+            end
+            imgui.PopItemWidth()
+            if imgui.Button(u8 'Добавить##tp') then 
+                tplist[#tplist + 1] = {text = u8:decode(tpname.v), coords = {tpcoords.v[1], tpcoords.v[2], tpcoords.v[3]}} 
+                tpname.v = ''
+                tpcoords.v[1], tpcoords.v[2], tpcoords.v[3] = 0,0,0
+                saveData(tplist, "moonloader/config/Admin Tools/tplist.json")  end
+        end
         imgui.End()
     end
     if recon.v then
@@ -1783,6 +2166,28 @@ function imgui.OnDrawFrame()
         imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Pro Sport:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtextprosport))
         imgui.PopStyleVar()
         imgui.End()
+        --[[imgui.SetNextWindowSize(imgui.ImVec2(100, 300), imgui.Cond.FirstUseEver)
+        imgui.Begin(u8 'Слежка1', _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoTitleBar)
+        [if imgui.Button("Change", btn_size) then imgui.OpenPopup("##change_recon") end
+        if imgui.BeginPopupModal('##change_recon', _, imgui.WindowFlags.AlwaysAutoResize) then
+            --imgui.InputInt(u8 'Введите ID игрока')
+            if imgui.Button(u8 "Отправить##change") then sampSendChat("/re") imgui.CloseCurrentPopup() end
+            imgui.SameLine()
+            if imgui.Button(u8 "Отмена##change") then imgui.CloseCurrentPopup() end
+            imgui.EndPopup()
+        end
+        if imgui.Button("Check »", btn_size) then imgui.OpenPopup("##check_recon") end
+        imgui.SetNextWindowSize(imgui.ImVec2(125, 140))
+        if imgui.BeginPopup('##check_recon', _, imgui.WindowFlags.AlwaysAutoResize) then
+            if imgui.Button("Check-GM", btn_size) then atext("check-gm") end
+            if imgui.Button("Check-GM2", btn_size) then atext("check-gm2") end
+            if imgui.Button("Check-GMCar", btn_size) then atext("check-gmcar") end
+            if imgui.Button("ResetShot", btn_size) then atext("resetshot") end
+            imgui.EndPopup()
+        end
+        for k, v in pairs(menu) do
+        end
+        imgui.End()]]
         imgui.PopStyleColor()
         if imgui.IsMouseClicked(0) and data.imgui.reconpos then
             data.imgui.reconpos = false
@@ -1822,7 +2227,7 @@ function imgui.OnDrawFrame()
         if imgui.Button(u8 'Настройки', btn_size) then settingwindows.v = not settingwindows.v end
         if imgui.Button(u8 'Телепорты', btn_size) then tpwindow.v = not tpwindow.v end
         if imgui.Button(u8 'Команды скрипта', btn_size) then cmdwindow.v = not cmdwindow.v end
-        if imgui.Button(u8 'Мероприятие', btn_size) then mpwindow.v = not mpwindow.v end
+        if imgui.Button(u8 'Мероприятие', btn_size) then imgui.OpenPopup('##1') mpwindow.v = not mpwindow.v end
         if imgui.Button(u8 'Лидеры', btn_size) then leadwindow.v = not leadwindow.v end
         if imgui.Button(u8 'Биндер', btn_size) then bMainWindow.v = not bMainWindow.v end
         --if imgui.Button(u8 'Тюнинг авто', btn_size) then tunwindow.v = not tunwindow.v end
@@ -1961,7 +2366,7 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Использование: /checkrangs [id фракции]')
             end
             if imgui.CollapsingHeader('/gs', btn_size) then
-                imgui.TextWrapped(u8 'Описание: Сокращение команды /getstats')
+                imgui.TextWrapped(u8 'Описание: Сокращение команды /getstats.\nВ реконе можно ид не указывать, сразу проверит статистику игрока, за которым слежка')
                 imgui.TextWrapped(u8 'Использование: /gs [id]')
             end
             if imgui.CollapsingHeader('/ags', btn_size) then
@@ -1969,15 +2374,15 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Использование: /ags [id/nick]')
             end
             if imgui.CollapsingHeader('/sbiv', btn_size) then
-                imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "Сбив анимации"'):format(cfg.timers.sbivtimer))
+                imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "Сбив анимации".\nЕсли у вас 1 лвл админки пишет в /a с просьбой посадить'):format(cfg.timers.sbivtimer))
                 imgui.TextWrapped(u8 'Использование: /sbiv [id]')
             end
             if imgui.CollapsingHeader('/csbiv', btn_size) then
-                imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "Сбив анимации"'):format(cfg.timers.csbivtimer))
+                imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "Сбив анимации".\nЕсли у вас 1 лвл админки пишет в /a с просьбой посадить'):format(cfg.timers.csbivtimer))
                 imgui.TextWrapped(u8 'Использование: /csbiv [id]')
             end
             if imgui.CollapsingHeader('/cbug', btn_size) then
-                imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "+с вне гетто"'):format(cfg.timers.cbugtimer))
+                imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "+с вне гетто".\nЕсли у вас 1 лвл админки пишет в /a с просьбой посадить'):format(cfg.timers.cbugtimer))
                 imgui.TextWrapped(u8 'Использование: /cbug [id]')
             end
             if imgui.CollapsingHeader('/mnarko', btn_size) then
@@ -2087,6 +2492,10 @@ function imgui.OnDrawFrame()
             if imgui.CollapsingHeader('/atp', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Открыть меню телепорта')
                 imgui.TextWrapped(u8 'Использование: /atp')
+            end
+            if imgui.CollapsingHeader('/ranks', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Узнать ранги во фракции')
+                imgui.TextWrapped(u8 'Использование: /ranks [фракция]')
             end
             imgui.End()
         end
@@ -2570,6 +2979,16 @@ function getFrak(frak)
         if frak:match(".+ MC") then frak = frak:match("(.+) MC") end
         return frak
     end
+end
+function isHex(str)
+    local str = tostring(str):upper()
+    if #str ~= 6 then return false end
+    for i = 1, #str do
+        if str:byte(i) < 48 or str:byte(i) > 70 or (str:byte(i) < 65 and str:byte(i) > 57) then
+            return false
+        end
+    end
+    return true
 end
 function getRank(frak, rang)
     local trangs = {}
@@ -4476,15 +4895,15 @@ function gs(pam)
     local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     if id ~= nil then
         if sampIsPlayerConnected(id) or id == myid then
-            sampSendChat('/getstats '..id)
+            sampSendChat(("/getstats %s"):format(id))
         else
-            atext('Игрок оффлайн')
+            atext("Игрок оффлайн")
         end
     else
-        if reid ~= nil then
-            sampSendChat('/getstats '..reid)
+        if reid ~= -1 then
+            sampSendChat(("/getstats %s"):format(reid))
         else
-            atext('Введите: /gs [id]')
+            atext("Введите /gs [id]")
         end
     end
 end
@@ -5063,7 +5482,7 @@ function punishlog(text)
 end
 
 function getlvl(pam)
-        lua_thread.create(function()
+    lua_thread.create(function()
         local t = {}
         local cid = tonumber(pam)
         if cid ~= nil then
@@ -5158,8 +5577,10 @@ end
 function addplayer(pam)
     if pam:match("^%s*(%d+)%s*(%S*)%s*(.*)") then
         local id, color, text = pam:match("(%d+)%s*(%S*)%s*(.*)")
-        if #color > 0 and #color < 6 then text = color ..' '..text end
-        if #color < 6 then color = 'FFFFFF' end
+        if not isHex(color) then 
+            text = color..' '..text
+            color = 'FFFFFF'
+        end
         if sampIsPlayerConnected(id) then
             local nick = sampGetPlayerNickname(id)
             local result, key = checkInTableChecker(players, nick)
@@ -5198,8 +5619,10 @@ function addplayer(pam)
     elseif pam:match("^%s*(%S+)%s*(%S*)%s*(.*)") then
         local nick, color, text = pam:match("(%S+)%s*(%S*)%s*(.*)")
         local id = sampGetPlayerIdByNickname(nick)
-        if #color > 0 and #color < 6 then text = color ..' '..text end
-        if #color < 6 then color = 'FFFFFF' end
+        if not isHex(color) then 
+            text = color..' '..text
+            color = 'FFFFFF'
+        end
         if id ~= nil then
             local result, key = checkInTableChecker(players, nick)
             if result then
@@ -5243,8 +5666,10 @@ end
 function addadm(pam)
     if pam:match("^%s*(%d+)%s*(%S*)%s*(.*)") then
         local id, color, text = pam:match("(%d+)%s*(%S*)%s*(.*)")
-        if #color > 0 and #color < 6 then text = color ..' '..text end
-        if #color < 6 then color = 'FFFFFF' end
+        if not isHex(color) then 
+            text = color..' '..text
+            color = 'FFFFFF'
+        end
         if sampIsPlayerConnected(id) then
             local nick = sampGetPlayerNickname(id)
             local result, key = checkInTableChecker(admins, nick)
@@ -5289,8 +5714,10 @@ function addadm(pam)
         end
     elseif pam:match("^%s*(%S+)%s*(%S*)%s*(.*)") then
         local nick, color, text = pam:match("(%S+)%s*(%S*)%s*(.*)")
-        if #color > 0 and #color < 6 then text = color ..' '..text end
-        if #color < 6 then color = 'FFFFFF' end
+        if not isHex(color) then 
+            text = color..' '..text
+            color = 'FFFFFF'
+        end
         local id = sampGetPlayerIdByNickname(nick)
         if id ~= nil then
             local result, key = checkInTableChecker(admins, nick)
@@ -5422,8 +5849,10 @@ end
 function addtemp(pam)
     if pam:match("^%s*(%d+)%s*(%S*)%s*(.*)") then
         local id, color, text = pam:match("(%d+)%s*(%S*)%s*(.*)")
-        if #color > 0 and #color < 6 then text = color ..' '..text end
-        if #color < 6 then color = 'FFFFFF' end
+        if not isHex(color) then 
+            text = color..' '..text
+            color = 'FFFFFF'
+        end
         if sampIsPlayerConnected(id) then
             local nick = sampGetPlayerNickname(id)
             local result, key = checkInTableChecker(temp_checker, nick)
@@ -5469,8 +5898,10 @@ function addtemp(pam)
     elseif pam:match("^%s*(%S+)%s*(%S*)%s*(.*)") then
         local nick, color, text = pam:match("(%S+)%s*(%S*)%s*(.*)")
         local id = sampGetPlayerIdByNickname(nick)
-        if #color > 0 and #color < 6 then text = color ..' '..text end
-        if #color < 6 then color = 'FFFFFF' end
+        if not isHex(color) then 
+            text = color..' '..text
+            color = 'FFFFFF'
+        end
         if id ~= nil then
             local result, key = checkInTableChecker(temp_checker, nick)
             if result then
@@ -5979,4 +6410,32 @@ function mcbug(pam)
     else
         atext("Введите: /mcbug [id]")
     end
+end
+
+function ranks(pam)
+    lua_thread.create(function()
+        local t = {}
+        for k, v in pairs(fraklist) do
+            table.insert(t, k)
+        end
+        if #pam ~= 0 then
+            if checkIntable(t, string.rupper(pam)) then
+                for k,v in pairs(fraklist[string.rupper(pam)]) do
+                    atext(("[%s] %s"):format(k, v))
+                end
+            else
+                sampShowDialog(33121, '{66FF00}Список фракций:', "{ffffff}"..table.concat(t, '\n'), 'x', _, 2)
+                while sampIsDialogActive(33121) do wait(0) end
+                local result, button, list, input = sampHasDialogRespond(33121)
+                if result and button ==  1 then
+                    local text = sampGetListboxItemText(list)
+                    for k,v in pairs(fraklist[text]) do
+                        atext(("[%s] %s"):format(k, v))
+                    end
+                end
+            end
+        else
+            atext("Введите: /ranks [фракция]")
+        end
+    end)
 end
