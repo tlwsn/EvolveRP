@@ -17,7 +17,6 @@ Jay_Rise
 Mihail_Klimov
 Daniel_Molotkov
 Sam_Teller
-Vladislav_Melentyev
 Chester_James
 Vladimir_DeMont
 Ernesto_Gilmore
@@ -30,14 +29,12 @@ Link_Maestro
 Santiago_Winston
 Santi_Sanni
 Kent_Barizhkin
-Aleksey_Tarasov
 Ozzy_Woozie
 Butcher_Wezers
 Gosha_Fantom
 Laymont_Breezy
 Wesley_Lewis
 Wayne_Clinton
-Diego_Serrano
 Alvin_Scerty
 Berna_Breezy
 Floyd_Mathers
@@ -47,7 +44,6 @@ Dmitriy_Vinokyrov
 Amelia_Andolinni
 Dima_Raskin
 Dima_Mayner
-Alex_Family
 Attaviano_Scerty
 Gabriel_Bradford
 Chris_Ramsey
@@ -68,7 +64,6 @@ Egor_Krestovsky
 Julietta_Stark
 Homer_Velaskes
 Castiel_Galante
-Emilie_Rouse
 Alexander_Almazov
 Zmey_Cayenne
 Fernando_Barrowman
@@ -83,7 +78,6 @@ Alexandr_Flores
 Curtis_Jackson
 John_Edwards
 Pablo_Arriano
-Diman_Tyumencev
 Aaron_Burkard
 Arturo_Kudo
 Antonio_Moreti
