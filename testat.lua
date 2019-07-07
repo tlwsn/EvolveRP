@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version('2.7')
+script_version('2.71')
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -2635,6 +2635,10 @@ function imgui.OnDrawFrame()
             if imgui.CollapsingHeader('/ranks', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Узнать ранги во фракции')
                 imgui.TextWrapped(u8 'Использование: /ranks [фракция]')
+            end
+            if imgui.CollapsingHeader('/oncapt', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Начать / остановить запись отлетевших в гетто')
+                imgui.TextWrapped(u8 'Использование: /oncapt')
             end
             imgui.End()
         end
