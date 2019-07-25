@@ -13,7 +13,6 @@ Laurence_Lawson
 Chrisstian_Norton
 Thomas_Lawson
 Mihail_Klimov
-Daniel_Molotkov
 Sam_Teller
 Chester_James
 Vladimir_DeMont
