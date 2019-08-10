@@ -6,6 +6,7 @@ Salvatore_Giordano
 Sergo_Cross
 Tobey_Marshall
 Ziggi_Shmiggi
+Game_Birds
 Dwayne_Eagle
 Maks_Wirense
 Angel_Espejo
@@ -20,6 +21,7 @@ Ernesto_Gilmore
 Fernando_Haizenberg
 Alberto_Clemente
 Giuseppe_Roell
+Vincento_Lapazzii
 Vincent_Vinograd
 Link_Maestro
 Santiago_Winston
@@ -28,6 +30,7 @@ Ozzy_Woozie
 Eazy_Williams
 Francis_Malomadro
 Maikl_Terano
+Joe_Armstrong
 Butcher_Wezers
 Gosha_Fantom
 Laymont_Breezy
@@ -40,7 +43,6 @@ Loreno_Esposito
 Dmitriy_Vinokyrov
 Amelia_Andolinni
 Dima_Raskin
-Dima_Mayner
 Brixton_Vandom
 Attaviano_Scerty
 Gabriel_Bradford
@@ -49,7 +51,6 @@ Torbuxa_Bielaski
 Misha_Shancev
 Dario_Brunelli
 Andrey_Sheredega
-Callisto_Quintano
 Julius_Visconti
 Lucian_Maclaine
 Keira_Voight
@@ -73,7 +74,6 @@ Looney_Peers
 Curtis_Jackson
 Aaron_Burkard
 Arturo_Kudo
-Antonio_Moreti
 Edward_Ronkov
 Diego_Aminatore
 Aleksei_Merser
