@@ -8,7 +8,7 @@
         "version":"1.5"
     },
     "testat":{
-        "url":"https://raw.githubusercontent.com/WhackerH/EvolveRP/master/testat.luac",
-        "version":"2.71"
+        "url":"https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admintools.luac",
+        "version":2
     }
 }
