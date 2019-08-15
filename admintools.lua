@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2)
+script_version(2.01)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -5918,6 +5918,9 @@ function addadm(pam)
         local nick = tostring(params[1])
         if id ~= nil then
             if sampIsPlayerConnectedFixed(id) then nick = sampGetPlayerNickname(id) connected = true end
+        else
+            id = sampGetPlayerIdByNickname(nick)
+            if id ~= nil and sampIsPlayerConnectedFixed(id) then connected = true end
         end
         if params[2] == nil then params[2] = "FFFFFF" end
         if params[3] == nil then params[3] = "" end
@@ -5950,6 +5953,9 @@ function addplayer(pam)
         local nick = tostring(params[1])
         if id ~= nil then
             if sampIsPlayerConnectedFixed(id) then nick = sampGetPlayerNickname(id) connected = true end
+        else
+            id = sampGetPlayerIdByNickname(nick)
+            if id ~= nil and sampIsPlayerConnectedFixed(id) then connected = true end
         end
         if params[2] == nil then params[2] = "FFFFFF" end
         if params[3] == nil then params[3] = "" end
@@ -5982,6 +5988,9 @@ function addtemp(pam)
         local nick = tostring(params[1])
         if id ~= nil then
             if sampIsPlayerConnectedFixed(id) then nick = sampGetPlayerNickname(id) connected = true end
+        else
+            id = sampGetPlayerIdByNickname(nick)
+            if id ~= nil and sampIsPlayerConnectedFixed(id) then connected = true end
         end
         if params[2] == nil then params[2] = "FFFFFF" end
         if params[3] == nil then params[3] = "" end
@@ -6009,15 +6018,18 @@ function deladm(pam)
         atext("Введите: /deladm [id/nick]")
     else
         local connected = false
-        local id = tostring(params[1])
+        local id = tonumber(params[1])
         local nick = tostring(params[1])
         if id ~= nil then
             if sampIsPlayerConnectedFixed(id) then nick = sampGetPlayerNickname(id) connected = true end
+        else
+            id = sampGetPlayerIdByNickname(nick)
+            if id ~= nil and sampIsPlayerConnectedFixed(id) then connected = true end
         end
         local result, key = checkInTableChecker(checker.admins.loaded, nick)
         if result then table.remove(checker.admins.loaded, key)
             atext(("Игрок {66FF00}%s%s{FFFFFF} удален из чекера админов"):format(nick, connected and (" [%s]"):format(id) or "" ))
-            saveData(checker.players.loaded, 'moonloader/config/Admin Tools/admchecker.json')
+            saveData(checker.admins.loaded, 'moonloader/config/Admin Tools/admchecker.json')
             rebuildUsers()
         else
             atext(("Игрок {66FF00}%s%s{FFFFFF} не обнаружен в чекере админов"):format(nick, connected and (" [%s]"):format(id) or "" ))
@@ -6031,10 +6043,13 @@ function delplayer(pam)
         atext("Введите: /deladm [id/nick]")
     else
         local connected = false
-        local id = tostring(params[1])
+        local id = tonumber(params[1])
         local nick = tostring(params[1])
         if id ~= nil then
             if sampIsPlayerConnectedFixed(id) then nick = sampGetPlayerNickname(id) connected = true end
+        else
+            id = sampGetPlayerIdByNickname(nick)
+            if id ~= nil and sampIsPlayerConnectedFixed(id) then connected = true end
         end
         local result, key = checkInTableChecker(checker.players.loaded, nick)
         if result then table.remove(checker.players.loaded, key)
@@ -6053,10 +6068,13 @@ function deltemp(pam)
         atext("Введите: /deltemp [id/nick]")
     else
         local connected = false
-        local id = tostring(params[1])
+        local id = tonumber(params[1])
         local nick = tostring(params[1])
         if id ~= nil then
             if sampIsPlayerConnectedFixed(id) then nick = sampGetPlayerNickname(id) connected = true end
+        else
+            id = sampGetPlayerIdByNickname(nick)
+            if id ~= nil and sampIsPlayerConnectedFixed(id) then connected = true end
         end
         local result, key = checkInTableChecker(checker.temp.loaded, nick)
         if result then table.remove(checker.temp.loaded, key)
