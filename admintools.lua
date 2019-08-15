@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.02)
+script_version(2.03)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -5264,12 +5264,12 @@ function punaccept()
     end
     if punkey.warn.id then
         local admnick, admfam = punkey.warn.admin:match('(.+)_(.+)')
-        warn(('%s %s %s • %s.%s'):format(punkey.warn.id, punkey.warn.day, punkey.warn.reason, admnick:sub(1,1), admfam))
+        sampSendChat(('/warn %s %s %s • %s.%s'):format(punkey.warn.id, punkey.warn.day, punkey.warn.reason, admnick:sub(1,1), admfam))
         punkey.warn.id, punkey.warn.day, punkey.warn.reason, punkey.warn.admin, punkey.delay = nil, nil, nil, nil, nil
     end
     if punkey.ban.id then
         local admnick, admfam = punkey.ban.admin:match('(.+)_(.+)')
-        ban(('%s %s • %s.%s'):format(punkey.ban.id, punkey.ban.reason, admnick:sub(1,1), admfam))
+        sampSendChat(('/ban %s %s • %s.%s'):format(punkey.ban.id, punkey.ban.reason, admnick:sub(1,1), admfam))
         punkey.ban.id, punkey.ban.reason, punkey.ban.admin, punkey.delay = nil, nil, nil, nil
     end
     if punkey.sban.id then
