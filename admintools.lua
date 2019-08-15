@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.01)
+script_version(2.02)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -1250,7 +1250,7 @@ function autoupdate(json_url, url)
             local info = decodeJson(response)
             updatelink = info.admintools.url --testat если не исходник
             updateversion = info.admintools.version
-            if updateversion > thisScript().version then
+            if tonumber(updateversion) > tonumber(thisScript().version) then
                 lua_thread.create(function()
                     local dlstatus = require('moonloader').download_status
                     atext(("ќбнаружено обновление. ѕытаюсь обновитьс€ с %s на %s"):format(thisScript().version, updateversion))
@@ -6040,7 +6040,7 @@ end
 function delplayer(pam)
     local params = string.split(pam, " ", 1)
     if #params < 1 then
-        atext("¬ведите: /deladm [id/nick]")
+        atext("¬ведите: /delplayer [id/nick]")
     else
         local connected = false
         local id = tonumber(params[1])
