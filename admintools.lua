@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.03)
+script_version(2.04)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -54,6 +54,7 @@ local admins                    = {}
 local nametagCoords             = {}
 local fonl                      = {}
 local checkf                    = {f= {}}
+local oocLimit                  = {state = true, msg = ""}
 local mainwindow                = imgui.ImBool(false)
 local settingwindows            = imgui.ImBool(false)
 local tpwindow                  = imgui.ImBool(false)
@@ -1849,10 +1850,11 @@ function main()
         if not isPauseMenuActive() then
 			for i = 1, BulletSync.maxLines do
                 if BulletSync[i].enable == true and BulletSync[i].time >= oTime then
+                    --if isPointOnScreen(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z, 0) then
 					local sx, sy, sz = calcScreenCoors(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
                     local fx, fy, fz = calcScreenCoors(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)
-                    --[[local sx, sy, sz = transform2d(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
-                    local fx, fy, fz = transform2d(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)]]
+                    --[[local sx, sy = convert3DCoordsToScreen(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
+                    local fx, fy = convert3DCoordsToScreen(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)]]
                     if sz > -0.03125 and fz > -0.03125 then
                         renderDrawLine(sx, sy, fx, fy, 1, bulletTypes[BulletSync[i].tType])
                         renderDrawPolygon(fx, fy-1, 3, 3, 4.0, 10, bulletTypes[BulletSync[i].tType])
@@ -4583,35 +4585,20 @@ end
 function warningsKey()
     while true do wait(0)
         local wtext, wprefix, wcolor, wpcolor = sampGetChatString(99)
-        if wcolor == 4294967295 and wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[%d+%] - .+') and not wtext:find('ExtraWS') then
-            cwid = wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[(%d+)%] - .+')
+        if wtext:match('%[SWarning%]%:{%S+}  Игрок  %S+ %[%d+%] - .+') then -- Варнинги печени.
+            cwid = wtext:match('%[SWarning%]:%{%S+%}  Игрок  %S+ %[(%d+)%] - .+')
         end
-        if wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[%d+%] - .+') and wcolor == 4294967295 and wtext:find('ExtraWS') then
-            cwid = wtext:match('%[SWarning%]%:{.+}  Игрок  .+ %[(%d+)%] - .+')
+        if wtext:match('<Warning> {%S+}%S+%[%d+%] .+') then --Варнинг раймонда
+            cwid = wtext:match('<Warning> {%S+}%S+%[(%d+)%] .+')
         end
-        if wcolor == 4294911012 and wtext:match('<Warning> {.+}.+%[%d+%]% .+') and not wtext:match("<Warning> {.+}.+%[%d+%] возможно попал сквозь текстуру в {.+}.+%[%d+%] из .+ %(model: %d+%)") then
-            cwid = wtext:match('<Warning> {.+}.+%[(%d+)%]% .+')
+        if wtext:match('<Warning> {%S+}%S+%[%d+%] {FFFFFF}.+') then --Варнинг женьки буэно
+            cwid = wtext:match('<Warning> {%S+}%S+%[(%d+)%] {FFFFFF}.+')
         end
-        if wtext:match("<Warning> {.+}.+%[%d+%] возможно попал сквозь текстуру в {.+}.+%[%d+%] из .+ %(model: %d+%)") then
-            cwid = wtext:match("<Warning> {.+}.+%[(%d+)%] возможно попал сквозь текстуру в {.+}.+%[%d+%] из .+ %(model: %d+%)")
+        if wtext:match('Warning:{%S+} %S+%[(%d+)%] .+') then --Варнинг макарона (старый)
+            cwid = wtext:match('Warning:{%S+} %S+%[(%d+)%] .+')
         end
-        if wtext:match('^<Warning> {.+}.+%[%d+%] {FFFFFF}.+') then
-            cwid = wtext:match('^<Warning> {.+}.+%[(%d+)%] {FFFFFF}.+')
-        end
-        if wtext:match('^Warning:{.+} .+%[%d+%] .+') and not wtext:match('^Warning:{.+} .+%[%d+%] возможно попал сквозь текстуру в{.+} .+%[%d+%] из: .+ %(texture: %d+%)') then
-            cwid = wtext:match('^Warning:{.+} .+%[(%d+)%] .+')
-        end
-        if wtext:match('^Warning:{.+} .+%[%d+%] возможно попал сквозь текстуру в{.+} .+%[%d+%] из: .+ %(texture: %d+%)') then
-            cwid = wtext:match('^Warning:{.+} .+%[(%d+)%] возможно попал сквозь текстуру в{.+} .+%[%d+%] из: .+ %(texture: %d+%)')
-        end
-        if wtext:match('%[mkrn wrn%]:%{%S+%} .+%[%d+%] .+') and not wtext:match('%[mkrn wrn%]:%{.+%} .+%[%d+%] возможно дамажит%/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+') and not wtext:match('%[mkrn wrn%]:%{.+%} .+%[%d+%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+, texture: %d+ %[.+%]') then
-            cwid = wtext:match('%[mkrn wrn%]:%{%S+%} .+%[(%d+)%] .+')
-        end
-        if wtext:match('%[mkrn wrn%]:%{.+%} .+%[%d+%] возможно дамажит%/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+') then
-            cwid = wtext:match('%[mkrn wrn%]%:%{.+%} .+%[(%d+)%] возможно дамажит/стреляет из сайлента в игрока%{.+%} .+%[%d+%] из .+')
-        end
-        if wtext:match('%[mkrn wrn%]:%{.+%} .+%[%d+%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+, texture: %d+ %[.+%]') then
-            cwid = wtext:match('%[mkrn wrn%]%:%{.+%} .+%[(%d+)%] попал сквозь текстуру в%{.+%} .+%[%d+%] из: .+, texture: %d+ %[.+%]')
+        if wtext:match('%[mkrn wrn%]%:{%S+} %S+%[%d+%] .+') then --Варнинг макарона (новый)
+            cwid = wtext:match('%[mkrn wrn%]:{%S+} %S+%[(%d+)%] .+')
         end
     end
 end
@@ -4629,6 +4616,29 @@ end
 
 function sampev.onSendClientJoin(version, mod, nick)
     rebuildUsers()
+end
+
+function sampev.onSendCommand(text)
+    if text:match("^/o .+") or text:match("^/ooc .+") then
+        if cfg.other.admlvl == 1 then
+            local msg = text:match("^/%S+ (.+)")
+            if oocLimit.state then
+                oocLimit.msg = msg
+                oocLimit.state = false
+                atext("Вы действительно хотите отправить сообщение в общий чат? Для подтверждения введите команду еще раз.")
+                return false
+            else
+                if msg ~= oocLimit.msg then
+                    oocLimit.msg = msg
+                    atext("Вы действительно хотите отправить сообщение в общий чат? Для подтверждения введите команду еще раз.")
+                    return false
+                else
+                    oocLimit.msg = ""
+                    oocLimit.state = true
+                end
+            end
+        end
+    end
 end
 
 function sampev.onShowDialog(id, style, title, button1, button2, text)
