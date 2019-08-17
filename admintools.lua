@@ -1771,7 +1771,7 @@ function main()
     whbind = rkeys.registerHotKey(config_keys.whkey.v, true, whkey)
     skeletwhbind = rkeys.registerHotKey(config_keys.skeletwhkey.v, true, skeletwh)
 	addEventHandler("onWindowMessage", function (msg, wparam, lparam)
-        if msg == wm.wm.WM_KEYDOWN then
+        if msg == wm.WM_KEYDOWN then
             if tEditData.id > -1 then
                 if wparam == key.VK_ESCAPE then
                     tEditData.id = -1
