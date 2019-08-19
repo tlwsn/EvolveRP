@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.06)
+script_version(2.07)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -6109,7 +6109,7 @@ function deltemp(pam)
 end
 
 function upd_checker()
-    while true do wait(500)
+    while true do wait(2000)
         rebuildUsers()
     end
 end
