@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.08)
+script_version(2.09)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -4201,7 +4201,7 @@ function renders()
                 renderFontDrawText(checkfont, "Админы онлайн ["..#checker.admins.online.."]:", cfg.admchecker.posx, admRender, 0xFF00FF00)
                 if #checker.admins.online > 0 then
                     for k, v in pairs(checker.admins.online) do
-                        local cText = ("{%s}%s [%s]{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
+                        local cText = ("{%s}%s [%s] %s{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
                         renderFontDrawText(checkfont, cText, cfg.admchecker.posx, (admrenderPosY - k*checkerheight)+checkerheight, -1)
                     end
                 else
@@ -4212,7 +4212,7 @@ function renders()
                 renderFontDrawText(checkfont, "Игроки онлайн ["..#checker.players.online.."]:", cfg.playerChecker.posx, playerRender, 0xFFFFFF00)
                 if #checker.players.online > 0 then
                     for k, v in pairs(checker.players.online) do
-                        local cText = ("{%s}%s [%s]{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
+                        local cText = ("{%s}%s [%s] %s{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
                         renderFontDrawText(checkfont, cText , cfg.playerChecker.posx, (playerRenderPosY - k*checkerheight)+checkerheight, -1)
                     end
                 else
@@ -4223,7 +4223,7 @@ function renders()
                 renderFontDrawText(checkfont, "Temp Чекер ["..#checker.temp.online.."]:", cfg.tempChecker.posx, tempRender, 0xFFFF0000)
                 if #checker.temp.online > 0 then
                     for k, v in pairs(checker.temp.online) do
-                        local cText = ("{%s}%s [%s]{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
+                        local cText = ("{%s}%s [%s] %s{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
                         renderFontDrawText(checkfont, cText, cfg.tempChecker.posx, (tempRenderPosY - k*checkerheight)+checkerheight, -1)
                     end
                 else
