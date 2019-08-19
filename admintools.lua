@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.07)
+script_version(2.08)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -37,7 +37,6 @@ local lcrypto, crypto           = pcall(require, 'crypto_lua')
 local d3dx9_43                  = ffi.load('d3dx9_43.dll')
 local getBonePosition           = ffi.cast("int (__thiscall*)(void*, float*, int, bool)", 0x5E4280)
 local dlstatus                  = require('moonloader').download_status
-local screenx, screeny          = getScreenResolution()
 encoding.default                = 'CP1251'
 local u8                        = encoding.UTF8
 local prcheck                   = {pr = 0, prt = {}}
@@ -407,6 +406,7 @@ end
 local savecoords = {x = 0, y = 0, z = 0}
 local traceid = -1
 local players = {}
+local screenx, screeny = getScreenResolution()
 local funcsStatus = {ClickWarp = false, Inv = false, AirBrk = false}
 local tLastKeys = {}
 local tCarsName = {"Landstalker", "Bravura", "Buffalo", "Linerunner", "Perrenial", "Sentinel", "Dumper", "Firetruck", "Trashmaster", "Stretch", "Manana", "Infernus",
@@ -4130,8 +4130,8 @@ function renders()
             local leadersRenderPosY = cfg.leadersChecker.posy
             local hposx, hposy, hposz = getCharCoordinates(PLAYER_PED)
             local hposint = getActiveInterior()
+            screenx, screeny = getScreenResolution()
             local hpos = ("%0.2f %0.2f %0.2f"):format(hposx, hposy, hposz)
-            local hsx, hsy = getScreenResolution()
             local checkerheight = renderGetFontDrawHeight(checkfont)
             local hudheight = renderGetFontDrawHeight(hudfont)
             local killheight = renderGetFontDrawHeight(killfont)
@@ -4155,7 +4155,6 @@ function renders()
             else
                 leaderRender = leadersRenderPosY - #checker.leaders.online*checkerheight
             end
-            screenx, screeny = getScreenResolution()
             if killlistmode == 1 then
                 local killsy = cfg.killlist.posy
                 for k, v in ipairs(tkilllist) do
@@ -4202,7 +4201,8 @@ function renders()
                 renderFontDrawText(checkfont, "Админы онлайн ["..#checker.admins.online.."]:", cfg.admchecker.posx, admRender, 0xFF00FF00)
                 if #checker.admins.online > 0 then
                     for k, v in pairs(checker.admins.online) do
-                        renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text']) , cfg.admchecker.posx, (admrenderPosY - k*checkerheight)+checkerheight, -1)
+                        local cText = ("{%s}%s [%s]{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
+                        renderFontDrawText(checkfont, cText, cfg.admchecker.posx, (admrenderPosY - k*checkerheight)+checkerheight, -1)
                     end
                 else
                     renderFontDrawText(checkfont, "Чекер пуст", cfg.admchecker.posx, admrenderPosY, 0xFF808080)
@@ -4212,7 +4212,8 @@ function renders()
                 renderFontDrawText(checkfont, "Игроки онлайн ["..#checker.players.online.."]:", cfg.playerChecker.posx, playerRender, 0xFFFFFF00)
                 if #checker.players.online > 0 then
                     for k, v in pairs(checker.players.online) do
-                        renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text']) , cfg.playerChecker.posx, (playerRenderPosY - k*checkerheight)+checkerheight, -1)
+                        local cText = ("{%s}%s [%s]{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
+                        renderFontDrawText(checkfont, cText , cfg.playerChecker.posx, (playerRenderPosY - k*checkerheight)+checkerheight, -1)
                     end
                 else
                     renderFontDrawText(checkfont, "Чекер пуст", cfg.playerChecker.posx, playerRenderPosY, 0xFF808080)
@@ -4222,7 +4223,8 @@ function renders()
                 renderFontDrawText(checkfont, "Temp Чекер ["..#checker.temp.online.."]:", cfg.tempChecker.posx, tempRender, 0xFFFF0000)
                 if #checker.temp.online > 0 then
                     for k, v in pairs(checker.temp.online) do
-                        renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} %s',v['color'], v["nick"], sampGetPlayerIdByNickname(v["nick"]), select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text']) , cfg.tempChecker.posx, (tempRenderPosY - k*checkerheight)+checkerheight, -1)
+                        local cText = ("{%s}%s [%s]{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
+                        renderFontDrawText(checkfont, cText, cfg.tempChecker.posx, (tempRenderPosY - k*checkerheight)+checkerheight, -1)
                     end
                 else
                     renderFontDrawText(checkfont, "Чекер пуст", cfg.tempChecker.posx, tempRenderPosY, 0xFF808080)
@@ -4233,9 +4235,9 @@ function renders()
                 if #checker.leaders.online > 0 then
                     for k, v in pairs(checker.leaders.online) do
                         if cfg.leadersChecker.cvetnick then
-                            renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} {%s}%s',leaders1[v['frak']], v["nick"], sampGetPlayerIdByNickname(v["nick"]), doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', leaders1[v['frak']], v['frak']) , cfg.leadersChecker.posx, (leadersRenderPosY - k*checkerheight)+checkerheight, -1)
+                            renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} {%s}%s',leaders1[v['frak']], v["nick"], v["id"], doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', leaders1[v['frak']], v['frak']) , cfg.leadersChecker.posx, (leadersRenderPosY - k*checkerheight)+checkerheight, -1)
                         else
-                            renderFontDrawText(checkfont,string.format('%s [%s] %s{5aa0aa} {%s}%s',v["nick"], sampGetPlayerIdByNickname(v["nick"]), select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', leaders1[v['frak']], v['frak']) , cfg.leadersChecker.posx, (leadersRenderPosY - k*checkerheight)+checkerheight, -1)
+                            renderFontDrawText(checkfont,string.format('%s [%s] %s{5aa0aa} {%s}%s',v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', leaders1[v['frak']], v['frak']) , cfg.leadersChecker.posx, (leadersRenderPosY - k*checkerheight)+checkerheight, -1)
                         end
                     end
                 else
