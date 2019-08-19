@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.05)
+script_version(2.06)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -2395,13 +2395,20 @@ function imgui.OnDrawFrame()
             imgui.Begin(u8 'Admin Tools | Тюнинг авто', tunwindow)
             if isCharInAnyCar(PLAYER_PED) then
                 local carh = storeCarCharIsInNoSave(PLAYER_PED)
-                if getDriverOfCar(carh) == PLAYER_PED then
-                    imgui.PushItemWidth(100)
-                    if imgui.InputInt(u8 'Цвет 1', mcolorb) then changeCarColour(carh, mcolorb.v, pcolorb.v) chcar = true end
-                    if imgui.InputInt(u8 'Цвет 2', pcolorb) then changeCarColour(carh, mcolorb.v, pcolorb.v) chcar = true end
-                    imgui.PopItemWidth()
-                else
-                    imgui.TextWrapped(u8 'Вы должны находиться за рулем автомобиля')
+                local result, carid = sampGetVehicleIdByCarHandle(carh)
+                if result then
+                    if getDriverOfCar(carh) == PLAYER_PED then
+                        imgui.PushItemWidth(100)
+                        if imgui.InputInt(u8 'Цвет 1', mcolorb) then
+                            changeCarColour(carh, mcolorb.v, pcolorb.v) 
+                        end
+                        if imgui.InputInt(u8 'Цвет 2', pcolorb) then 
+                            changeCarColour(carh, mcolorb.v, pcolorb.v) 
+                        end
+                        imgui.PopItemWidth()
+                    else
+                        imgui.TextWrapped(u8 'Вы должны находиться за рулем автомобиля')
+                    end
                 end
             else
                 imgui.TextWrapped(u8 'Вы должны находиться в автомобиле')
@@ -2496,15 +2503,15 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Использование: /ags [id/nick]')
             end
             if imgui.CollapsingHeader('/sbiv', btn_size) then
-                imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "Сбив анимации".\nЕсли у вас 1 лвл админки пишет в /a с просьбой посадить'):format(cfg.timers.sbivtimer))
+                imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "Сбив анимации".'):format(cfg.timers.sbivtimer))
                 imgui.TextWrapped(u8 'Использование: /sbiv [id]')
             end
             if imgui.CollapsingHeader('/csbiv', btn_size) then
-                imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "Сбив анимации".\nЕсли у вас 1 лвл админки пишет в /a с просьбой посадить'):format(cfg.timers.csbivtimer))
+                imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "Сбив анимации".'):format(cfg.timers.csbivtimer))
                 imgui.TextWrapped(u8 'Использование: /csbiv [id]')
             end
             if imgui.CollapsingHeader('/cbug', btn_size) then
-                imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "+с вне гетто".\nЕсли у вас 1 лвл админки пишет в /a с просьбой посадить'):format(cfg.timers.cbugtimer))
+                imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут в деморган по причине "+с вне гетто".'):format(cfg.timers.cbugtimer))
                 imgui.TextWrapped(u8 'Использование: /cbug [id]')
             end
             if imgui.CollapsingHeader('/mnarko', btn_size) then
@@ -3478,6 +3485,25 @@ function sampev.onServerMessage(color, text)
                     file:close()
                 end
             end
+            if banda == 'Yakuza' or banda == 'LCN' or banda == 'Rus Mafia' then
+                if not doesFileExist("moonloader/Admin Tools/setmatlog.txt") then
+                    local time = localTime()
+                    local file = io.open("moonloader/Admin Tools/setmatlog.txt", "w")
+                    file:write(("\n[size=85][list][*] [color=#00BFFF]Игровой ник[/color]: %s\n"):format(nick))
+                    file:write(("[*] [color=#00BFFF]Наименование мафии[/color]: %s\n"):format(banda))
+                    file:write(("[*] [color=#00BFFF]Количество выданных материалов[/color]: %s\n"):format(mati))
+                    file:write(("[*] [color=#00BFFF]Дата и время[/color]: %s / %s[/list][/size]\n"):format(("%s:%s"):format(time.wHour, time.wMinute), os.date('%d.%m.%Y')))
+                    file:close()
+                else
+                    local time = localTime()
+                    local file = io.open("moonloader/Admin Tools/setmatlog.txt", "a")
+                    file:write(("\n[size=85][list][*] [color=#00BFFF]Игровой ник[/color]: %s\n"):format(nick))
+                    file:write(("[*] [color=#00BFFF]Наименование мафии[/color]: %s\n"):format(banda))
+                    file:write(("[*] [color=#00BFFF]Количество выданных материалов[/color]: %s\n"):format(mati))
+                    file:write(("[*] [color=#00BFFF]Дата и время[/color]: %s / %s[/list][/size]\n"):format(("%s:%s"):format(time.wHour, time.wMinute), os.date('%d.%m.%Y')))
+                    file:close()
+                end
+            end
         end
     end
     if ban.check and text:find("Игрок не найден") then 
@@ -3981,7 +4007,6 @@ function sampev.onPlayerQuit(id, reason)
     for k, v in pairs(checker) do
         for k1, v1 in pairs(v.online) do
             if v1.id == id then table.remove(v.online, k1) end
-            break
         end
     end
 end
@@ -4660,6 +4685,14 @@ function sampev.onSendCommand(text)
             end
         end
     end
+    local aCommands = {"warn", "ban", "prison"}
+    for k, v in pairs(aCommands) do
+        if cfg.other.admlvl == 1 then
+            if text:match("^/"..v.." .+") then
+                return {"/a "..text}
+            end
+        end
+    end
 end
 
 function sampev.onShowDialog(id, style, title, button1, button2, text)
@@ -4729,11 +4762,7 @@ function sbiv(pam)
     local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     if id ~= nil then
         if sampIsPlayerConnectedFixed(id) then
-            if cfg.other.admlvl < 2 then
-                sampSendChat(("/a /prison %s %s Сбив анимации"):format(id, cfg.timers.sbivtimer))
-            else
-                sampSendChat(("/prison %s %s Сбив анимации"):format(id, cfg.timers.sbivtimer))
-            end
+            sampSendChat(("/prison %s %s Сбив анимации"):format(id, cfg.timers.sbivtimer))
         else
             atext('Игрок оффлайн')
         end
@@ -4747,11 +4776,7 @@ function csbiv(pam)
     local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     if id ~= nil then
         if sampIsPlayerConnectedFixed(id) then
-            if cfg.other.admlvl < 2 then
-                sampSendChat(("/a /prison %s %s Сбив анимации"):format(id, cfg.timers.csbivtimer))
-            else
-                sampSendChat(("/prison %s %s Сбив анимации"):format(id, cfg.timers.csbivtimer))
-            end
+            sampSendChat(("/prison %s %s Сбив анимации"):format(id, cfg.timers.csbivtimer))
         else
             atext('Игрок оффлайн')
         end
@@ -4765,11 +4790,7 @@ function cbug(pam)
     local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     if id ~= nil then
         if sampIsPlayerConnectedFixed(id) then
-            if cfg.other.admlvl < 2 then
-                sampSendChat(("/a /prison %s %s +C вне гетто"):format(id, cfg.timers.cbugtimer))
-            else
-                sampSendChat(("/prison %s %s +C вне гетто"):format(id, cfg.timers.cbugtimer))
-            end
+            sampSendChat(("/prison %s %s +C вне гетто"):format(id, cfg.timers.cbugtimer))
         else
             atext('Игрок оффлайн')
         end
@@ -5576,11 +5597,7 @@ function vkv(pam)
     local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     if id ~= nil then
         if sampIsPlayerConnectedFixed(id) then
-            if cfg.other.admlvl < 2 then
-                sampSendChat(("/a /prison %s 30 Война вне квадрата"):format(id--[[, cfg.timers.sbivtimer]]))
-            else
-                sampSendChat(("/prison %s 30 Война вне квадрата"):format(id--[[, cfg.timers.sbivtimer]]))
-            end
+            sampSendChat(("/prison %s 30 Война вне квадрата"):format(id--[[, cfg.timers.sbivtimer]]))
         else
             atext('Игрок оффлайн')
         end
@@ -6092,7 +6109,7 @@ function deltemp(pam)
 end
 
 function upd_checker()
-    while true do wait(2000)
+    while true do wait(500)
         rebuildUsers()
     end
 end
