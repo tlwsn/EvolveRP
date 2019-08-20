@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.09)
+script_version(2.1)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -85,11 +85,27 @@ local tpcount                   = 0
 local countstart                = false
 local swork                     = true
 local nametag                   = true
+local checkerEdit               = {
+    window  = imgui.ImBool(false),
+    select  = 0,
+    admins  = {
+        nick    = imgui.ImBuffer(256),
+        color   = imgui.ImBuffer(128),
+        desc    = imgui.ImBuffer(256),
+        list    = 0
+    },
+    players  = {
+        nick    = imgui.ImBuffer(256),
+        color   = imgui.ImBuffer(128),
+        desc    = imgui.ImBuffer(256),
+        list    = 0
+    },
+}
 local oCheat                    = {
-    wind                        = imgui.ImBool(false), 
-    extra                       = imgui.ImBool(false), 
-    spread                      = imgui.ImBool(false), 
-    unlimBullets                = imgui.ImBool(false)
+    wind            = imgui.ImBool(false), 
+    extra           = imgui.ImBool(false), 
+    spread          = imgui.ImBool(false), 
+    unlimBullets    = imgui.ImBool(false)
 }
 local checker                   = {
     admins = {
@@ -1047,11 +1063,11 @@ function calcScreenCoors(fX,fY,fZ)
 	frX = frX * (fRecip * dwLenX)
 	frY = frY * (fRecip * dwLenY)
 
-    --[[if(frX<=dwLenX and frY<=dwLenY and frZ>1)then
+    if(frX<=dwLenX and frY<=dwLenY and frZ>1)then
         return frX, frY, frZ
 	else
 		return -1, -1, -1
-    end]]
+    end
     return frX, frY, frZ
 end
 
@@ -1451,16 +1467,16 @@ function main()
         end)
     end
     local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools', 'moonloader/Admin Tools/Check Banned', 'moonloader/Admin Tools/Rules'}
-    local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt', 'moonloader/Admin Tools/punishjb.txt', 'moonloader/Admin Tools/punishlogs.txt', 'moonloader/Admin Tools/Check Banned/players.txt'}
-	for k, v in pairs(directors) do
+    local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt', 'moonloader/Admin Tools/punishjb.txt', 'moonloader/Admin Tools/punishlogs.txt', 'moonloader/Admin Tools/Check Banned/players.txt', "moonloader/Admin Tools/setmatlog.txt"}
+    --Проверяем и создаем папки
+    for k, v in pairs(directors) do
 		if not doesDirectoryExist(v) then createDirectory(v) end
-	end
-    for k, v in pairs(files) do
-        if not doesFileExist(v) then 
-            local file = io.open(v, 'w')
-            file:close()
-        end
     end
+    --Проверяем и создаем файлы
+    for k, v in pairs(files) do
+        if not doesFileExist(v) then io.open(v, 'w'):close() end
+    end
+    --Основной файл конфига
     if not doesFileExist('moonloader/config/Admin Tools/config.json') then
         io.open('moonloader/config/Admin Tools/config.json', 'w'):close()
         local scx, scy = convertGameScreenCoordsToWindowScreenCoords(552.33337402344, 435)
@@ -1505,7 +1521,7 @@ function main()
             file:close()
         end
     end
-    saveData(cfg, 'moonloader/config/Admin Tools/config.json')
+    --Файл своих телепортов
     if not doesFileExist("moonloader/config/Admin Tools/tplist.json") then
         io.open('moonloader/config/Admin Tools/tplist.json', 'w'):close()
     else
@@ -1514,7 +1530,7 @@ function main()
             tplist = decodeJson(file:read('*a'))
         end
     end
-    saveData(tplist, "moonloader/config/Admin Tools/tplist.json")
+    --Файл фраки / ранги
     if not doesFileExist("moonloader/config/Admin Tools/fraklist.json") then
         io.open('moonloader/config/Admin Tools/fraklist.json', 'w'):close()
     else
@@ -1523,10 +1539,127 @@ function main()
             fraklist = decodeJson(file:read('*a'))
         end
     end
-    saveData(fraklist, "moonloader/config/Admin Tools/fraklist.json")
+    --Файл кнопок
+    if not doesFileExist("moonloader/config/Admin Tools/keys.json") then
+        io.open("moonloader/config/Admin Tools/keys.json", "w"):close()
+    else
+        local fa = io.open("moonloader/config/Admin Tools/keys.json", 'r')
+        if fa then
+            config_keys = decodeJson(fa:read('*a'))
+			if config_keys == nil then
+				config_keys = {
+                    banipkey = {v = {190}},
+                    warningkey = {v = {key.VK_Z}},
+                    reportkey = {v = {key.VK_X}},
+                    saveposkey = {v = {key.VK_M}},
+                    goposkey = {v = {key.VK_J}},
+                    cwarningkey = {v = {key.VK_R}},
+                    punaccept = {v = {key.VK_Y}},
+                    pundeny = {v = {key.VK_N}},
+                    whkey = {v = {16,71}},
+                    skeletwhkey = {v = {16, 72}},
+                    airbrkkey = {v = key.VK_RSHIFT},
+                }
+			end
+            if config_keys.cwarningkey == nil then config_keys.cwarningkey = {v = {key.VK_R}} end
+            if config_keys.punaccept == nil then config_keys.punaccept = {v = {key.VK_Y}} end
+            if config_keys.pundeny == nil then config_keys.pundeny = {v = {key.VK_N}} end
+            if config_keys.whkey == nil then config_keys.whkey = {v = {16,71}} end
+            if config_keys.skeletwhkey == nil then config_keys.skeletwhkey = {v = {16, 72}} end
+            if config_keys.airbrkkey == nil then config_keys.airbrkkey = {v = key.VK_RSHIFT} end
+        end
+    end
+    --Файл биндера
+    if not doesFileExist("moonloader/config/Admin Tools/binder.json") then
+		io.open("moonloader/config/Admin Tools/binder.json", "w"):close()
+	else
+		local fb = io.open("moonloader/config/Admin Tools/binder.json", "r")
+		if fb then
+			tBindList = decodeJson(fb:read('*a'))
+            if tBindList == nil then
+                tBindList = {
+                    [1] = {
+                        text = "",
+                        v = {},
+                        name = 'Бинд1'
+                    },
+                    [2] = {
+                        text = "",
+                        v = {},
+                        name = 'Бинд2'
+                    },
+                    [3] = {
+                        text = "",
+                        v = {},
+                        name = 'Бинд3'
+                    }
+                }
+			end
+		end
+    end
+    --Файл цветов
+    if not doesFileExist("moonloader/config/Admin Tools/colors.json") then
+        io.open("moonloader/config/Admin Tools/colors.json", 'w'):close()
+    else
+        local fc = io.open("moonloader/config/Admin Tools/colors.json", "r")
+        if fc then
+            config_colors = decodeJson(fc:read('*a'))
+            if config_colors == nil then
+                config_colors = {
+                    admchat = {r = 255, g = 255, b = 0, color = 16776960},
+                    supchat = {r = 0, g = 255, b = 153, color = 65433},
+                    smschat = {r = 255, g = 255, b = 0, color = 16776960},
+                    repchat = {r = 217, g = 119, b = 0, color = 14251776},
+                    anschat = {r = 140, g = 255, b = 155, color = 9240475},
+                    askchat = {r = 233, g = 165, b = 40, color = 15312168},
+                    jbchat = {r = 217, g = 119, b = 0, color = 14251776},
+                    tracemiss = {r = 0, g = 0, b = 255, color = -16776961},
+                    tracehit = {r = 255, g = 0, b = 0, color = -65536}
+                }
+            end
+            if config_colors.tracemiss == nil then config_colors.tracemiss = {r = 0, g = 0, b = 255, color = -16776961} end
+            if config_colors.tracehit == nil then config_colors.tracehit = {r = 255, g = 0, b = 0, color = -65536} end
+            if type(config_colors.admchat.color) == 'string' then config_colors.admchat.color = ARGBtoRGB(join_argb(255, config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b)) end
+            if type(config_colors.supchat.color) == 'string' then config_colors.supchat.color = ARGBtoRGB(join_argb(255, config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b)) end
+            if type(config_colors.smschat.color) == 'string' then config_colors.smschat.color = ARGBtoRGB(join_argb(255, config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b)) end
+            if type(config_colors.repchat.color) == 'string' then config_colors.repchat.color = ARGBtoRGB(join_argb(255, config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b)) end
+            if type(config_colors.anschat.color) == 'string' then config_colors.anschat.color = ARGBtoRGB(join_argb(255, config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b)) end
+            if type(config_colors.askchat.color) == 'string' then config_colors.askchat.color = ARGBtoRGB(join_argb(255, config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b)) end
+            if type(config_colors.jbchat.color) == 'string' then config_colors.jbchat.color = ARGBtoRGB(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b)) end
+            acolor      = imgui.ImFloat3(config_colors.admchat.r / 255, config_colors.admchat.g / 255, config_colors.admchat.b / 255)
+            scolor      = imgui.ImFloat3(config_colors.supchat.r / 255, config_colors.supchat.g / 255, config_colors.supchat.b / 255)
+            smscolor    = imgui.ImFloat3(config_colors.smschat.r / 255, config_colors.smschat.g / 255, config_colors.smschat.b / 255)
+            jbcolor     = imgui.ImFloat3(config_colors.jbchat.r / 255, config_colors.jbchat.g / 255, config_colors.jbchat.b / 255)
+            askcolor    = imgui.ImFloat3(config_colors.askchat.r / 255, config_colors.askchat.g / 255, config_colors.askchat.b / 255)
+            repcolor    = imgui.ImFloat3(config_colors.repchat.r / 255, config_colors.repchat.g / 255, config_colors.repchat.b / 255)
+            anscolor    = imgui.ImFloat3(config_colors.anschat.r / 255, config_colors.anschat.g / 255, config_colors.anschat.b / 255)
+            trhitcolor  = imgui.ImFloat3(config_colors.tracehit.r / 255, config_colors.tracehit.g / 255, config_colors.tracehit.b / 255)
+            trmisscolor = imgui.ImFloat3(config_colors.tracemiss.r / 255, config_colors.tracemiss.g / 255, config_colors.tracemiss.b / 255)
+            bulletTypes = {
+                [0] = config_colors.tracemiss.color,
+                [1] = config_colors.tracehit.color,
+                [2] = config_colors.tracemiss.color,
+                [3] = config_colors.tracemiss.color,
+                [4] = config_colors.tracemiss.color,
+                [5] = 0xFF00FF00
+            }
+        end
+    end
+    --Еще что то с рангами
+    if not doesFileExist("moonloader/config/Admin Tools/rangset.json") then
+        local fr = io.open("moonloader/config/Admin Tools/rangset.json", "w")
+        fr:write(encodeJson(frakrang))
+        fr:close()
+    else
+        local fr = io.open("moonloader/config/Admin Tools/rangset.json", 'r')
+        if fr then
+            frakrang = decodeJson(fr:read('*a'))
+        end
+    end
+    --Проверка загруженности сампа
     repeat wait(0) until isSampAvailable()
     libs()
-    if cfg.killlist.startenable then killlistmode = 1 end
+    --Проверка на лицензию
     if prcheck.pr == 3 then
         atext("Не удалось проверить привязку. Проверьте соединение с интернетом")
         thisScript():unload()
@@ -1545,6 +1678,8 @@ function main()
             thisScript():unload()
         end
     end
+    if cfg.killlist.startenable then killlistmode = 1 end
+    --Проверка правил
     for k, v in pairs({'ghetto.txt', 'mafia.txt', 'bikers.txt'}) do
         if not doesFileExist("moonloader/Admin Tools/Rules/"..v) then
             httpRequest("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/at_rules/"..v, nil, function(response, code, headers, status)
@@ -1559,10 +1694,15 @@ function main()
             rultext = nil
         end
     end
+    --Автоалогин
     if #tostring(cfg.other.adminpass) >=6 and cfg.other.apassb then autoal() end
+    --Автообновление
     if cfg.other.autoupdate then autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", "https://evolve-rp.su/viewtopic.php?f=21&t=151439") end
+    --Запускаем ВХ
     lua_thread.create(wh)
+    --Регистрируем быстрые ответы
     registerFastAnswer()
+    --Загружаем список админов
     httpRequest("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admins.txt", nil, function(response, code, headers, status) 
         if response then
             for line in response:gmatch('[^\r\n]+') do
@@ -1574,12 +1714,7 @@ function main()
             print("Не удалось загрузить список админов")
         end
     end)
-    sampRegisterChatCommand("gpc", function()
-        local cx, cy = getCursorPos()
-        atext(renderGetFontDrawHeight(checkfont))
-        atext(("X: %s | Y: %s"):format(cx, cy))
-        setClipboardText(("%s, %s"):format(cx, cy))
-    end)
+    --Регистрируем команды
     sampRegisterChatCommand("oncapt", oncapt)
     sampRegisterChatCommand("vkv", vkv)
     sampRegisterChatCommand("ranks", ranks)
@@ -1627,149 +1762,28 @@ function main()
     sampRegisterChatCommand('addplayer', addplayer)
     sampRegisterChatCommand('delplayer', delplayer)
     sampRegisterChatCommand('deladm', deladm)
+    --Создаем шрифты
     initializeRender()
+    --Применяем стиль ImGui
     apply_custom_style()
-    if not doesFileExist("moonloader/config/Admin Tools/keys.json") then
-        io.open("moonloader/config/Admin Tools/keys.json", "w"):close()
-    else
-        local fa = io.open("moonloader/config/Admin Tools/keys.json", 'r')
-        if fa then
-            config_keys = decodeJson(fa:read('*a'))
-			if config_keys == nil then
-				config_keys = {
-                    banipkey = {v = {190}},
-                    warningkey = {v = {key.VK_Z}},
-                    reportkey = {v = {key.VK_X}},
-                    saveposkey = {v = {key.VK_M}},
-                    goposkey = {v = {key.VK_J}},
-                    cwarningkey = {v = {key.VK_R}},
-                    punaccept = {v = {key.VK_Y}},
-                    pundeny = {v = {key.VK_N}},
-                    whkey = {v = {16,71}},
-                    skeletwhkey = {v = {16, 72}},
-                    airbrkkey = {v = key.VK_RSHIFT},
-                }
-			end
-            if config_keys.cwarningkey == nil then config_keys.cwarningkey = {v = {key.VK_R}} end
-            if config_keys.punaccept == nil then config_keys.punaccept = {v = {key.VK_Y}} end
-            if config_keys.pundeny == nil then config_keys.pundeny = {v = {key.VK_N}} end
-            if config_keys.whkey == nil then config_keys.whkey = {v = {16,71}} end
-            if config_keys.skeletwhkey == nil then config_keys.skeletwhkey = {v = {16, 72}} end
-            if config_keys.airbrkkey == nil then config_keys.airbrkkey = {v = key.VK_RSHIFT} end
-        end
-    end
-    saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
-	if not doesFileExist("moonloader/config/Admin Tools/binder.json") then
-		io.open("moonloader/config/Admin Tools/binder.json", "w"):close()
-	else
-		local fb = io.open("moonloader/config/Admin Tools/binder.json", "r")
-		if fb then
-			tBindList = decodeJson(fb:read('*a'))
-            if tBindList == nil then
-                tBindList = {
-                    [1] = {
-                        text = "",
-                        v = {},
-                        name = 'Бинд1'
-                    },
-                    [2] = {
-                        text = "",
-                        v = {},
-                        name = 'Бинд2'
-                    },
-                    [3] = {
-                        text = "",
-                        v = {},
-                        name = 'Бинд3'
-                    }
-                }
-			end
-		end
-    end
-    saveData(tBindList, "moonloader/config/Admin Tools/binder.json")
-    if not doesFileExist("moonloader/config/Admin Tools/rangset.json") then
-        local fr = io.open("moonloader/config/Admin Tools/rangset.json", "w")
-        fr:write(encodeJson(frakrang))
-        fr:close()
-    else
-        local fr = io.open("moonloader/config/Admin Tools/rangset.json", 'r')
-        if fr then
-            frakrang = decodeJson(fr:read('*a'))
-        end
-    end
-    if not doesFileExist("moonloader/config/Admin Tools/colors.json") then
-        io.open("moonloader/config/Admin Tools/colors.json", 'w'):close()
-    else
-        local fc = io.open("moonloader/config/Admin Tools/colors.json", "r")
-        if fc then
-            config_colors = decodeJson(fc:read('*a'))
-            if config_colors == nil then
-                config_colors = {
-                    admchat = {r = 255, g = 255, b = 0, color = 16776960},
-                    supchat = {r = 0, g = 255, b = 153, color = 65433},
-                    smschat = {r = 255, g = 255, b = 0, color = 16776960},
-                    repchat = {r = 217, g = 119, b = 0, color = 14251776},
-                    anschat = {r = 140, g = 255, b = 155, color = 9240475},
-                    askchat = {r = 233, g = 165, b = 40, color = 15312168},
-                    jbchat = {r = 217, g = 119, b = 0, color = 14251776},
-                    tracemiss = {r = 0, g = 0, b = 255, color = -16776961},
-                    tracehit = {r = 255, g = 0, b = 0, color = -65536}
-                }
-            end
-            if config_colors.tracemiss == nil then config_colors.tracemiss = {r = 0, g = 0, b = 255, color = -16776961} end
-            if config_colors.tracehit == nil then config_colors.tracehit = {r = 255, g = 0, b = 0, color = -65536} end
-            if type(config_colors.admchat.color) == 'string' then config_colors.admchat.color = ARGBtoRGB(join_argb(255, config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b)) end
-            if type(config_colors.supchat.color) == 'string' then config_colors.supchat.color = ARGBtoRGB(join_argb(255, config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b)) end
-            if type(config_colors.smschat.color) == 'string' then config_colors.smschat.color = ARGBtoRGB(join_argb(255, config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b)) end
-            if type(config_colors.repchat.color) == 'string' then config_colors.repchat.color = ARGBtoRGB(join_argb(255, config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b)) end
-            if type(config_colors.anschat.color) == 'string' then config_colors.anschat.color = ARGBtoRGB(join_argb(255, config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b)) end
-            if type(config_colors.askchat.color) == 'string' then config_colors.askchat.color = ARGBtoRGB(join_argb(255, config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b)) end
-            if type(config_colors.jbchat.color) == 'string' then config_colors.jbchat.color = ARGBtoRGB(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b)) end
-        end
-    end
-    bulletTypes = {
-        [0] = config_colors.tracemiss.color,
-        [1] = config_colors.tracehit.color,
-        [2] = config_colors.tracemiss.color,
-        [3] = config_colors.tracemiss.color,
-        [4] = config_colors.tracemiss.color,
-        [5] = 0xFF00FF00
-    }
-    saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
-    ar, ag, ab = imgui.ImColor(config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b):GetFloat4()
-    acolor = imgui.ImFloat3(ar, ag, ab)
-    sr, sg, sb = imgui.ImColor(config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b):GetFloat4()
-    scolor = imgui.ImFloat3(sr, sg, sb)
-    smsr, smsg, smsb = imgui.ImColor(config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b):GetFloat4()
-    smscolor = imgui.ImFloat3(smsr, smsg, smsb)
-    jbr, jbg, jbb = imgui.ImColor(config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b):GetFloat4()
-    jbcolor = imgui.ImFloat3(jbr, jbg, jbb)
-    askr, askg, askb = imgui.ImColor(config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b):GetFloat4()
-    askcolor = imgui.ImFloat3(askr, askg, askb)
-    repr, repg, repb = imgui.ImColor(config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b):GetFloat4()
-    repcolor = imgui.ImFloat3(repr, repg, repb)
-    ansr, ansg, ansb = imgui.ImColor(config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b):GetFloat4()
-    anscolor = imgui.ImFloat3(ansr, ansg, ansb)
-    trhitr, trhitg, trhitb = imgui.ImColor(config_colors.tracehit.r, config_colors.tracehit.g, config_colors.tracehit.b):GetFloat4()
-    trhitcolor = imgui.ImFloat3(trhitr, trhitg, trhitb)
-    trmissr, trmissg, trmissb = imgui.ImColor(config_colors.tracemiss.r, config_colors.tracemiss.g, config_colors.tracemiss.b):GetFloat4()
-    trmisscolor = imgui.ImFloat3(trmissr, trmissg, trmissb)
+    --Регистрируем бинды
 	for k, v in pairs(tBindList) do
         rkeys.registerHotKey(v.v, true, onHotKey)
         if v.time ~= nil then v.time = nil end
         if v.name == nil then v.name = "Бинд"..k end
         v.text = v.text:gsub("%[enter%]", ""):gsub("{noenter}", "{noe}")
     end
-    reportbind = rkeys.registerHotKey(config_keys.reportkey.v, true, reportk)
-    warningbind = rkeys.registerHotKey(config_keys.warningkey.v, true, warningk)
-    banipbind = rkeys.registerHotKey(config_keys.banipkey.v, true, banipk)
-    saveposbind = rkeys.registerHotKey(config_keys.saveposkey.v, true, saveposk)
-    goposbind = rkeys.registerHotKey(config_keys.goposkey.v, true, goposk)
-    cwarningbind = rkeys.registerHotKey(config_keys.cwarningkey.v, true, cwarningk)
-    punacceptbind = rkeys.registerHotKey(config_keys.punaccept.v, true, punaccept)
-    pundenybind = rkeys.registerHotKey(config_keys.pundeny.v, true, pundeny)
-    whbind = rkeys.registerHotKey(config_keys.whkey.v, true, whkey)
-    skeletwhbind = rkeys.registerHotKey(config_keys.skeletwhkey.v, true, skeletwh)
+    reportbind      = rkeys.registerHotKey(config_keys.reportkey.v, true, reportk)
+    warningbind     = rkeys.registerHotKey(config_keys.warningkey.v, true, warningk)
+    banipbind       = rkeys.registerHotKey(config_keys.banipkey.v, true, banipk)
+    saveposbind     = rkeys.registerHotKey(config_keys.saveposkey.v, true, saveposk)
+    goposbind       = rkeys.registerHotKey(config_keys.goposkey.v, true, goposk)
+    cwarningbind    = rkeys.registerHotKey(config_keys.cwarningkey.v, true, cwarningk)
+    punacceptbind   = rkeys.registerHotKey(config_keys.punaccept.v, true, punaccept)
+    pundenybind     = rkeys.registerHotKey(config_keys.pundeny.v, true, pundeny)
+    whbind          = rkeys.registerHotKey(config_keys.whkey.v, true, whkey)
+    skeletwhbind    = rkeys.registerHotKey(config_keys.skeletwhkey.v, true, skeletwh)
+    --Обработчик onWindowMessage
 	addEventHandler("onWindowMessage", function (msg, wparam, lparam)
         if msg == wm.WM_KEYDOWN then
             if tEditData.id > -1 then
@@ -1784,9 +1798,9 @@ function main()
             end
         end
     end)
-    if cfg.cheat.autogm then
-        funcsStatus.Inv = true
-    end
+    --АвтоГМ
+    if cfg.cheat.autogm then funcsStatus.Inv = true end
+    --Создаем потоки
     lua_thread.create(upd_locals)
     lua_thread.create(upd_checker)
     lua_thread.create(clickF)
@@ -1796,19 +1810,26 @@ function main()
     lua_thread.create(warningsKey)
     lua_thread.create(admchat)
     lua_thread.create(whon)
+    --Загружаем список для чекеров
     loadUsers()
+    --Обновляем список чекеров
     rebuildUsers()
+    --Загружаем анимации для флая
     requestAnimation("SWIM")
     requestAnimation("PARACHUTE")
     while true do wait(0)
+        --Бесконечные патроны
         unlimBullets(oCheat.unlimBullets.v)
+        --Reset remove
         if mem.read(0x8E4CB4, 4, true) > 419430400 then cleanStreamMemoryBuffer() end
+        --Время на выдачу наказания
         if punkey.delay ~= nil then
             if (os.time() - punkey.delay) > 20 then
                 atext('Время выдачи наказания истекло.')
                 punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}}
             end
         end
+        --Киллист
         if swork then 
             if killlistmode == 1 or killlistmode == 2 then
                 if isKillstatActive() then
@@ -1820,6 +1841,7 @@ function main()
                 end
             end 
         end
+        --ТП по метке
         if not recon.state then
             local result, x, y, z = getTargetBlipCoordinatesFixed()
             if result and swork then
@@ -1827,11 +1849,13 @@ function main()
                 removeWaypoint()
             end
         end
+        --Варнинги на клео реконнект
         for k, v in ipairs(wrecon) do
             if os.clock() > v["time"] then
                 table.remove(wrecon, k)
             end
         end
+        --Выключение на F12
         if wasKeyPressed(key.VK_F12) then swork = not swork 
             if not swork then
                 nameTagOn()
@@ -1843,6 +1867,7 @@ function main()
                 infRun(true)
             end
         end
+        --Выключение килл-листа на F9
         if wasKeyPressed(key.VK_F9) then
             if killlistmode == 0 then
                 enableKillList(false)
@@ -1854,18 +1879,15 @@ function main()
                 killlistmode = 0
             end
         end
-        if #tkills > 50 then
-            table.remove(tkills, 1)
-        end
+        --Чистка списка киллов
+        if #tkills > 50 then table.remove(tkills, 1) end
+        --Рендер трейсеров
         local oTime = os.time()
         if not isPauseMenuActive() then
 			for i = 1, BulletSync.maxLines do
                 if BulletSync[i].enable == true and BulletSync[i].time >= oTime then
-                    --if isPointOnScreen(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z, 0) then
 					local sx, sy, sz = calcScreenCoors(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
                     local fx, fy, fz = calcScreenCoors(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)
-                    --[[local sx, sy = convert3DCoordsToScreen(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
-                    local fx, fy = convert3DCoordsToScreen(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)]]
                     if sz > -0.03125 and fz > -0.03125 then
                         renderDrawLine(sx, sy, fx, fy, 1, bulletTypes[BulletSync[i].tType])
                         renderDrawPolygon(fx, fy-1, 3, 3, 4.0, 10, bulletTypes[BulletSync[i].tType])
@@ -1873,6 +1895,7 @@ function main()
 				end
 			end
         end
+        --Смена позиций
         if data.imgui.reconpos then
             imrecon.v = true
             sampToggleCursor(true)
@@ -2349,8 +2372,192 @@ function imgui.OnDrawFrame()
         if imgui.Button(u8 'Лидеры', btn_size) then leadwindow.v = not leadwindow.v end
         if imgui.Button(u8 'Биндер', btn_size) then bMainWindow.v = not bMainWindow.v end
         if imgui.Button(u8 "Прочие читы", btn_size) then oCheat.wind.v = not oCheat.wind.v end
+        if imgui.Button(u8 "Редактор чекера", btn_size) then checkerEdit.window.v = not checkerEdit.window.v end
         --if imgui.Button(u8 'Тюнинг авто', btn_size) then tunwindow.v = not tunwindow.v end
         imgui.End()
+        if checkerEdit.window.v then
+            imgui.SetNextWindowSize(imgui.ImVec2(780, 522), imgui.Cond.FirstUseEver)
+            imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+            imgui.Begin(u8 "Редактор чекера", checkerEdit.window)
+            imgui.BeginChild("##selectchecker", imgui.ImVec2(750, 60), true)
+            if imgui.Button(u8 "Чекер админов", imgui.ImVec2(355, 30)) then checkerEdit.select = 1 end
+            imgui.SameLine()
+            if imgui.Button(u8 "Чекер игроков", imgui.ImVec2(355, 30)) then checkerEdit.select = 2 end
+            imgui.EndChild()
+            imgui.BeginChild("editchecker", imgui.ImVec2(750, 400), true)
+            if checkerEdit.select ~= 0 then
+                imgui.BeginChild("##select player", imgui.ImVec2(200, 370), true)
+                if checkerEdit.select == 1 then --Селектор ников админов
+                    for k, v in pairs(checker.admins.loaded) do
+                        if imgui.Selectable(u8(("%s##adm%s"):format(v["nick"], k)), checkerEdit.admins.list == k) then 
+                            checkerEdit.admins.list         = k
+                            checkerEdit.admins.nick.v       = u8(tostring(v["nick"]))
+                            checkerEdit.admins.color.v      = v["color"]
+                            checkerEdit.admins.desc.v       = u8(tostring(v["text"]))
+                            local a, r, g, b                = explode_argb(tonumber("0x"..checkerEdit.admins.color.v))
+                            checkerEdit.admins.ImColor      = imgui.ImFloat3(r / 255, g / 255, b / 255)
+                        end
+                    end
+                    imgui.Separator()
+                    if imgui.Button(u8 "Добавить", btn_size) then
+                        checkerEdit.admins.ImColor = imgui.ImFloat3(1, 1, 1)
+                        checkerEdit.admins.list     = 0
+                        checkerEdit.admins.nick.v   = ""
+                        checkerEdit.admins.color.v  = "FFFFFF"
+                        checkerEdit.admins.desc.v   = ""
+                        imgui.OpenPopup(u8 "Добавить игрока##1") end --Добавить админа в чекер
+                    if imgui.BeginPopupModal(u8 "Добавить игрока##1", _, imgui.WindowFlags.NoResize) then
+                        imgui.InputText(u8 "Введите ник##addadm", checkerEdit.admins.nick)
+                        imgui.InputText(u8 "Введите цвет##addadm", checkerEdit.admins.color)
+                        imgui.InputText(u8 "Введите описание##addadm", checkerEdit.admins.desc)
+                        if imgui.ColorEdit3(u8 "Цвет##addadm", checkerEdit.admins.ImColor) then
+                            local hex = bit.tohex(ARGBtoRGB(join_argb(255, checkerEdit.admins.ImColor.v[1] * 255, checkerEdit.admins.ImColor.v[2] * 255, checkerEdit.admins.ImColor.v[3] * 255)))
+                            checkerEdit.admins.color.v = tostring(hex:match("^00(.+)")):upper()
+                        end
+                        if imgui.Button(u8 "Сохранить##addadm", imgui.ImVec2(233.5, 30)) then
+                            if not isHex(checkerEdit.admins.color.v) then checkerEdit.admins.color.v = "FFFFFF" end
+                            table.insert(checker.admins.loaded, {nick = checkerEdit.admins.nick.v, color = checkerEdit.admins.color.v, text = u8:decode(checkerEdit.admins.desc.v)})
+                            saveData(checker.admins.loaded, 'moonloader/config/Admin Tools/admchecker.json')
+                            rebuildUsers()
+                            imgui.CloseCurrentPopup()
+                        end
+                        imgui.SameLine()
+                        if imgui.Button(u8 "Отмена", imgui.ImVec2(233.5, 30)) then
+                            imgui.CloseCurrentPopup()
+                        end
+                        imgui.EndPopup()
+                    end
+                elseif checkerEdit.select == 2 then --Селектор ников игроков
+                    for k, v in pairs(checker.players.loaded) do
+                        if imgui.Selectable(u8(("%s##players%s"):format(v["nick"], k)), checkerEdit.players.list == k) then 
+                            checkerEdit.players.list         = k
+                            checkerEdit.players.nick.v       = u8(tostring(v["nick"]))
+                            checkerEdit.players.color.v      = v["color"]
+                            checkerEdit.players.desc.v       = u8(tostring(v["text"]))
+                            local a, r, g, b                 = explode_argb(tonumber("0x"..checkerEdit.players.color.v))
+                            checkerEdit.players.ImColor      = imgui.ImFloat3(r / 255, g / 255, b / 255)
+                        end
+                    end
+                    imgui.Separator()
+                    imgui.Separator()
+                    if imgui.Button(u8 "Добавить##2", btn_size) then 
+                        checkerEdit.players.ImColor = imgui.ImFloat3(1, 1, 1)
+                        checkerEdit.players.list     = 0
+                        checkerEdit.players.nick.v   = ""
+                        checkerEdit.players.color.v  = "FFFFFF"
+                        checkerEdit.players.desc.v   = ""
+                        imgui.OpenPopup(u8 "Добавить игрока##2") end --Добавить игрока в чекер
+                    if imgui.BeginPopupModal(u8 "Добавить игрока##2", _, imgui.WindowFlags.NoResize) then
+                        imgui.InputText(u8 "Введите ник##addp", checkerEdit.players.nick)
+                        imgui.InputText(u8 "Введите цвет##addp", checkerEdit.players.color)
+                        imgui.InputText(u8 "Введите описание##addp", checkerEdit.players.desc)
+                        if imgui.ColorEdit3(u8 "Цвет##addp", checkerEdit.players.ImColor) then
+                            local hex = bit.tohex(ARGBtoRGB(join_argb(255, checkerEdit.players.ImColor.v[1] * 255, checkerEdit.players.ImColor.v[2] * 255, checkerEdit.players.ImColor.v[3] * 255)))
+                            checkerEdit.players.color.v = tostring(hex:match("^00(.+)")):upper()
+                        end
+                        if imgui.Button(u8 "Сохранить##addp", imgui.ImVec2(233.5, 30)) then
+                            if not isHex(checkerEdit.players.color.v) then checkerEdit.players.color.v = "FFFFFF" end
+                            table.insert(checker.players.loaded, {nick = checkerEdit.players.nick.v, color = checkerEdit.players.color.v, text = u8:decode(checkerEdit.players.desc.v)})
+                            saveData(checker.players.loaded, 'moonloader/config/Admin Tools/playerchecker.json')
+                            rebuildUsers()
+                            imgui.CloseCurrentPopup()
+                        end
+                        imgui.SameLine()
+                        if imgui.Button(u8 "Отмена", imgui.ImVec2(233.5, 30)) then
+                            imgui.CloseCurrentPopup()
+                        end
+                        imgui.EndPopup()
+                    end
+                end
+                imgui.EndChild()
+                imgui.SameLine()
+                imgui.BeginChild("##edit player", imgui.ImVec2(507, 370), true)
+                if checkerEdit.select == 1 then
+                    for k, v in pairs(checker.admins.loaded) do
+                        if checkerEdit.admins.list == k then
+                            imgui.InputText(u8 "Введите ник##editadm", checkerEdit.admins.nick)
+                            imgui.InputText(u8 "Введите цвет##editadm", checkerEdit.admins.color)
+                            imgui.InputText(u8 "Введите описание##editadm", checkerEdit.admins.desc)
+                            if imgui.ColorEdit3(u8 "Цвет##1", checkerEdit.admins.ImColor) then
+                                local hex = bit.tohex(ARGBtoRGB(join_argb(255, checkerEdit.admins.ImColor.v[1] * 255, checkerEdit.admins.ImColor.v[2] * 255, checkerEdit.admins.ImColor.v[3] * 255)))
+                                checkerEdit.admins.color.v = tostring(hex:match("^00(.+)")):upper()
+                            end
+                            if imgui.Button(u8 "Сохранить игрока##editadm", imgui.ImVec2(233.5, 30)) then
+                                if not isHex(checkerEdit.admins.color.v) then checkerEdit.admins.color.v = "FFFFFF" end
+                                v["nick"]   = u8:decode(checkerEdit.admins.nick.v)
+                                v["color"]  = checkerEdit.admins.color.v
+                                v["text"]   = u8:decode(checkerEdit.admins.desc.v)
+                                saveData(checker.admins.loaded, 'moonloader/config/Admin Tools/admchecker.json')
+                                rebuildUsers()
+                            end
+                            imgui.SameLine()
+                            if imgui.Button(u8 "Удалить игрока##k##editadm", imgui.ImVec2(233.5, 30)) then imgui.OpenPopup(u8 "Удалить игрока##"..k) end
+                            if imgui.BeginPopupModal(u8 "Удалить игрока##"..k, _, imgui.WindowFlags.NoResize) then
+                                imgui.CentrText(u8 "Вы действительно хотите удалить игрока из чекера")
+                                if imgui.Button(u8 "Удалить##check####editadm"..k, imgui.ImVec2(233.5, 30)) then
+                                    table.remove(checker.admins.loaded, k)
+                                    saveData(checker.admins.loaded, 'moonloader/config/Admin Tools/admchecker.json')
+                                    checkerEdit.admins.list     = 0
+                                    checkerEdit.admins.nick.v   = ""
+                                    checkerEdit.admins.color.v  = ""
+                                    checkerEdit.admins.desc.v   = ""
+                                    rebuildUsers()
+                                    imgui.CloseCurrentPopup()
+                                end
+                                imgui.SameLine()
+                                if imgui.Button(u8 "Отмена", imgui.ImVec2(233.5, 30)) then
+                                    imgui.CloseCurrentPopup()
+                                end
+                                imgui.EndPopup()
+                            end
+                        end
+                    end
+                elseif checkerEdit.select == 2 then
+                    for k, v in pairs(checker.players.loaded) do
+                        if checkerEdit.players.list == k then
+                            imgui.InputText(u8 "Введите ник##editp", checkerEdit.players.nick)
+                            imgui.InputText(u8 "Введите цвет##editp", checkerEdit.players.color)
+                            imgui.InputText(u8 "Введите описание##editp", checkerEdit.players.desc)
+                            if imgui.ColorEdit3(u8 "Цвет##2", checkerEdit.players.ImColor) then
+                                local hex = bit.tohex(ARGBtoRGB(join_argb(255, checkerEdit.players.ImColor.v[1] * 255, checkerEdit.players.ImColor.v[2] * 255, checkerEdit.players.ImColor.v[3] * 255)))
+                                checkerEdit.players.color.v = tostring(hex:match("^00(.+)")):upper()
+                            end
+                            if imgui.Button(u8 "Сохранить игрока##editp", imgui.ImVec2(233.5, 30)) then
+                                if not isHex(checkerEdit.players.color.v) then checkerEdit.players.color.v = "FFFFFF" end
+                                v["nick"]   = u8:decode(checkerEdit.players.nick.v)
+                                v["color"]  = checkerEdit.players.color.v
+                                v["text"]   = u8:decode(checkerEdit.players.desc.v)
+                                saveData(checker.players.loaded, 'moonloader/config/Admin Tools/playerchecker.json')
+                                rebuildUsers()
+                            end
+                            imgui.SameLine()
+                            if imgui.Button(u8 "Удалить игрока##k##editp", imgui.ImVec2(233.5, 30)) then imgui.OpenPopup(u8 "Удалить игрока##"..k) end
+                            if imgui.BeginPopupModal(u8 "Удалить игрока##"..k, _, imgui.WindowFlags.NoResize) then
+                                imgui.CentrText(u8 "Вы действительно хотите удалить игрока из чекера")
+                                if imgui.Button(u8 "Удалить##check##"..k, imgui.ImVec2(233.5, 30)) then
+                                    table.remove(checker.players.loaded, k)
+                                    saveData(checker.players.loaded, 'moonloader/config/Admin Tools/playerchecker.json')
+                                    checkerEdit.players.list     = 0
+                                    checkerEdit.players.nick.v   = ""
+                                    checkerEdit.players.color.v  = ""
+                                    checkerEdit.players.desc.v   = ""
+                                    rebuildUsers()
+                                    imgui.CloseCurrentPopup()
+                                end
+                                imgui.SameLine()
+                                if imgui.Button(u8 "Отмена", imgui.ImVec2(233.5, 30)) then
+                                    imgui.CloseCurrentPopup()
+                                end
+                                imgui.EndPopup()
+                            end
+                        end
+                    end
+                end
+                imgui.End()
+            end
+            imgui.EndChild()
+            imgui.End()
+        end
         if oCheat.wind.v then
             imgui.SetNextWindowSize(imgui.ImVec2(220, 300), imgui.Cond.FirstUseEver)
             imgui.SetNextWindowPos(imgui.ImVec2(screenx/2-300, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
@@ -2951,7 +3158,8 @@ function imgui.OnDrawFrame()
                         [1] = config_colors.tracehit.color,
                         [2] = config_colors.tracemiss.color,
                         [3] = config_colors.tracemiss.color,
-                        [4] = config_colors.tracemiss.color
+                        [4] = config_colors.tracemiss.color,
+                        [5] = 0xFF00FF00
                     }
                     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
                 end
@@ -2963,7 +3171,8 @@ function imgui.OnDrawFrame()
                         [1] = config_colors.tracehit.color,
                         [2] = config_colors.tracemiss.color,
                         [3] = config_colors.tracemiss.color,
-                        [4] = config_colors.tracemiss.color
+                        [4] = config_colors.tracemiss.color,
+                        [5] = 0xFF00FF00
                     }
                     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
                 end
@@ -2979,30 +3188,22 @@ function imgui.OnDrawFrame()
                         tracemiss = {r = 0, g = 0, b = 255, color = -16776961},
                         tracehit = {r = 255, g = 0, b = 0, color = -65536}
                     }
-                    ar, ag, ab = imgui.ImColor(config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b):GetFloat4()
-                    acolor = imgui.ImFloat3(ar, ag, ab)
-                    sr, sg, sb = imgui.ImColor(config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b):GetFloat4()
-                    scolor = imgui.ImFloat3(sr, sg, sb)
-                    smsr, smsg, smsb = imgui.ImColor(config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b):GetFloat4()
-                    smscolor = imgui.ImFloat3(smsr, smsg, smsb)
-                    jbr, jbg, jbb = imgui.ImColor(config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b):GetFloat4()
-                    jbcolor = imgui.ImFloat3(jbr, jbg, jbb)
-                    askr, askg, askb = imgui.ImColor(config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b):GetFloat4()
-                    askcolor = imgui.ImFloat3(askr, askg, askb)
-                    repr, repg, repb = imgui.ImColor(config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b):GetFloat4()
-                    repcolor = imgui.ImFloat3(repr, repg, repb)
-                    ansr, ansg, ansb = imgui.ImColor(config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b):GetFloat4()
-                    anscolor = imgui.ImFloat3(ansr, ansg, ansb)
-                    trhitr, trhitg, trhitb = imgui.ImColor(config_colors.tracehit.r, config_colors.tracehit.g, config_colors.tracehit.b):GetFloat4()
-                    trhitcolor = imgui.ImFloat3(trhitr, trhitg, trhitb)
-                    trmissr, trmissg, trmissb = imgui.ImColor(config_colors.tracemiss.r, config_colors.tracemiss.g, config_colors.tracemiss.b):GetFloat4()
-                    trmisscolor = imgui.ImFloat3(trmissr, trmissg, trmissb)
+                    acolor      = imgui.ImFloat3(config_colors.admchat.r / 255, config_colors.admchat.g / 255, config_colors.admchat.b / 255)
+                    scolor      = imgui.ImFloat3(config_colors.supchat.r / 255, config_colors.supchat.g / 255, config_colors.supchat.b / 255)
+                    smscolor    = imgui.ImFloat3(config_colors.smschat.r / 255, config_colors.smschat.g / 255, config_colors.smschat.b / 255)
+                    jbcolor     = imgui.ImFloat3(config_colors.jbchat.r / 255, config_colors.jbchat.g / 255, config_colors.jbchat.b / 255)
+                    askcolor    = imgui.ImFloat3(config_colors.askchat.r / 255, config_colors.askchat.g / 255, config_colors.askchat.b / 255)
+                    repcolor    = imgui.ImFloat3(config_colors.repchat.r / 255, config_colors.repchat.g / 255, config_colors.repchat.b / 255)
+                    anscolor    = imgui.ImFloat3(config_colors.anschat.r / 255, config_colors.anschat.g / 255, config_colors.anschat.b / 255)
+                    trhitcolor  = imgui.ImFloat3(config_colors.tracehit.r / 255, config_colors.tracehit.g / 255, config_colors.tracehit.b / 255)
+                    trmisscolor = imgui.ImFloat3(config_colors.tracemiss.r / 255, config_colors.tracemiss.g / 255, config_colors.tracemiss.b / 255)
                     bulletTypes = {
                         [0] = config_colors.tracemiss.color,
                         [1] = config_colors.tracehit.color,
                         [2] = config_colors.tracemiss.color,
                         [3] = config_colors.tracemiss.color,
-                        [4] = config_colors.tracemiss.color
+                        [4] = config_colors.tracemiss.color,
+                        [5] = 0xFF00FF00
                     }
                     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
                 end
@@ -3450,9 +3651,29 @@ end
 
 function sampev.onServerMessage(color, text)
     local mynick = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
-    if text:match('^ Вы авторизировались как модератор %d+ уровня$') then cfg.other.admlvl = tonumber(text:match('^ Вы авторизировались как модератор (%d+) уровня$')) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+    --Лог наказаных
     punishlog(text)
+    --Для счетчика отлетевших
     otletfunc(text, color)
+    --Добавляем ID в чате
+    for i = 0, 1000 do
+        if sampIsPlayerConnectedFixed(i) then
+            local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
+            local a = text:gsub('{.+}', '')
+            if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
+                if nick:find("%[") then
+                    if nick:find("%]") then
+                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                    end
+                else
+                    text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                end
+            end
+        end
+    end
+    --Получаем лвл админки
+    if text:match('^ Вы авторизировались как модератор %d+ уровня$') then cfg.other.admlvl = tonumber(text:match('^ Вы авторизировались как модератор (%d+) уровня$')) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+    --Для выдачи наказаний по кнопке
     if cfg.other.admlvl > 1 and color == -10270806 then
         if punkey.re.id or punkey.warn.id or punkey.ban.id or punkey.prison.id then
             if text:find(sampGetPlayerNickname(punkey.warn.id)) or text:find(sampGetPlayerNickname(punkey.ban.id)) or text:find(sampGetPlayerNickname(punkey.prison.id)) then
@@ -3463,49 +3684,31 @@ function sampev.onServerMessage(color, text)
             end
         end
     end
+    --Логирование выдачи склада в гетто / мафиях
     if text:match("^ Администратор %S+ добавил %d+ материалов на склад фракции .+. Текущее состояние склада: %d+$") and color == -65366 then
         local nick, mati, banda = text:match("^ Администратор (%S+) добавил (%d+) материалов на склад фракции (.+). Текущее состояние склада: %d+$")
         if nick == sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))) then
             if banda == 'Grove' or banda == 'Rifa' or banda == 'Ballas' or banda == 'Vagos' or banda == 'Aztec' then
-                if not doesFileExist("moonloader/Admin Tools/setmatlog.txt") then
-                    local time = localTime()
-                    local file = io.open("moonloader/Admin Tools/setmatlog.txt", "w")
-                    file:write(("\n[size=85][list][*] [color=#00BFFF]Игровой ник[/color]: %s\n"):format(nick))
-                    file:write(("[*] [color=#00BFFF]Наименование банды[/color]: %s\n"):format(banda))
-                    file:write(("[*] [color=#00BFFF]Количество выданных материалов[/color]: %s\n"):format(mati))
-                    file:write(("[*] [color=#00BFFF]Дата и время[/color]: %s / %s[/list][/size]\n"):format(("%s:%s"):format(time.wHour, time.wMinute), os.date('%d.%m.%Y')))
-                    file:close()
-                else
-                    local time = localTime()
-                    local file = io.open("moonloader/Admin Tools/setmatlog.txt", "a")
-                    file:write(("\n[size=85][list][*] [color=#00BFFF]Игровой ник[/color]: %s\n"):format(nick))
-                    file:write(("[*] [color=#00BFFF]Наименование банды[/color]: %s\n"):format(banda))
-                    file:write(("[*] [color=#00BFFF]Количество выданных материалов[/color]: %s\n"):format(mati))
-                    file:write(("[*] [color=#00BFFF]Дата и время[/color]: %s / %s[/list][/size]\n"):format(("%s:%s"):format(time.wHour, time.wMinute), os.date('%d.%m.%Y')))
-                    file:close()
-                end
+                local time = localTime()
+                local file = io.open("moonloader/Admin Tools/setmatlog.txt", "a")
+                file:write(("\n[size=85][list][*] [color=#00BFFF]Игровой ник[/color]: %s\n"):format(nick))
+                file:write(("[*] [color=#00BFFF]Наименование банды[/color]: %s\n"):format(banda))
+                file:write(("[*] [color=#00BFFF]Количество выданных материалов[/color]: %s\n"):format(mati))
+                file:write(("[*] [color=#00BFFF]Дата и время[/color]: %s / %s[/list][/size]\n"):format(("%s:%s"):format(time.wHour, time.wMinute), os.date('%d.%m.%Y')))
+                file:close()
             end
             if banda == 'Yakuza' or banda == 'LCN' or banda == 'Rus Mafia' then
-                if not doesFileExist("moonloader/Admin Tools/setmatlog.txt") then
-                    local time = localTime()
-                    local file = io.open("moonloader/Admin Tools/setmatlog.txt", "w")
-                    file:write(("\n[size=85][list][*] [color=#00BFFF]Игровой ник[/color]: %s\n"):format(nick))
-                    file:write(("[*] [color=#00BFFF]Наименование мафии[/color]: %s\n"):format(banda))
-                    file:write(("[*] [color=#00BFFF]Количество выданных материалов[/color]: %s\n"):format(mati))
-                    file:write(("[*] [color=#00BFFF]Дата и время[/color]: %s / %s[/list][/size]\n"):format(("%s:%s"):format(time.wHour, time.wMinute), os.date('%d.%m.%Y')))
-                    file:close()
-                else
-                    local time = localTime()
-                    local file = io.open("moonloader/Admin Tools/setmatlog.txt", "a")
-                    file:write(("\n[size=85][list][*] [color=#00BFFF]Игровой ник[/color]: %s\n"):format(nick))
-                    file:write(("[*] [color=#00BFFF]Наименование мафии[/color]: %s\n"):format(banda))
-                    file:write(("[*] [color=#00BFFF]Количество выданных материалов[/color]: %s\n"):format(mati))
-                    file:write(("[*] [color=#00BFFF]Дата и время[/color]: %s / %s[/list][/size]\n"):format(("%s:%s"):format(time.wHour, time.wMinute), os.date('%d.%m.%Y')))
-                    file:close()
-                end
+                local time = localTime()
+                local file = io.open("moonloader/Admin Tools/setmatlog.txt", "a")
+                file:write(("\n[size=85][list][*] [color=#00BFFF]Игровой ник[/color]: %s\n"):format(nick))
+                file:write(("[*] [color=#00BFFF]Наименование мафии[/color]: %s\n"):format(banda))
+                file:write(("[*] [color=#00BFFF]Количество выданных материалов[/color]: %s\n"):format(mati))
+                file:write(("[*] [color=#00BFFF]Дата и время[/color]: %s / %s[/list][/size]\n"):format(("%s:%s"):format(time.wHour, time.wMinute), os.date('%d.%m.%Y')))
+                file:close()
             end
         end
     end
+    --/bcheck
     if ban.check and text:find("Игрок не найден") then 
         atext(("Игрок %s не заблокирован"):format(ban.nick)) 
         if not doesFileExist('moonloader/Admin Tools/Check Banned/result.txt') then
@@ -3520,125 +3723,44 @@ function sampev.onServerMessage(color, text)
         ban.check = false 
         return false 
     end
+    --Лог в консоли сампфункса
     if cfg.other.chatconsole then sampfuncsLog(text) end
-    if doesFileExist('moonloader/Admin Tools/chatlog_all.txt') then
-        local time = localTime()
-		local file = io.open('moonloader/Admin Tools/chatlog_all.txt', 'a')
-		file:write(('[%s || %s] %s\n'):format(os.date('%d.%m.%Y'), ("%s:%s:%s.%s"):format(time.wHour, time.wMinute, time.wSecond, time.wMilliseconds), text))
-		file:close()
-    else
-        local time = localTime()
-        local file = io.open('moonloader/Admin Tools/chatlog_all.txt', 'w')
-		file:write(('[%s || %s] %s\n'):format(os.date('%d.%m.%Y'), ("%s:%s:%s.%s"):format(time.wHour, time.wMinute, time.wSecond, time.wMilliseconds), text))
-        file:close()
+    --Запись в единый чатлог
+    local time = localTime()
+	local file = io.open('moonloader/Admin Tools/chatlog_all.txt', 'a')
+	file:write(('[%s || %s] %s\n'):format(os.date('%d.%m.%Y'), ("%s:%s:%s.%s"):format(time.wHour, time.wMinute, time.wSecond, time.wMilliseconds), text))
+    file:close()
+    --Цвета
+    if text:match('^ Ответ от .+%[%d+%] к .+%[%d+%]:') then return {argb_to_rgba(join_argb(255, config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b)), text} end
+    if text:match('^ <ADM%-CHAT> .+: .+') then return {argb_to_rgba(join_argb(255, config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b)), text} end
+    if text:match('^ <SUPPORT%-CHAT> .+: .+') then return {argb_to_rgba(join_argb(255, config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b)), text} end
+    if text:match('^ SMS:') then return {argb_to_rgba(join_argb(255, config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b)), text} end
+    if text:match('^ %->Вопрос .+') then return {argb_to_rgba(join_argb(255, config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b)), text} end
+    --Получаем ID по репорту
+    if text:match("^ Жалоба от .+%[%d+%] на .+%[%d+%]%: .+") then
+        reportid = text:match("Жалоба от .+%[%d+%] на .+%[(%d+)%]%: .+")
+        return {argb_to_rgba(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b)), text} 
     end
-    if text:match('^ Ответ от .+%[%d+%] к .+%[%d+%]:') then
-        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
-        for i = 0, 1000 do
-            if sampIsPlayerConnectedFixed(i) then
-                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
-                local a = text:gsub('{.+}', '')
-                if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                    if nick:find("%[") then
-                        if nick:find("%]") then
-                            text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                        end
-                    else
-                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                    end
-                end
-            end
-        end
-        return {argb_to_rgba(join_argb(255, config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b)), text} 
+    if text:match('^ Репорт от .+%[%d+%]%:') then
+        reportid = text:match('Репорт от .+%[(%d+)%]%:')
+        return {argb_to_rgba(join_argb(255, config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b)), text} 
     end
-    if text:match('^ <ADM%-CHAT> .+: .+') then
-        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
-        for i = 0, 1000 do
-            if sampIsPlayerConnectedFixed(i) then
-                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
-                local a = text:gsub('{.+}', '')
-                if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                    if nick:find("%[") then
-                        if nick:find("%]") then
-                            text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                        end
-                    else
-                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                    end
-                end
-            end
-        end
-        return {argb_to_rgba(join_argb(255, config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b)), text}  
+    if text:match('^ Жалоба от%: .+%[%d+%]%:') then
+        reportid = text:match('Жалоба от%: .+%[(%d+)%]%:')
+        return {argb_to_rgba(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b)), text} 
     end
-    if text:match('^ <SUPPORT%-CHAT> .+: .+') then
-        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
-        for i = 0, 1000 do
-            if sampIsPlayerConnectedFixed(i) then
-                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
-                local a = text:gsub('{.+}', '')
-                if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                    if nick:find("%[") then
-                        if nick:find("%]") then
-                            text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                        end
-                    else
-                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                    end
-                end
-            end
-        end
-        return {argb_to_rgba(join_argb(255, config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b)), text} 
-    end
+    --Массовое ТП
     if masstpon and text:match('^ SMS: .+ Отправитель: .+%[%d+%]$') then
         local smsid = text:match('^ SMS: .+ Отправитель: .+%[(%d+)%]$')
-        if not checkIntable(smsids, smsid) then
-            table.insert(smsids, smsid)
-        end
+        if not checkIntable(smsids, smsid) then table.insert(smsids, smsid) end
         return false
     end
-    if text:match('^ SMS:') then
-        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
-        for i = 0, 1000 do
-            if sampIsPlayerConnectedFixed(i) then
-                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
-                local a = text:gsub('{.+}', '')
-                if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                    if nick:find("%[") then
-                        if nick:find("%]") then
-                            text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                        end
-                    else
-                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                    end
-                end
-            end
-        end
-        return {argb_to_rgba(join_argb(255, config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b)), text} 
-    end
-    if text:match('^ %->Вопрос .+') then
-        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
-        for i = 0, 1000 do
-            if sampIsPlayerConnectedFixed(i) then
-                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
-                local a = text:gsub('{.+}', '')
-                if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                    if nick:find("%[") then
-                        if nick:find("%]") then
-                            text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                        end
-                    else
-                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                    end
-                end
-            end
-        end
-        return {argb_to_rgba(join_argb(255, config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b)), text}  
-    end
+    --Цветной /warehouse
     if text:match('^ На складе .+ %d+/%d+') and color == -1 then
-        local mfrak, mati, ogran = text:match('^ На складе (.+) (%d+)/(%d+)')
-        local text = text:gsub(mfrak, frakcolor[mfrak])
-        return {color, text}
+        local mfrak = text:match('^ На складе (.+) %d+/%d+')
+        if frakcolor[mfrak] ~= nil then text = text:gsub(mfrak, frakcolor[mfrak]) end
     end
+    --Проверка лвл / ранг
     if checkf.state then
         if text:match('^ ID: %d+ |.+') then
             local cid, cday, cmonth, cyear, cnick, crang = text:match('^ ID%: (%d+) | %d+%:%d+ (%d+)%.(%d+)%.(%d+) | (.+)%: .+%[(%d+)%]')
@@ -3844,6 +3966,7 @@ function sampev.onServerMessage(color, text)
         if text:find('Члены организации Он%-лайн%:') then return false end
         if text == ' ' and color == -1 then return false end
     end
+    --Получения кол-во игрококов во фракции
     if fonl.check then
         if text:match('^ ID: %d+ |.+') then
             return false
@@ -3856,26 +3979,7 @@ function sampev.onServerMessage(color, text)
         if text:find('Члены организации Он%-лайн%:') then return false end
         if text == ' ' and color == -1 then return false end
     end
-    if text:match("^ Жалоба от .+%[%d+%] на .+%[%d+%]%: .+") then
-        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
-        for i = 0, 1000 do
-            if sampIsPlayerConnectedFixed(i) then
-                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
-                local a = text:gsub('{.+}', '')
-                if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                    if nick:find("%[") then
-                        if nick:find("%]") then
-                            text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                        end
-                    else
-                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                    end
-                end
-            end
-        end
-        reportid = text:match("Жалоба от .+%[%d+%] на .+%[(%d+)%]%: .+")
-        return {argb_to_rgba(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b)), text} 
-    end
+    --Получение IP для проверки регов
     if text:match("Nik %[.+%]  R%-IP %[.+%]  L%-IP %[.+%]  IP %[(.+)%]") and color == -10270806 then
         local nick, rip, ip = text:match("Nik %[(.+)%]  R%-IP %[(.+)%]  L%-IP %[.+%]  IP %[(.+)%]")
         ips = {rip, ip}
@@ -3886,74 +3990,17 @@ function sampev.onServerMessage(color, text)
 		local nick, rip, ip = text:match('^ Nik %[(.+)%]   R%-IP %[(.+)%]   L%-IP %[.+%]   IP %[(.+)%]$')
         ips = {rip, ip}
 		rnick = nick
-	end
+    end
+    --Получение ID по серверному варнингу
     if text:match('<Warning> .+%[%d+%]%: .+') and color == -16763905 then
         local cnick, ccwid = text:match('<Warning> (.+)%[(%d+)%]%: .+')
 		wid = ccwid
         if cfg.tempChecker.wadd then
             local result, key = checkInTableChecker(checker.temp.loaded, cnick)
-            if not result then
-                table.insert(checker.temp.loaded, {{nick = cnick, color = 'FFFFFF', text = ''}})
-                rebuildUsers()
-            end
+            if not result then table.insert(checker.temp.loaded, {{nick = cnick, color = 'FFFFFF', text = ''}}) end
 		end
     end
-    if text:match('^ Репорт от .+%[%d+%]%:') then
-        reportid = text:match('Репорт от .+%[(%d+)%]%:')
-        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
-        for i = 0, 1000 do
-            if sampIsPlayerConnectedFixed(i) then
-                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
-                local a = text:gsub('{.+}', '')
-                if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                    if nick:find("%[") then
-                        if nick:find("%]") then
-                            text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                        end
-                    else
-                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                    end
-                end
-            end
-        end
-        return {argb_to_rgba(join_argb(255, config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b)), text} 
-    end
-    if text:match('^ Жалоба от%: .+%[%d+%]%:') then
-        reportid = text:match('Жалоба от%: .+%[(%d+)%]%:')
-        local _, myid = sampGetPlayerIdByCharHandle(playerPed)
-        for i = 0, 1000 do
-            if sampIsPlayerConnectedFixed(i) then
-                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
-                local a = text:gsub('{.+}', '')
-                if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                    if nick:find("%[") then
-                        if nick:find("%]") then
-                            text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                        end
-                    else
-                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                    end
-                end
-            end
-        end
-        return {argb_to_rgba(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b)), text} 
-    end
-	local _, myid = sampGetPlayerIdByCharHandle(playerPed)
-    for i = 0, 1000 do
-        if sampIsPlayerConnectedFixed(i) then
-            local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
-            local a = text:gsub('{.+}', '')
-            if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                if nick:find("%[") then
-                    if nick:find("%]") then
-                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                    end
-                else
-                    text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                end
-            end
-        end
-    end
+    --Рисуем текст с ID
     return { color, text }
 end
 
@@ -4026,9 +4073,7 @@ function sampev.onPlayerDeathNotification(killerId, killedId, reason)
     if #tkilllist > 5 then table.remove(tkilllist, 1) end
 end
 
-function sampev.onTogglePlayerControllable(bool)
-    if swork then return false end
-end
+function sampev.onTogglePlayerControllable(bool) if swork then return false end end
 
 function sampev.onBulletSync(playerId, data)
     if tonumber(playerId) == tonumber(traceid) then
@@ -4662,12 +4707,10 @@ function gun(pam)
     end)
 end
 
-function sampev.onSendClientJoin(version, mod, nick)
-    rebuildUsers()
-end
+function sampev.onSendClientJoin(version, mod, nick) rebuildUsers() end
 
 function sampev.onSendCommand(text)
-    if text:match("^/o .+") or text:match("^/ooc .+") then
+    if text:match("^/o .+") or text:match("^/ooc .+") then --Огран /o для 1 лвл-ов
         if cfg.other.admlvl < 2 then
             local msg = text:match("^/%S+ (.+)")
             if oocLimit.state then
@@ -4687,7 +4730,7 @@ function sampev.onSendCommand(text)
             end
         end
     end
-    local aCommands = {"warn", "ban", "prison"}
+    local aCommands = {"warn", "ban", "prison", "pspawn"} --Отправка команд в /a
     for k, v in pairs(aCommands) do
         if cfg.other.admlvl == 1 then
             if text:match("^/"..v.." .+") then
@@ -4801,9 +4844,7 @@ function cbug(pam)
     end
 end
 
-function kills()
-    sampShowDialog(21321, '{ffffff}Последние убийства', '{ffffff}Убийца\t{ffffff}Жертва\t{ffffff}Оружие\n'..table.concat(tkills, '\n'), 'x', _, 5)
-end
+function kills() sampShowDialog(21321, '{ffffff}Последние убийства', '{ffffff}Убийца\t{ffffff}Жертва\t{ffffff}Оружие\n'..table.concat(tkills, '\n'), 'x', _, 5) end
 --бинды
 function reportk()
     if reportid ~= nil then
@@ -5149,6 +5190,8 @@ function punish()
             pfile:close()
             local ppfile = io.open(os.getenv('TEMP')..'\\Punishment.txt', 'w')
             ppfile:close()
+        else
+            atext("Файл с заготовлеными наказаниями не обнаружен.")
         end
     end)
 end
