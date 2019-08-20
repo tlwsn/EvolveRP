@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.1)
+script_version(2.11)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -2392,7 +2392,7 @@ function imgui.OnDrawFrame()
                         if imgui.Selectable(u8(("%s##adm%s"):format(v["nick"], k)), checkerEdit.admins.list == k) then 
                             checkerEdit.admins.list         = k
                             checkerEdit.admins.nick.v       = u8(tostring(v["nick"]))
-                            checkerEdit.admins.color.v      = v["color"]
+                            checkerEdit.admins.color.v      = tostring(v["color"])
                             checkerEdit.admins.desc.v       = u8(tostring(v["text"]))
                             local a, r, g, b                = explode_argb(tonumber("0x"..checkerEdit.admins.color.v))
                             checkerEdit.admins.ImColor      = imgui.ImFloat3(r / 255, g / 255, b / 255)
@@ -2432,13 +2432,12 @@ function imgui.OnDrawFrame()
                         if imgui.Selectable(u8(("%s##players%s"):format(v["nick"], k)), checkerEdit.players.list == k) then 
                             checkerEdit.players.list         = k
                             checkerEdit.players.nick.v       = u8(tostring(v["nick"]))
-                            checkerEdit.players.color.v      = v["color"]
+                            checkerEdit.players.color.v      = tostring(v["color"])
                             checkerEdit.players.desc.v       = u8(tostring(v["text"]))
                             local a, r, g, b                 = explode_argb(tonumber("0x"..checkerEdit.players.color.v))
                             checkerEdit.players.ImColor      = imgui.ImFloat3(r / 255, g / 255, b / 255)
                         end
                     end
-                    imgui.Separator()
                     imgui.Separator()
                     if imgui.Button(u8 "Добавить##2", btn_size) then 
                         checkerEdit.players.ImColor = imgui.ImFloat3(1, 1, 1)
@@ -3734,7 +3733,14 @@ function sampev.onServerMessage(color, text)
     if text:match('^ Ответ от .+%[%d+%] к .+%[%d+%]:') then return {argb_to_rgba(join_argb(255, config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b)), text} end
     if text:match('^ <ADM%-CHAT> .+: .+') then return {argb_to_rgba(join_argb(255, config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b)), text} end
     if text:match('^ <SUPPORT%-CHAT> .+: .+') then return {argb_to_rgba(join_argb(255, config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b)), text} end
-    if text:match('^ SMS:') then return {argb_to_rgba(join_argb(255, config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b)), text} end
+    if text:match('^ SMS:') then 
+        local smsid = text:match('^ SMS: .+ Отправитель: .+%[(%d+)%]$')
+        if masstpon then --Массовое ТП
+            if not checkIntable(smsids, smsid) then table.insert(smsids, smsid) end
+            return false
+        end
+        return {argb_to_rgba(join_argb(255, config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b)), text} 
+    end
     if text:match('^ %->Вопрос .+') then return {argb_to_rgba(join_argb(255, config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b)), text} end
     --Получаем ID по репорту
     if text:match("^ Жалоба от .+%[%d+%] на .+%[%d+%]%: .+") then
@@ -3748,12 +3754,6 @@ function sampev.onServerMessage(color, text)
     if text:match('^ Жалоба от%: .+%[%d+%]%:') then
         reportid = text:match('Жалоба от%: .+%[(%d+)%]%:')
         return {argb_to_rgba(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b)), text} 
-    end
-    --Массовое ТП
-    if masstpon and text:match('^ SMS: .+ Отправитель: .+%[%d+%]$') then
-        local smsid = text:match('^ SMS: .+ Отправитель: .+%[(%d+)%]$')
-        if not checkIntable(smsids, smsid) then table.insert(smsids, smsid) end
-        return false
     end
     --Цветной /warehouse
     if text:match('^ На складе .+ %d+/%d+') and color == -1 then
