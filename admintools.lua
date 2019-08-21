@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.11)
+script_version(2.12)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -3654,22 +3654,8 @@ function sampev.onServerMessage(color, text)
     punishlog(text)
     --Для счетчика отлетевших
     otletfunc(text, color)
-    --Добавляем ID в чате
-    for i = 0, 1000 do
-        if sampIsPlayerConnectedFixed(i) then
-            local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
-            local a = text:gsub('{.+}', '')
-            if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                if nick:find("%[") then
-                    if nick:find("%]") then
-                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                    end
-                else
-                    text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                end
-            end
-        end
-    end
+    --Лог в консоли сампфункса
+    if cfg.other.chatconsole then sampfuncsLog(text) end
     --Получаем лвл админки
     if text:match('^ Вы авторизировались как модератор %d+ уровня$') then cfg.other.admlvl = tonumber(text:match('^ Вы авторизировались как модератор (%d+) уровня$')) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
     --Для выдачи наказаний по кнопке
@@ -3687,8 +3673,8 @@ function sampev.onServerMessage(color, text)
     if text:match("^ Администратор %S+ добавил %d+ материалов на склад фракции .+. Текущее состояние склада: %d+$") and color == -65366 then
         local nick, mati, banda = text:match("^ Администратор (%S+) добавил (%d+) материалов на склад фракции (.+). Текущее состояние склада: %d+$")
         if nick == sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))) then
+            local time = localTime()
             if banda == 'Grove' or banda == 'Rifa' or banda == 'Ballas' or banda == 'Vagos' or banda == 'Aztec' then
-                local time = localTime()
                 local file = io.open("moonloader/Admin Tools/setmatlog.txt", "a")
                 file:write(("\n[size=85][list][*] [color=#00BFFF]Игровой ник[/color]: %s\n"):format(nick))
                 file:write(("[*] [color=#00BFFF]Наименование банды[/color]: %s\n"):format(banda))
@@ -3697,7 +3683,6 @@ function sampev.onServerMessage(color, text)
                 file:close()
             end
             if banda == 'Yakuza' or banda == 'LCN' or banda == 'Rus Mafia' then
-                local time = localTime()
                 local file = io.open("moonloader/Admin Tools/setmatlog.txt", "a")
                 file:write(("\n[size=85][list][*] [color=#00BFFF]Игровой ник[/color]: %s\n"):format(nick))
                 file:write(("[*] [color=#00BFFF]Наименование мафии[/color]: %s\n"):format(banda))
@@ -3707,7 +3692,7 @@ function sampev.onServerMessage(color, text)
             end
         end
     end
-    --/bcheck
+    --/checkb
     if ban.check and text:find("Игрок не найден") then 
         atext(("Игрок %s не заблокирован"):format(ban.nick)) 
         if not doesFileExist('moonloader/Admin Tools/Check Banned/result.txt') then
@@ -3722,17 +3707,15 @@ function sampev.onServerMessage(color, text)
         ban.check = false 
         return false 
     end
-    --Лог в консоли сампфункса
-    if cfg.other.chatconsole then sampfuncsLog(text) end
     --Запись в единый чатлог
+    chatlogfile = io.open('moonloader/Admin Tools/chatlog_all.txt', 'a')
     local time = localTime()
-	local file = io.open('moonloader/Admin Tools/chatlog_all.txt', 'a')
-	file:write(('[%s || %s] %s\n'):format(os.date('%d.%m.%Y'), ("%s:%s:%s.%s"):format(time.wHour, time.wMinute, time.wSecond, time.wMilliseconds), text))
-    file:close()
+    chatlogfile:write(('[%s || %s]\t%s\n'):format(os.date('%d.%m.%Y'), ("%s:%s:%s.%s"):format(time.wHour, time.wMinute, time.wSecond, time.wMilliseconds), text))
+    chatlogfile:close()
     --Цвета
-    if text:match('^ Ответ от .+%[%d+%] к .+%[%d+%]:') then return {argb_to_rgba(join_argb(255, config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b)), text} end
-    if text:match('^ <ADM%-CHAT> .+: .+') then return {argb_to_rgba(join_argb(255, config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b)), text} end
-    if text:match('^ <SUPPORT%-CHAT> .+: .+') then return {argb_to_rgba(join_argb(255, config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b)), text} end
+    if text:match('^ Ответ от .+%[%d+%] к .+%[%d+%]:') then color = argb_to_rgba(join_argb(255, config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b)) end
+    if text:match('^ <ADM%-CHAT> .+: .+') then color = argb_to_rgba(join_argb(255, config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b)) end
+    if text:match('^ <SUPPORT%-CHAT> .+: .+') then color = argb_to_rgba(join_argb(255, config_colors.supchat.r, config_colors.supchat.g, config_colors.supchat.b)) end
     if text:match('^ SMS:') then 
         local smsid = text:match('^ SMS: .+ Отправитель: .+%[(%d+)%]$')
         if masstpon then --Массовое ТП
@@ -3741,19 +3724,19 @@ function sampev.onServerMessage(color, text)
         end
         return {argb_to_rgba(join_argb(255, config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b)), text} 
     end
-    if text:match('^ %->Вопрос .+') then return {argb_to_rgba(join_argb(255, config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b)), text} end
+    if text:match('^ %->Вопрос .+') then color = argb_to_rgba(join_argb(255, config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b)) end
     --Получаем ID по репорту
     if text:match("^ Жалоба от .+%[%d+%] на .+%[%d+%]%: .+") then
         reportid = text:match("Жалоба от .+%[%d+%] на .+%[(%d+)%]%: .+")
-        return {argb_to_rgba(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b)), text} 
+        color = argb_to_rgba(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b))
     end
     if text:match('^ Репорт от .+%[%d+%]%:') then
         reportid = text:match('Репорт от .+%[(%d+)%]%:')
-        return {argb_to_rgba(join_argb(255, config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b)), text} 
+        color = argb_to_rgba(join_argb(255, config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b))
     end
     if text:match('^ Жалоба от%: .+%[%d+%]%:') then
         reportid = text:match('Жалоба от%: .+%[(%d+)%]%:')
-        return {argb_to_rgba(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b)), text} 
+        color = argb_to_rgba(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b))
     end
     --Цветной /warehouse
     if text:match('^ На складе .+ %d+/%d+') and color == -1 then
@@ -3999,6 +3982,22 @@ function sampev.onServerMessage(color, text)
             local result, key = checkInTableChecker(checker.temp.loaded, cnick)
             if not result then table.insert(checker.temp.loaded, {{nick = cnick, color = 'FFFFFF', text = ''}}) end
 		end
+    end
+    --Добавляем ID в чате
+    for i = 0, 1000 do
+        if sampIsPlayerConnectedFixed(i) then
+            local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
+            local a = text:gsub('{.+}', '')
+            if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
+                if nick:find("%[") then
+                    if nick:find("%]") then
+                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                    end
+                else
+                    text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                end
+            end
+        end
     end
     --Рисуем текст с ID
     return { color, text }
