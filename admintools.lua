@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.12)
+script_version(2.13)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -219,95 +219,116 @@ local otletel = {
 local recon = {
     {
         name = 'Change',
-        onclick = function() atext("change") end
+        onclick = function() sampSendClickTextdraw(2189) end
     },
     {
-        name = "Check »",
+        name = "Check >>",
         onclick = {
             {
                 name = 'Check-GM',
-                onclick = function() atext("check-gm") end
+                onclick = function() sampSendClickTextdraw(2198) end
             },
             {
                 name = 'Check-GM2',
-                onclick = function() atext("check-gm2") end
+                onclick = function() sampSendClickTextdraw(2199) end
             },
             {
                 name = 'Check-GMCar',
-                onclick = function() atext("check-gmcar") end
+                onclick = function() sampSendClickTextdraw(2200) end
             },
             {
                 name = 'ResetShot',
-                onclick = function() atext("resetshot") end
+                onclick = function() sampSendClickTextdraw(2201) end
             }
         }
     },
     {
-        name = 'Drop »',
+        name = 'Drop >>',
         onclick = {
             {
                 name = 'Mute',
-                onclick = function() atext("mute") end
+                onclick = function() sampSendClickTextdraw(2202) end
             },
             {
                 name = "Slap",
-                onclick = function() atext("Slap") end
+                onclick = function() sampSendClickTextdraw(2203) end
             },
             {
                 name = "Prison",
-                onclick = function() atext("prison") end
+                onclick = function() sampSendClickTextdraw(2204) end
             },
             {
                 name = 'Freeze',
-                onclick = function() atext("freeze") end
+                onclick = function() sampSendClickTextdraw(2205) end
             },
             {
                 name = 'UnFreeze',
-                onclick = function() atext("unfreeze") end
+                onclick = function() sampSendClickTextdraw(2206) end
             }
         }
     },
     {
-        name = "Kick »",
+        name = "Kick >>",
         onclick = {
             {
                 name = "SKick",
-                onclick = function() atext("skick") end
+                onclick = function() sampSendClickTextdraw(2207) end
             },
             {
                 name = 'Kick',
-                onclick = function() atext("kick") end
+                onclick = function() sampSendClickTextdraw(2208) end
             }
         }
     },
     {
         name = "Warn",
-        onclick = function() atext("warn") end
+        onclick = function() sampSendClickTextdraw(2193) end
     },
     {
-        name = "Ban »",
+        name = "Ban >>",
         onclick = {
             {
                 name = 'Ban',
-                onclick = function() atext("ban") end
+                onclick = function() sampSendClickTextdraw(2209) end
             },
             {
                 name = "SBan",
-                onclick = function() atext("sban") end
+                onclick = function() sampSendClickTextdraw(2210) end
             },
             {
                 name = 'IBan',
-                onclick = function() atext("iban") end
+                onclick = function() sampSendClickTextdraw(2211) end
+            }
+        }
+    },
+    {
+        name = "Stats >>",
+        onclick = {
+            {
+                name = "Stats",
+                onclick = function() sampSendClickTextdraw(2212) end
+            },
+            {
+                name = "IWep",
+                onclick = function() sampSendClickTextdraw(2213) end
+            },
+            {
+                name = "GetIP",
+                onclick = function() sampSendClickTextdraw(2214) end
+            },
+            {
+                name = "Serial/S0b",
+                onclick = function() sampSendClickTextdraw(2215) end
             }
         }
     },
     {
         name = "Refresh",
-        onclick = function() atext("refresh") end
+        onclick = function() sampSendClickTextdraw(2196) end
     },
     {
         name = 'Exit',
-        onclick = function() atext("exit") end
+        onclick = function() sampSendClickTextdraw(2197) end
     }
 }
 local frakrang = {
@@ -488,6 +509,20 @@ function join_argb(a, r, g, b)
     return argb
 end
 
+local vars = {
+    bools = {
+        recon = {
+            isPopup = false
+        }
+    },
+    others = {
+        recon = {
+            select = 1,
+            selectPopup = 1
+        }
+    }
+}
+
 function ARGBtoRGB(color) return bit32 or require'bit'.band(color, 0xFFFFFF) end
 local data = {
     imgui = {
@@ -526,8 +561,10 @@ local cfg = {
         autogm = true
     },
     crecon = {
-        posx = screenx/2,
-        posy = screeny/2,
+        fPosx = screenx/2,
+        fPosy = screeny/2,
+        sPosx = screenx/2,
+        sPosy = screeny/2,
         enable = false
     },
 	timers = {
@@ -1063,11 +1100,11 @@ function calcScreenCoors(fX,fY,fZ)
 	frX = frX * (fRecip * dwLenX)
 	frY = frY * (fRecip * dwLenY)
 
-    if(frX<=dwLenX and frY<=dwLenY and frZ>1)then
+    --[[if(frX<=dwLenX and frY<=dwLenY and frZ>1)then
         return frX, frY, frZ
 	else
 		return -1, -1, -1
-    end
+    end]]
     return frX, frY, frZ
 end
 
@@ -1518,6 +1555,14 @@ function main()
             if cfg.timers.mnarkotimer == nil then cfg.timers.mnarkotimer = 7 end
             if cfg.timers.mcbugtimer == nil then cfg.timers.mcbugtimer = 3 end
             if cfg.other.socrpm == nil then cfg.other.socrpm = false end
+            if cfg.crecon.sPosX == nil then
+                cfg.crecon.fPosX = screenx/2
+                cfg.crecon.sPosX = cfg.crecon.posx
+                cfg.crecon.fPosY = screeny/2
+                cfg.crecon.sPosY = cfg.crecon.posy
+                cfg.crecon.posx = nil
+                cfg.crecon.posy = nil
+            end
             file:close()
         end
     end
@@ -1898,10 +1943,16 @@ function main()
         --Смена позиций
         if data.imgui.reconpos then
             imrecon.v = true
+            vars.others.recon.select = 1
             sampToggleCursor(true)
             local curX, curY = getCursorPos()
-            cfg.crecon.posx = curX
-            cfg.crecon.posy = curY
+            if data.imgui.recontype == 1 then
+                cfg.crecon.fPosX = curX
+                cfg.crecon.fPosY = curY
+            else
+                cfg.crecon.sPosX = curX
+                cfg.crecon.sPosY = curY
+            end
         end
         if data.imgui.admcheckpos then
             sampToggleCursor(true)
@@ -1988,6 +2039,17 @@ function imgui.CentrText(text)
     local calc = imgui.CalcTextSize(text)
     imgui.SetCursorPosX( width / 2 - calc.x / 2 )
     imgui.Text(text)
+end
+
+function imgui.CustomButton(name, color, colorHovered, colorActive, size)
+    local clr = imgui.Col
+    imgui.PushStyleColor(clr.Button, color)
+    imgui.PushStyleColor(clr.ButtonHovered, colorHovered)
+    imgui.PushStyleColor(clr.ButtonActive, colorActive)
+    if not size then size = imgui.ImVec2(0, 0) end
+    local result = imgui.Button(name, size)
+    imgui.PopStyleColor(3)
+    return result
 end
 
 function imgui.TextColoredRGB(text)
@@ -2275,27 +2337,18 @@ function imgui.OnDrawFrame()
         imgui.End()
     end
     if imrecon.v then
-		local style = imgui.GetStyle()
-		local colors = style.Colors
-		local clr = imgui.Col
-		local ImVec4 = imgui.ImVec4
-		imgui.LockPlayer = false
-        local imvsize = imgui.GetWindowSize()
+        local ImVec4 = imgui.ImVec4
         local spacing, height = 140.0, 162.0
-        local imkx, imky = convertGameScreenCoordsToWindowScreenCoords(530, 199)
-        imgui.PushStyleColor(imgui.Col.Separator, imgui.ImVec4(ir, ig, ib, ia))
-		--imgui.PushStyleColor(imgui.Col.WindowBg, imgui.ImVec4(1, 0, 0, 1))
-        imgui.SetNextWindowPos(imgui.ImVec2(cfg.crecon.posx, cfg.crecon.posy), imgui.ImVec2(0.5, 0.5))
-        imgui.SetNextWindowSize(imgui.ImVec2(260, 285), imgui.Cond.FirstUseEver)
-        imgui.Begin(u8'Слежка за игроком', _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoTitleBar)
-        imgui.CentrText(('%s'):format(imtext.nick))
+        imgui.SetNextWindowPos(imgui.ImVec2(cfg.crecon.sPosX, cfg.crecon.sPosY))
+        imgui.SetNextWindowSize(imgui.ImVec2(230, 360), imgui.Cond.FirstUseEver)
+        imgui.Begin(u8'Слежка за игроком', _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoTitleBar + imgui.WindowFlags.NoSavedSettings)
+        imgui.CentrText(('%s'):format((imtext.nick):gsub("_", " ")))
         imgui.CentrText(('ID: %s'):format(recon.id))
         if reafk then
             imgui.SameLine()
             imgui.TextColored(ImVec4(255, 0, 0, 1),'AFK')
         end
         imgui.Separator()
-        imgui.PushStyleVar(imgui.StyleVar.ItemSpacing, imgui.ImVec2(1.0, 2.5))
         imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Level:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.lvl))
         imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Warns:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.warn))
         imgui.TextColored(ImVec4(255, 0, 0, 1), u8"Armour:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.arm))
@@ -2309,34 +2362,82 @@ function imgui.OnDrawFrame()
         imgui.TextColored(ImVec4(0, 255, 0, 1), u8"AFK Time:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.afktime))
         imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Engine:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.engine))
         imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Pro Sport:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.prosport))
-        imgui.PopStyleVar()
         imgui.End()
-        --[[imgui.SetNextWindowSize(imgui.ImVec2(100, 270), imgui.Cond.FirstUseEver)
-        imgui.Begin(u8 'Слежка1', _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoTitleBar)
-        for k, v in ipairs(recon) do
-            if imgui.Button(v.name.."##"..k, btn_size) then
-                if type(v.onclick) == 'function' then v.onclick()
-                elseif type(v.onclick) == 'table' then
-                    imgui.OpenPopup("##check_recon"..k)
+        imgui.SetNextWindowPos(imgui.ImVec2(cfg.crecon.fPosX, cfg.crecon.fPosY))
+        imgui.SetNextWindowSize(imgui.ImVec2(150, 310), imgui.Cond.FirstUseEver)
+        imgui.Begin(u8 'Слежка1', _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoTitleBar + imgui.WindowFlags.NoSavedSettings)
+        local style = imgui.GetStyle()
+        local colors = style.Colors
+        local clr = imgui.Col
+        local ImVec4 = imgui.ImVec4
+        colors[clr.Button] = ImVec4(0.10, 0.09, 0.12, 1.00)
+        colors[clr.ButtonHovered] = ImVec4(0.24, 0.23, 0.29, 1.00)
+        colors[clr.ButtonActive] = ImVec4(0.56, 0.56, 0.58, 1.00)
+        if not sampIsDialogActive() and not sampIsChatInputActive() and not isSampfuncsConsoleActive() then
+            if wasKeyPressed(key.VK_S) or wasKeyPressed(key.VK_DOWN) then
+                if not vars.bools.recon.isPopup then
+                    vars.others.recon.select = vars.others.recon.select + 1
+                    if vars.others.recon.select > #recon then vars.others.recon.select = 1 end
+                else
+                    vars.others.recon.selectPopup = vars.others.recon.selectPopup + 1
+                    if vars.others.recon.selectPopup > vars.others.recon.popupCount then vars.others.recon.selectPopup = 1 end
                 end
             end
-            imgui.SetNextWindowSize(imgui.ImVec2(100, 100), imgui.Cond.FirstUseEver)
-            if imgui.BeginPopup('##check_recon'..k) then
-                for k1, v1 in pairs(v.onclick) do
-                    if imgui.Button(v1.name.."##"..k1, btn_size) then v1.onclick() end
+            if wasKeyPressed(key.VK_W) or wasKeyPressed(key.VK_UP) then
+                if not vars.bools.recon.isPopup then
+                    vars.others.recon.select = vars.others.recon.select - 1
+                    if vars.others.recon.select < 1 then vars.others.recon.select = #recon end
+                else
+                    vars.others.recon.selectPopup = vars.others.recon.selectPopup - 1
+                    if vars.others.recon.selectPopup < 1 then vars.others.recon.selectPopup = vars.others.recon.popupCount end
                 end
-                imgui.EndPopup()
+            end
+            if wasKeyPressed(key.VK_SPACE) or wasKeyPressed(key.VK_RIGHT) or wasKeyPressed(key.VK_D) then
+                if not vars.bools.recon.isPopup then
+                    if type(recon[vars.others.recon.select].onclick) == 'function' then recon[vars.others.recon.select].onclick()
+                    elseif type(recon[vars.others.recon.select].onclick) == 'table' then
+                        vars.bools.recon.isPopup = true
+                        vars.others.recon.popupCount = #recon[vars.others.recon.select].onclick
+                        vars.others.recon.selectPopup = 1
+                        imgui.OpenPopup("##check_recon"..vars.others.recon.select)
+                    end
+                else
+                    recon[vars.others.recon.select].onclick[vars.others.recon.selectPopup].onclick()
+                end
+            end
+            if wasKeyPressed(key.VK_LEFT) or wasKeyPressed(key.VK_A) then
+                if vars.bools.recon.isPopup then
+                    local select = vars.others.recon.select
+                    vars.others.recon.select = 1
+                    vars.others.recon.select = select
+                    vars.bools.recon.isPopup = false
+                end
             end
         end
-        imgui.End()]]
-        imgui.PopStyleColor()
+        for k, v in ipairs(recon) do
+            if k == vars.others.recon.select then bColor = colors[clr.ButtonActive] else bColor = colors[clr.Button] end
+            imgui.CustomButton(v.name.."##"..k, bColor, colors[clr.ButtonHovered], colors[clr.ButtonActive], btn_size)
+            imgui.SetNextWindowPos(imgui.ImVec2(cfg.crecon.fPosX + 150, cfg.crecon.fPosY))
+            if imgui.BeginPopup('##check_recon'..vars.others.recon.select) then
+                if vars.others.recon.select == k then
+                    for k1, v1 in pairs(v.onclick) do
+                        if k1 == vars.others.recon.selectPopup then pColor = colors[clr.ButtonActive] else pColor = colors[clr.Button] end
+                        imgui.CustomButton(v1.name.."##"..k1, pColor, colors[clr.ButtonHovered], colors[clr.ButtonActive], imgui.ImVec2(100, 30)) --Вот как раз то, что дофига раз показывается
+                    end
+                    if not vars.bools.recon.isPopup then imgui.CloseCurrentPopup() end
+                end
+                imgui.EndPopup()
+            else
+                vars.bools.recon.isPopup = false
+            end
+        end
         if imgui.IsMouseClicked(0) and data.imgui.reconpos then
             data.imgui.reconpos = false
             imrecon.v = false
             sampToggleCursor(false)
-            mainwindow.v = true
             saveData(cfg, 'moonloader/config/Admin Tools/config.json')
         end
+        imgui.End()
     end
     if arul.v then
         imgui.SetNextWindowSize(imgui.ImVec2(500, 500), imgui.Cond.FirstUseEver)
@@ -3076,7 +3177,20 @@ function imgui.OnDrawFrame()
                 if imgui.Button(u8 'Изменить местоположения кил-листа') then data.imgui.killlist = true mainwindow.v = false end
                 if creconB.v then
                     imgui.SameLine()
-                    if imgui.Button(u8 'Изменить местоположение рекона##3') then data.imgui.reconpos = true; mainwindow.v = false end
+                    if imgui.Button(u8 'Изменить местоположение рекона##3') then imgui.OpenPopup("##selectrecon") end 
+                    if imgui.BeginPopup("##selectrecon") then
+                        if imgui.Button(u8 "Левая панель") then 
+                            data.imgui.recontype = 1
+                            data.imgui.reconpos = true
+                            mainwindow.v = false
+                        end
+                        if imgui.Button(u8 "Правая панель") then
+                            data.imgui.recontype = 2
+                            data.imgui.reconpos = true
+                            mainwindow.v = false
+                        end
+                        imgui.EndPopup()
+                    end
                 end
                 if joinquitb.v then 
                     if imgui.Button(u8'Изменить местоположения подключившихся##1') then data.imgui.joinpos = true; mainwindow.v = false end
@@ -4004,10 +4118,10 @@ function sampev.onServerMessage(color, text)
 end
 
 function sampev.onTextDrawSetString(id, text)
-    if id == 2173 then
+    if id == 2187 then
         imtext.lvl, imtext.warn, imtext.arm, imtext.hp, imtext.carhp, imtext.speed, imtext.ping, imtext.ammo, imtext.shot, imtext.timeshot, imtext.afktime, imtext.engine, imtext.prosport = text:match('~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)')
     end
-    if id == 2174 then
+    if id == 2188 then
         if text:match('~w~.+') then
             imtext.nick = text:match('~w~(.+)~n~ID:')
             reafk = true
@@ -4021,18 +4135,24 @@ function sampev.onTextDrawSetString(id, text)
 end
 
 function sampev.onShowTextDraw(id, textdraw)
-    if id == 2173 then recon.state = true end
+    if id == 2187 then recon.state = true end
     if cfg.crecon.enable then
-        if id == 2174 then imrecon.v = true return false end
-        if id == 2173 then return false end
-        if id == 2172 then return false end
-        if id == 2168 then return false end
-        if id == 2169 then return false end
+        if id == 2187 then imrecon.v = true vars.others.recon.select = 1 return false end
+        local ids = {2182, 2183, 2184, 2185, 2186, 2187, 2188, 2189, 2190, 2191, 2192, 2193, 2194, 2195, 2196, 2197}
+        for k, v in pairs(ids) do if v == id then return false end end
+    end
+end
+
+function sampev.onSendSpectatorSync(d)
+    if cfg.crecon.enable then
+        d.leftRightKeys = 0
+        d.upDownKeys = 0
+        d.keysData = 0
     end
 end
 
 function sampev.onTextDrawHide(id)
-    if id == 2173 then
+    if id == 2187 then
         if flyInfo.active then
             lua_thread.create(function()
                 flyInfo.isASvailable = false
@@ -4042,7 +4162,11 @@ function sampev.onTextDrawHide(id)
         end
         recon.state = false 
     end
-    if cfg.crecon.enable then if id == 2173 then imrecon.v = false end end
+    if cfg.crecon.enable then 
+        if id == 2187 then 
+            imrecon.v = false
+        end 
+    end
 end
 
 function sampev.onPlayerQuit(id, reason)
@@ -4661,7 +4785,10 @@ end
 
 function nameTagOff()
     nameTag = false
-	local pStSet = sampGetServerSettingsPtr();
+    local pStSet = sampGetServerSettingsPtr();
+    NTdist = mem.getfloat(pStSet)
+    NTwalls = mem.getint8(pStSet)
+    NTshow = mem.getint8(pStSet)
 	mem.setfloat(pStSet + 39, NTdist)
 	mem.setint8(pStSet + 47, NTwalls)
 	mem.setint8(pStSet + 56, NTshow)
@@ -4882,7 +5009,7 @@ function goposk()
 end
 
 function whkey()
-    if nameTag then nameTagOff() else nameTagOn() end
+    if swork then if nameTag then nameTagOff() else nameTagOn() end end
 end
 
 function skeletwh()
