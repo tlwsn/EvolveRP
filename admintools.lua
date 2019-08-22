@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.13)
+script_version(2.14)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -2342,7 +2342,7 @@ function imgui.OnDrawFrame()
         imgui.SetNextWindowPos(imgui.ImVec2(cfg.crecon.sPosX, cfg.crecon.sPosY))
         imgui.SetNextWindowSize(imgui.ImVec2(230, 360), imgui.Cond.FirstUseEver)
         imgui.Begin(u8'Слежка за игроком', _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoTitleBar + imgui.WindowFlags.NoSavedSettings)
-        imgui.CentrText(('%s'):format((imtext.nick):gsub("_", " ")))
+        imgui.CentrText(('%s'):format(imtext.nick))
         imgui.CentrText(('ID: %s'):format(recon.id))
         if reafk then
             imgui.SameLine()
@@ -4123,10 +4123,10 @@ function sampev.onTextDrawSetString(id, text)
     end
     if id == 2188 then
         if text:match('~w~.+') then
-            imtext.nick = text:match('~w~(.+)~n~ID:')
+            imtext.nick = (text:match('~w~(.+)~n~ID:')):gsub("_", " ")
             reafk = true
         else
-            imtext.nick = text:match('(.+)~n~ID:')
+            imtext.nick = (text:match('(.+)~n~ID:')):gsub("_", " ")
             reafk = false
         end
         recon.id = text:match('.+~n~ID%: (%d+)')
