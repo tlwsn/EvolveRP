@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.14)
+script_version(2.15)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -563,8 +563,8 @@ local cfg = {
     crecon = {
         fPosx = screenx/2,
         fPosy = screeny/2,
-        sPosx = screenx/2,
-        sPosy = screeny/2,
+        sPosX = screenx/2,
+        sPosY = screeny/2,
         enable = false
     },
 	timers = {
@@ -1030,7 +1030,7 @@ function apply_custom_style()
     colors[clr.FrameBgHovered] = ImVec4(0.24, 0.23, 0.29, 1.00)
     colors[clr.FrameBgActive] = ImVec4(0.56, 0.56, 0.58, 1.00)
     colors[clr.TitleBg] = ImVec4(0.10, 0.09, 0.12, 1.00)
-    colors[clr.TitleBgCollapsed] = ImVec4(1.00, 0.98, 0.95, 0.75)
+    colors[clr.TitleBgCollapsed] = ImVec4(0.10, 0.09, 0.12, 1.00)
     colors[clr.TitleBgActive] = ImVec4(0.07, 0.07, 0.09, 1.00)
     colors[clr.MenuBarBg] = ImVec4(0.10, 0.09, 0.12, 1.00)
     colors[clr.ScrollbarBg] = ImVec4(0.10, 0.09, 0.12, 1.00)
@@ -1515,7 +1515,7 @@ function main()
     end
     --Основной файл конфига
     if not doesFileExist('moonloader/config/Admin Tools/config.json') then
-        io.open('moonloader/config/Admin Tools/config.json', 'w'):close()
+        saveData(cfg, 'moonloader/config/Admin Tools/config.json')
         local scx, scy = convertGameScreenCoordsToWindowScreenCoords(552.33337402344, 435)
         local tcx, tcy = convertGameScreenCoordsToWindowScreenCoords(490.33334350586, 435)
         local ascx, ascy = convertGameScreenCoordsToWindowScreenCoords(3, 272)
@@ -1557,9 +1557,14 @@ function main()
             if cfg.other.socrpm == nil then cfg.other.socrpm = false end
             if cfg.crecon.sPosX == nil then
                 cfg.crecon.fPosX = screenx/2
-                cfg.crecon.sPosX = cfg.crecon.posx
+                if cfg.crecon.posx ~= nil then
+                    cfg.crecon.sPosX = cfg.crecon.posx
+                    cfg.crecon.sPosY = cfg.crecon.posy
+                else
+                    cfg.crecon.sPosX = screenx/2
+                    cfg.crecon.sPosY = screeny/2
+                end
                 cfg.crecon.fPosY = screeny/2
-                cfg.crecon.sPosY = cfg.crecon.posy
                 cfg.crecon.posx = nil
                 cfg.crecon.posy = nil
             end
@@ -1568,7 +1573,7 @@ function main()
     end
     --Файл своих телепортов
     if not doesFileExist("moonloader/config/Admin Tools/tplist.json") then
-        io.open('moonloader/config/Admin Tools/tplist.json', 'w'):close()
+        saveData(tplist, "moonloader/config/Admin Tools/tplist.json")
     else
         local file = io.open('moonloader/config/Admin Tools/tplist.json', 'r')
         if file then
@@ -1577,7 +1582,7 @@ function main()
     end
     --Файл фраки / ранги
     if not doesFileExist("moonloader/config/Admin Tools/fraklist.json") then
-        io.open('moonloader/config/Admin Tools/fraklist.json', 'w'):close()
+        saveData(fraklist, 'moonloader/config/Admin Tools/fraklist.json')
     else
         local file = io.open('moonloader/config/Admin Tools/fraklist.json', 'r')
         if file then
@@ -1586,7 +1591,7 @@ function main()
     end
     --Файл кнопок
     if not doesFileExist("moonloader/config/Admin Tools/keys.json") then
-        io.open("moonloader/config/Admin Tools/keys.json", "w"):close()
+        saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
     else
         local fa = io.open("moonloader/config/Admin Tools/keys.json", 'r')
         if fa then
@@ -1616,7 +1621,7 @@ function main()
     end
     --Файл биндера
     if not doesFileExist("moonloader/config/Admin Tools/binder.json") then
-		io.open("moonloader/config/Admin Tools/binder.json", "w"):close()
+        saveData(tBindList, "moonloader/config/Admin Tools/binder.json")
 	else
 		local fb = io.open("moonloader/config/Admin Tools/binder.json", "r")
 		if fb then
@@ -1644,7 +1649,7 @@ function main()
     end
     --Файл цветов
     if not doesFileExist("moonloader/config/Admin Tools/colors.json") then
-        io.open("moonloader/config/Admin Tools/colors.json", 'w'):close()
+        saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
     else
         local fc = io.open("moonloader/config/Admin Tools/colors.json", "r")
         if fc then
@@ -3774,12 +3779,28 @@ function sampev.onServerMessage(color, text)
     if text:match('^ Вы авторизировались как модератор %d+ уровня$') then cfg.other.admlvl = tonumber(text:match('^ Вы авторизировались как модератор (%d+) уровня$')) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
     --Для выдачи наказаний по кнопке
     if cfg.other.admlvl > 1 and color == -10270806 then
-        if punkey.re.id or punkey.warn.id or punkey.ban.id or punkey.prison.id then
+        if punkey.warn.id or punkey.ban.id or punkey.prison.id then
             if text:find(sampGetPlayerNickname(punkey.warn.id)) or text:find(sampGetPlayerNickname(punkey.ban.id)) or text:find(sampGetPlayerNickname(punkey.prison.id)) then
                 if not text:find(mynick) then
                     atext('Команду выполнил другой администратор')
                     punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}}
                 end
+                for i = 0, 1000 do
+                    if sampIsPlayerConnectedFixed(i) then
+                        local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
+                        local a = text:gsub('{.+}', '')
+                        if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
+                            if nick:find("%[") then
+                                if nick:find("%]") then
+                                    text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                                end
+                            else
+                                text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                            end
+                        end
+                    end
+                end
+                return {color, text}
             end
         end
     end
