@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.15)
+script_version(2.16)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -560,11 +560,18 @@ local cfg = {
         airbrkspeed = 0.5,
         autogm = true
     },
-    crecon = {
-        fPosx = screenx/2,
-        fPosy = screeny/2,
+    recon = {
+        fPosX = screenx/2,
+        fPosY = screeny/2,
         sPosX = screenx/2,
         sPosY = screeny/2,
+		fSizeX = 150,
+		fSizeY = 310,
+		sSizeX = 260,
+		sSizeY = 285,
+        fCoff = 1,
+        sCoff = 1,
+        bSize = 28.720,
         enable = false
     },
 	timers = {
@@ -1006,9 +1013,9 @@ function apply_custom_style()
     local clr = imgui.Col
     local ImVec4 = imgui.ImVec4
     local ImVec2 = imgui.ImVec2
-
     style.WindowPadding = ImVec2(15, 15)
     style.WindowRounding = 5.0
+    style.WindowTitleAlign = imgui.ImVec2(0.5, 0.5)
     style.FramePadding = ImVec2(5, 5)
     style.FrameRounding = 4.0
     style.ItemSpacing = ImVec2(12, 8)
@@ -1047,7 +1054,7 @@ function apply_custom_style()
     colors[clr.Header] = ImVec4(0.10, 0.09, 0.12, 1.00)
     colors[clr.HeaderHovered] = ImVec4(0.56, 0.56, 0.58, 1.00)
     colors[clr.HeaderActive] = ImVec4(0.06, 0.05, 0.07, 1.00)
-    colors[clr.ResizeGrip] = ImVec4(0.00, 0.00, 0.00, 0.00)
+    colors[clr.ResizeGrip] = ImVec4(0.00, 0.00, 0.00, 1.00)
     colors[clr.ResizeGripHovered] = ImVec4(0.56, 0.56, 0.58, 1.00)
     colors[clr.ResizeGripActive] = ImVec4(0.06, 0.05, 0.07, 1.00)
     colors[clr.CloseButton] = ImVec4(0.40, 0.39, 0.38, 0.16)
@@ -1535,38 +1542,23 @@ function main()
         local file = io.open('moonloader/config/Admin Tools/config.json', 'r')
         if file then
             cfg = decodeJson(file:read('*a'))
-            if cfg.other.autoupdate == nil then cfg.other.autoupdate = true end
-            if cfg.killlist == nil then cfg.killlist = {
-                posx = screenx/2,
-                posy = screeny/2,
-                startenable = true
-            } end
-            if cfg.other.delay == nil then cfg.other.delay = 1200 end
-            if cfg.other.killfont == nil then cfg.other.killfont = "Times New Roman" end
-            if cfg.other.killsize == nil then cfg.other.killsize = 10 end
-            if cfg.other.skeletwh == nil then cfg.other.skeletwh = true end
-            if cfg.leadersChecker == nil then cfg.leadersChecker = {
-                enable = true,
-                posx = screenx/2,
-                posy = screeny/2,
-                cvetnick = true
-            } end
-            if cfg.leadersChecker.cvetnick == nil then cfg.leadersChecker.cvetnick = true end
-            if cfg.timers.mnarkotimer == nil then cfg.timers.mnarkotimer = 7 end
-            if cfg.timers.mcbugtimer == nil then cfg.timers.mcbugtimer = 3 end
-            if cfg.other.socrpm == nil then cfg.other.socrpm = false end
-            if cfg.crecon.sPosX == nil then
-                cfg.crecon.fPosX = screenx/2
-                if cfg.crecon.posx ~= nil then
-                    cfg.crecon.sPosX = cfg.crecon.posx
-                    cfg.crecon.sPosY = cfg.crecon.posy
-                else
-                    cfg.crecon.sPosX = screenx/2
-                    cfg.crecon.sPosY = screeny/2
-                end
-                cfg.crecon.fPosY = screeny/2
-                cfg.crecon.posx = nil
-                cfg.crecon.posy = nil
+            if cfg.recon == nil then
+                cfg.recon = {
+					fPosX = screenx/2,
+					fPosY = screeny/2,
+					sPosX = screenx/2,
+					sPosY = screeny/2,
+					fSizeX = 150,
+					fSizeY = 310,
+					sSizeX = 260,
+					sSizeY = 285,
+					fCoff = 1,
+					sCoff = 1,
+					bSize = 28.720,
+					enable = false
+				}
+                cfg.crecon = nil
+                saveData(cfg, 'moonloader/config/Admin Tools/config.json')
             end
             file:close()
         end
@@ -1869,7 +1861,11 @@ function main()
     requestAnimation("PARACHUTE")
     while true do wait(0)
         --Бесконечные патроны
-        unlimBullets(oCheat.unlimBullets.v)
+        if not recon.state then
+            unlimBullets(oCheat.unlimBullets.v)
+        else
+            unlimBullets(false)
+        end
         --Reset remove
         if mem.read(0x8E4CB4, 4, true) > 419430400 then cleanStreamMemoryBuffer() end
         --Время на выдачу наказания
@@ -1946,19 +1942,6 @@ function main()
 			end
         end
         --Смена позиций
-        if data.imgui.reconpos then
-            imrecon.v = true
-            vars.others.recon.select = 1
-            sampToggleCursor(true)
-            local curX, curY = getCursorPos()
-            if data.imgui.recontype == 1 then
-                cfg.crecon.fPosX = curX
-                cfg.crecon.fPosY = curY
-            else
-                cfg.crecon.sPosX = curX
-                cfg.crecon.sPosY = curY
-            end
-        end
         if data.imgui.admcheckpos then
             sampToggleCursor(true)
             local curX, curY = getCursorPos()
@@ -2001,11 +1984,9 @@ function main()
             cfg.leadersChecker.posx = curX
             cfg.leadersChecker.posy = curY
         end
-        if isKeyJustPressed(key.VK_LBUTTON) and (data.imgui.admcheckpos or data.imgui.playercheckpos or data.imgui.reconpos or data.imgui.tempcheckpos or data.imgui.joinpos or data.imgui.quitpos or data.imgui.killlist or data.imgui.leadercheckerpos) then
+        if isKeyJustPressed(key.VK_LBUTTON) and (data.imgui.admcheckpos or data.imgui.playercheckpos  or data.imgui.tempcheckpos or data.imgui.joinpos or data.imgui.quitpos or data.imgui.killlist or data.imgui.leadercheckerpos) then
             data.imgui.admcheckpos = false
             data.imgui.playercheckpos = false
-            if data.imgui.reconpos then imrecon.v = false end
-            data.imgui.reconpos = false
             data.imgui.tempcheckpos = false
             data.imgui.joinpos = false
             data.imgui.quitpos = false
@@ -2341,12 +2322,17 @@ function imgui.OnDrawFrame()
         end
         imgui.End()
     end
-    if imrecon.v then
+    if imrecon.v or (data.imgui.menu == 7 and settingwindows.v and mainwindow.v) then
+        local flags =  imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoTitleBar
+        if data.imgui.menu ~= 7 or not settingwindows.v or not mainwindow.v then
+            flags = flags + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove
+        end
         local ImVec4 = imgui.ImVec4
         local spacing, height = 140.0, 162.0
-        imgui.SetNextWindowPos(imgui.ImVec2(cfg.crecon.sPosX, cfg.crecon.sPosY))
-        imgui.SetNextWindowSize(imgui.ImVec2(230, 360), imgui.Cond.FirstUseEver)
-        imgui.Begin(u8'Слежка за игроком', _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoTitleBar + imgui.WindowFlags.NoSavedSettings)
+        imgui.SetNextWindowPos(imgui.ImVec2(cfg.recon.sPosX, cfg.recon.sPosY), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowSize(imgui.ImVec2(cfg.recon.sSizeX, cfg.recon.sSizeY), imgui.Cond.FirstUseEver)
+        imgui.Begin(u8'Слежка за игроком', _, flags)
+        imgui.PushStyleVar(imgui.StyleVar.ItemSpacing, imgui.ImVec2(8*cfg.recon.sCoff, 4*cfg.recon.sCoff))
         imgui.CentrText(('%s'):format(imtext.nick))
         imgui.CentrText(('ID: %s'):format(recon.id))
         if reafk then
@@ -2367,17 +2353,23 @@ function imgui.OnDrawFrame()
         imgui.TextColored(ImVec4(0, 255, 0, 1), u8"AFK Time:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.afktime))
         imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Engine:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.engine))
         imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Pro Sport:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.prosport))
+        imgui.PopStyleVar()
+        if data.imgui.menu == 7 then
+            local wX, wY = imgui.GetWindowWidth(), imgui.GetWindowHeight()
+            cfg.recon.sSizeX, cfg.recon.sSizeY = wX, wY
+            local pos =  imgui.GetWindowPos()
+            cfg.recon.sPosX, cfg.recon.sPosY = pos.x, pos.y
+        end
         imgui.End()
-        imgui.SetNextWindowPos(imgui.ImVec2(cfg.crecon.fPosX, cfg.crecon.fPosY))
-        imgui.SetNextWindowSize(imgui.ImVec2(150, 310), imgui.Cond.FirstUseEver)
-        imgui.Begin(u8 'Слежка1', _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoTitleBar + imgui.WindowFlags.NoSavedSettings)
+        imgui.SetNextWindowPos(imgui.ImVec2(cfg.recon.fPosX, cfg.recon.fPosY), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowSize(imgui.ImVec2(cfg.recon.fSizeX, cfg.recon.fSizeY), imgui.Cond.FirstUseEver)
+        imgui.Begin(u8 'Слежка1', _, flags)
         local style = imgui.GetStyle()
         local colors = style.Colors
         local clr = imgui.Col
         local ImVec4 = imgui.ImVec4
-        colors[clr.Button] = ImVec4(0.10, 0.09, 0.12, 1.00)
-        colors[clr.ButtonHovered] = ImVec4(0.24, 0.23, 0.29, 1.00)
-        colors[clr.ButtonActive] = ImVec4(0.56, 0.56, 0.58, 1.00)
+        local rbtn_size = imgui.ImVec2(120, cfg.recon.bSize)
+        local wS = imgui.GetWindowSize()
         if not sampIsDialogActive() and not sampIsChatInputActive() and not isSampfuncsConsoleActive() then
             if wasKeyPressed(key.VK_S) or wasKeyPressed(key.VK_DOWN) then
                 if not vars.bools.recon.isPopup then
@@ -2419,15 +2411,16 @@ function imgui.OnDrawFrame()
                 end
             end
         end
+        imgui.PushStyleVar(imgui.StyleVar.ItemSpacing, imgui.ImVec2(8 * cfg.recon.fCoff, 4 * cfg.recon.fCoff))
         for k, v in ipairs(recon) do
             if k == vars.others.recon.select then bColor = colors[clr.ButtonActive] else bColor = colors[clr.Button] end
-            imgui.CustomButton(v.name.."##"..k, bColor, colors[clr.ButtonHovered], colors[clr.ButtonActive], btn_size)
-            imgui.SetNextWindowPos(imgui.ImVec2(cfg.crecon.fPosX + 150, cfg.crecon.fPosY))
+            imgui.CustomButton(v.name.."##"..k, bColor, colors[clr.ButtonHovered], colors[clr.ButtonActive], rbtn_size)
+            imgui.SetNextWindowPos(imgui.ImVec2(cfg.recon.fPosX + 150, cfg.recon.fPosY))
             if imgui.BeginPopup('##check_recon'..vars.others.recon.select) then
                 if vars.others.recon.select == k then
                     for k1, v1 in pairs(v.onclick) do
                         if k1 == vars.others.recon.selectPopup then pColor = colors[clr.ButtonActive] else pColor = colors[clr.Button] end
-                        imgui.CustomButton(v1.name.."##"..k1, pColor, colors[clr.ButtonHovered], colors[clr.ButtonActive], imgui.ImVec2(100, 30)) --Вот как раз то, что дофига раз показывается
+                        imgui.CustomButton(v1.name.."##"..k1, pColor, colors[clr.ButtonHovered], colors[clr.ButtonActive], imgui.ImVec2(100, cfg.recon.bSize)) --Вот как раз то, что дофига раз показывается
                     end
                     if not vars.bools.recon.isPopup then imgui.CloseCurrentPopup() end
                 end
@@ -2436,11 +2429,12 @@ function imgui.OnDrawFrame()
                 vars.bools.recon.isPopup = false
             end
         end
-        if imgui.IsMouseClicked(0) and data.imgui.reconpos then
-            data.imgui.reconpos = false
-            imrecon.v = false
-            sampToggleCursor(false)
-            saveData(cfg, 'moonloader/config/Admin Tools/config.json')
+        imgui.PopStyleVar()
+        if data.imgui.menu == 7 then
+            local wX, wY = imgui.GetWindowWidth(), imgui.GetWindowHeight()
+            local pos =  imgui.GetWindowPos()
+            cfg.recon.fSizeX, cfg.recon.fSizeY = wX, wY
+            cfg.recon.fPosX, cfg.recon.fPosY = pos.x, pos.y
         end
         imgui.End()
     end
@@ -2467,7 +2461,6 @@ function imgui.OnDrawFrame()
     end
     if mainwindow.v then
         imgui.LockPlayer = false
-        local btn_size = imgui.ImVec2(-0.1, 0)
         imgui.SetNextWindowSize(imgui.ImVec2(310, 300), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
         imgui.Begin(u8(('Admin Tools | Главное меню | Версия %s'):format(thisScript().version)), mainwindow, imgui.WindowFlags.NoResize)
@@ -2973,6 +2966,7 @@ function imgui.OnDrawFrame()
             end
             if imgui.Selectable(u8 'Настройка выдачи наказаний', data.imgui.menu == 4) then data.imgui.menu = 4 end
             if imgui.Selectable(u8 'Настройка цветов', data.imgui.menu == 6) then data.imgui.menu = 6 end
+            if imgui.Selectable(u8 'Настройки рекона', data.imgui.menu == 7) then data.imgui.menu = 7 end
 			if imgui.Selectable(u8 'Остальные настройки', data.imgui.menu == 5) then data.imgui.menu = 5 end
             imgui.EndChild()
             imgui.SameLine()
@@ -3114,11 +3108,10 @@ function imgui.OnDrawFrame()
                 if imgui.InputInt(u8 'Таймер +C вне гетто (/cbug)', cbugb, 0) then cfg.timers.cbugtimer = cbugb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 if imgui.InputInt(u8 'Таймер наркотиков в мафии(дни) (/mnarko)', mnarkob, 0) then cfg.timers.mnarkotimer = mnarkob.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 if imgui.InputInt(u8 'Таймер +C на стреле(дни) (/mcbug)', mcbugb, 0) then cfg.timers.mcbugtimer = mcbugb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
-			elseif data.imgui.menu == 5 then
-				local creconB = imgui.ImBool(cfg.crecon.enable)
+            elseif data.imgui.menu == 5 then
+                local reconwb = imgui.ImBool(cfg.other.reconw)
 				local ipassb = imgui.ImBool(cfg.other.passb)
 				local iapassb = imgui.ImBool(cfg.other.apassb)
-                local reconwb = imgui.ImBool(cfg.other.reconw)
                 local conschat = imgui.ImBool(cfg.other.chatconsole)
                 local joinquitb = imgui.ImBool(cfg.joinquit.enable)
                 local autoupdateb = imgui.ImBool(cfg.other.autoupdate)
@@ -3134,7 +3127,6 @@ function imgui.OnDrawFrame()
 				imgui.CentrText(u8 'Остальное')
                 imgui.Separator()
 				if imadd.ToggleButton(u8 'reconw##1', reconwb) then cfg.other.reconw = reconwb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Варнинги на клео реконнект')
-                if imadd.ToggleButton(u8 'Включить замененный рекон##1', creconB) then cfg.crecon.enable = creconB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить замененный рекон')
 				if imadd.ToggleButton(u8 'Автологин##11', ipassb) then cfg.other.passb = ipassb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автологин')
                 if imadd.ToggleButton(u8 'Автоалогин##11', iapassb) then cfg.other.apassb = iapassb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автоалогин')
                 if imadd.ToggleButton(u8 'Чатлог в консоли##11', conschat) then cfg.other.chatconsole = conschat.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Чатлог в консоли')
@@ -3180,23 +3172,6 @@ function imgui.OnDrawFrame()
                     end)
                 end
                 if imgui.Button(u8 'Изменить местоположения кил-листа') then data.imgui.killlist = true mainwindow.v = false end
-                if creconB.v then
-                    imgui.SameLine()
-                    if imgui.Button(u8 'Изменить местоположение рекона##3') then imgui.OpenPopup("##selectrecon") end 
-                    if imgui.BeginPopup("##selectrecon") then
-                        if imgui.Button(u8 "Левая панель") then 
-                            data.imgui.recontype = 1
-                            data.imgui.reconpos = true
-                            mainwindow.v = false
-                        end
-                        if imgui.Button(u8 "Правая панель") then
-                            data.imgui.recontype = 2
-                            data.imgui.reconpos = true
-                            mainwindow.v = false
-                        end
-                        imgui.EndPopup()
-                    end
-                end
                 if joinquitb.v then 
                     if imgui.Button(u8'Изменить местоположения подключившихся##1') then data.imgui.joinpos = true; mainwindow.v = false end
                     imgui.SameLine()
@@ -3325,8 +3300,21 @@ function imgui.OnDrawFrame()
                     }
                     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
                 end
+            elseif data.imgui.menu == 7 then
+                imgui.CentrText(u8 "Настройки рекона")
+                imgui.Separator()
+                local creconB = imgui.ImBool(cfg.recon.enable)
+                local fCoffb = imgui.ImFloat(cfg.recon.fCoff)
+                local sCoffb = imgui.ImFloat(cfg.recon.sCoff)
+                local bSizeb = imgui.ImFloat(cfg.recon.bSize)
+                if imadd.ToggleButton(u8 'Включить замененный рекон##1', creconB) then cfg.recon.enable = creconB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить замененный рекон')
+                if imgui.SliderFloat(u8 "Размер текста", sCoffb, 0.01, 2) then cfg.recon.sCoff = sCoffb.v end
+                if imgui.SliderFloat(u8 "Размер отступ между кнопками", fCoffb, 0.01, 2) then cfg.recon.fCoff = fCoffb.v end
+                if imgui.SliderFloat(u8 "Размер кнопок", bSizeb, 5, 30) then cfg.recon.bSize = bSizeb.v end
+                if imgui.Button(u8 "Сохранить настройки##recon") then
+                    saveData(cfg, 'moonloader/config/Admin Tools/config.json')
+                end
             end
-            --imgui.ShowStyleEditor()
             imgui.EndChild()
             imgui.End()
         end
@@ -4157,7 +4145,7 @@ end
 
 function sampev.onShowTextDraw(id, textdraw)
     if id == 2187 then recon.state = true end
-    if cfg.crecon.enable then
+    if cfg.recon.enable then
         if id == 2187 then imrecon.v = true vars.others.recon.select = 1 return false end
         local ids = {2182, 2183, 2184, 2185, 2186, 2187, 2188, 2189, 2190, 2191, 2192, 2193, 2194, 2195, 2196, 2197}
         for k, v in pairs(ids) do if v == id then return false end end
@@ -4165,7 +4153,7 @@ function sampev.onShowTextDraw(id, textdraw)
 end
 
 function sampev.onSendSpectatorSync(d)
-    if cfg.crecon.enable then
+    if cfg.recon.enable then
         d.leftRightKeys = 0
         d.upDownKeys = 0
         d.keysData = 0
@@ -4183,7 +4171,7 @@ function sampev.onTextDrawHide(id)
         end
         recon.state = false 
     end
-    if cfg.crecon.enable then 
+    if cfg.recon.enable then 
         if id == 2187 then 
             imrecon.v = false
         end 
