@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.16)
+script_version(2.17)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -572,7 +572,9 @@ local cfg = {
         fCoff = 1,
         sCoff = 1,
         bSize = 28.720,
-        enable = false
+        enable = false,
+        fFontSize = 1,
+        sFontSize = 1
     },
 	timers = {
 		sbivtimer = 30,
@@ -1544,20 +1546,27 @@ function main()
             cfg = decodeJson(file:read('*a'))
             if cfg.recon == nil then
                 cfg.recon = {
-					fPosX = screenx/2,
-					fPosY = screeny/2,
-					sPosX = screenx/2,
-					sPosY = screeny/2,
-					fSizeX = 150,
-					fSizeY = 310,
-					sSizeX = 260,
-					sSizeY = 285,
-					fCoff = 1,
-					sCoff = 1,
-					bSize = 28.720,
-					enable = false
-				}
+                    fPosX = screenx/2,
+                    fPosY = screeny/2,
+                    sPosX = screenx/2,
+                    sPosY = screeny/2,
+                    fSizeX = 150,
+                    fSizeY = 310,
+                    sSizeX = 260,
+                    sSizeY = 285,
+                    fCoff = 1,
+                    sCoff = 1,
+                    bSize = 28.720,
+                    enable = false,
+                    fFontSize = 1,
+                    sFontSize = 1
+                }
                 cfg.crecon = nil
+                saveData(cfg, 'moonloader/config/Admin Tools/config.json')
+            end
+            if cfg.recon.fFontSize == nil then
+                cfg.recon.fFontSize = 1
+                cfg.recon.sFontSize = 1
                 saveData(cfg, 'moonloader/config/Admin Tools/config.json')
             end
             file:close()
@@ -1708,10 +1717,10 @@ function main()
     else
         while #prcheck.prt == 0 do wait(0) end
         if checkIntable(prcheck.prt, sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))) then
-            if sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))) ~= "Sam_Teller" then
-                atext("Для вызова меню введите команду \"{66FF00}/at{ffffff}\"")
-            else
+            if sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))) == "Sam_Teller" then
                 sampAddChatMessage(" даник {FFC0CB}</3 {FFFFFF}даник {FFC0CB}</3 {FFFFFF}даник {FFC0CB}</3 {FFFFFF}даник {FFC0CB}</3 {FFFFFF}даник {FFC0CB}</3", -1)
+            else
+                atext("Для вызова меню введите команду \"{66FF00}/at{ffffff}\"")
             end
             local DWMAPI = ffi.load('dwmapi')
             DWMAPI.DwmEnableComposition(1)
@@ -2332,6 +2341,7 @@ function imgui.OnDrawFrame()
         imgui.SetNextWindowPos(imgui.ImVec2(cfg.recon.sPosX, cfg.recon.sPosY), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowSize(imgui.ImVec2(cfg.recon.sSizeX, cfg.recon.sSizeY), imgui.Cond.FirstUseEver)
         imgui.Begin(u8'Слежка за игроком', _, flags)
+        imgui.SetWindowFontScale(cfg.recon.sFontSize)
         imgui.PushStyleVar(imgui.StyleVar.ItemSpacing, imgui.ImVec2(8*cfg.recon.sCoff, 4*cfg.recon.sCoff))
         imgui.CentrText(('%s'):format(imtext.nick))
         imgui.CentrText(('ID: %s'):format(recon.id))
@@ -2364,6 +2374,7 @@ function imgui.OnDrawFrame()
         imgui.SetNextWindowPos(imgui.ImVec2(cfg.recon.fPosX, cfg.recon.fPosY), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowSize(imgui.ImVec2(cfg.recon.fSizeX, cfg.recon.fSizeY), imgui.Cond.FirstUseEver)
         imgui.Begin(u8 'Слежка1', _, flags)
+        imgui.SetWindowFontScale(cfg.recon.fFontSize)
         local style = imgui.GetStyle()
         local colors = style.Colors
         local clr = imgui.Col
@@ -3307,10 +3318,14 @@ function imgui.OnDrawFrame()
                 local fCoffb = imgui.ImFloat(cfg.recon.fCoff)
                 local sCoffb = imgui.ImFloat(cfg.recon.sCoff)
                 local bSizeb = imgui.ImFloat(cfg.recon.bSize)
+                local fSizeb = imgui.ImFloat(cfg.recon.fFontSize)
+                local sSizeb = imgui.ImFloat(cfg.recon.sFontSize)
                 if imadd.ToggleButton(u8 'Включить замененный рекон##1', creconB) then cfg.recon.enable = creconB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить замененный рекон')
                 if imgui.SliderFloat(u8 "Размер текста", sCoffb, 0.01, 2) then cfg.recon.sCoff = sCoffb.v end
                 if imgui.SliderFloat(u8 "Размер отступ между кнопками", fCoffb, 0.01, 2) then cfg.recon.fCoff = fCoffb.v end
                 if imgui.SliderFloat(u8 "Размер кнопок", bSizeb, 5, 30) then cfg.recon.bSize = bSizeb.v end
+                if imgui.SliderFloat(u8 "Размер шрифта левой панели", fSizeb, 0, 5) then cfg.recon.fFontSize = fSizeb.v end
+                if imgui.SliderFloat(u8 "Размер шрифта правой панели", sSizeb, 0, 5) then cfg.recon.sFontSize = sSizeb.v end
                 if imgui.Button(u8 "Сохранить настройки##recon") then
                     saveData(cfg, 'moonloader/config/Admin Tools/config.json')
                 end
@@ -3773,22 +3788,6 @@ function sampev.onServerMessage(color, text)
                     atext('Команду выполнил другой администратор')
                     punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}}
                 end
-                for i = 0, 1000 do
-                    if sampIsPlayerConnectedFixed(i) then
-                        local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
-                        local a = text:gsub('{.+}', '')
-                        if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                            if nick:find("%[") then
-                                if nick:find("%]") then
-                                    text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                                end
-                            else
-                                text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                            end
-                        end
-                    end
-                end
-                return {color, text}
             end
         end
     end
@@ -4112,13 +4111,7 @@ function sampev.onServerMessage(color, text)
             local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
             local a = text:gsub('{.+}', '')
             if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                if nick:find("%[") then
-                    if nick:find("%]") then
-                        text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                    end
-                else
-                    text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-                end
+                 text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
             end
         end
     end
