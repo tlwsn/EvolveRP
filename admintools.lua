@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.17)
+script_version(2.18)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -1941,7 +1941,24 @@ function main()
         if not isPauseMenuActive() then
 			for i = 1, BulletSync.maxLines do
                 if BulletSync[i].enable == true and BulletSync[i].time >= oTime then
-					local sx, sy, sz = calcScreenCoors(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
+                    local scX, scY = getScreenResolution()
+
+                    -----------------------------------ЧИНИМ ТРЕЙСЕРА-----------------------------------
+					--[[local sx, sy, sz = convert3DCoordsToScreen(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
+                    local fx, fy, fz = convert3DCoordsToScreen(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)]]
+
+                    --[[if sx < 0 then sx = scX end
+                    if fx < 0 then fx = scX end
+                    if sy < 0 then sy = scY end
+                    if fy < 0 then fy = scY end]]
+                    --if sz > -0.03125 and fz > -0.03125 then
+                        --[[print(("%s / %s / %s / %s"):format(sx, sy, fx, fy))
+                        renderDrawLine(sx, sy, fx, fy, 1, bulletTypes[BulletSync[i].tType])
+                        renderDrawPolygon(fx, fy-1, 3, 3, 4.0, 10, bulletTypes[BulletSync[i].tType])]]
+                    --end
+                    ----------------------------------------------------------------------------------
+                    
+                    local sx, sy, sz = calcScreenCoors(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
                     local fx, fy, fz = calcScreenCoors(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)
                     if sz > -0.03125 and fz > -0.03125 then
                         renderDrawLine(sx, sy, fx, fy, 1, bulletTypes[BulletSync[i].tType])
@@ -3956,7 +3973,7 @@ function sampev.onServerMessage(color, text)
                     if crang == 7 or crang == 8 or crang == 9 then
                         local dayInvite = os.time({ day = cday, month = cmonth, year = cyear })
                         local today = os.time({day = os.date('%d'), month = os.date('%m'), year = os.date('%Y')})
-                        if today - dayInvite < 4 then
+                        if today - dayInvite < 345600 then
                             table.insert(checkf.f, string.format("Nick: %s [%s] | LVL: %s | Rang: %s — находится во фракции менее 4-ех дней. Дата принятия: %s.%s.%s", cnick, cid, lvl, crang, cday,cmonth,cyear))
                         end
                     end
