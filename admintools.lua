@@ -1,10 +1,11 @@
 script_name('Admin Tools')
-script_version(2.18)
+script_version(2.19)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
 require 'lib.moonloader'
 require 'lib.sampfuncs'
+local lfs                       = require 'lfs'
 local lweapons, weapons         = pcall(require, 'game.weapons')
                                   assert(lweapons, 'not found lib game.weapons')
 local lsampev, sampev           = pcall(require, 'lib.samp.events')
@@ -19,8 +20,6 @@ local lVector3D, Vector3D       = pcall(require, 'vector3d')
                                   assert(lVector3D, 'not found lib vector3d')
 local lffi, ffi                 = pcall(require, 'ffi')
                                   assert(lffi, 'not found lib ffi')
-local lrequests, requests       = pcall(require, 'requests')
-                                  assert(lrequests, 'not found lib requests')
 local lmem, mem                 = pcall(require, 'memory')
                                   assert(lmem, 'not found lib memory')
 local lwm, wm                   = pcall(require, 'lib.windows.message')
@@ -32,7 +31,9 @@ local limadd, imadd             = pcall(require, 'imgui_addons')
 local lrkeys, rkeys             = pcall(require, 'rkeys')
                                   assert(lrkeys, 'not found lib rkeys')
 local lcopas, copas             = pcall(require, 'copas')
+                                  assert(lcopas, 'not found lib copas')
 local lhttp, http               = pcall(require, 'copas.http')
+                                  assert(lhttp, 'not found lib copas_http')
 local lcrypto, crypto           = pcall(require, 'crypto_lua')
 local d3dx9_43                  = ffi.load('d3dx9_43.dll')
 local getBonePosition           = ffi.cast("int (__thiscall*)(void*, float*, int, bool)", 0x5E4280)
@@ -198,7 +199,9 @@ local config_colors = {
     askchat = {r = 233, g = 165, b = 40, color = 15312168},
     jbchat = {r = 217, g = 119, b = 0, color = 14251776},
     tracemiss = {r = 0, g = 0, b = 255, color = -16776961},
-    tracehit = {r = 255, g = 0, b = 0, color = -65536}
+    tracehit = {r = 255, g = 0, b = 0, color = -65536},
+    hudmain = {r = 255, g = 255, b = 255, color = -1},
+    hudsecond = {r= 0, g = 255, b = 0, color = -16711936}
 }
 local tEditData = {
 	id = -1,
@@ -605,8 +608,8 @@ local cfg = {
         checkfont = 'Arial',
         whfont = "Verdana",
         whsize = 8,
-        hudfont = "Times New Roman",
-        killfont = "Times New Roman",
+        hudfont = "Arial",
+        killfont = "Arial",
         killsize = 10,
         hudsize = 10,
         chatconsole = false,
@@ -614,7 +617,9 @@ local cfg = {
         autoupdate = true,
         delay = 1200,
         skeletwh = true,
-        socrpm = false
+        socrpm = false,
+        style = 1,
+        resend = true
     }
 }
 local fraklist = {
@@ -1410,7 +1415,7 @@ function libs()
         atext('По окончанию загрузки скрипт будет перезагружен')
         if not lcopas or not lhttp then
             local direct = {'copas'}
-            local files = {'copas.lua', "copas/ftp.lua", 'copas/http.lua', 'copas/limit.lua', 'copas/smtp.lua', 'requests.lua'}
+            local files = {'copas.lua', "copas/ftp.lua", 'copas/http.lua', 'copas/limit.lua', 'copas/smtp.lua'}
             for k, v in pairs(direct) do if not doesDirectoryExist("moonloader/lib/"..v) then createDirectory("moonloader/lib/"..v) end end
             for k, v in pairs(files) do
                 copas_download_status = 'proccess'
@@ -1564,6 +1569,8 @@ function main()
                 cfg.crecon = nil
                 saveData(cfg, 'moonloader/config/Admin Tools/config.json')
             end
+            if cfg.other.resend == nil then cfg.other.resend = true end
+            if cfg.other.style == nil then cfg.other.style = 1 end
             if cfg.recon.fFontSize == nil then
                 cfg.recon.fFontSize = 1
                 cfg.recon.sFontSize = 1
@@ -1665,7 +1672,9 @@ function main()
                     askchat = {r = 233, g = 165, b = 40, color = 15312168},
                     jbchat = {r = 217, g = 119, b = 0, color = 14251776},
                     tracemiss = {r = 0, g = 0, b = 255, color = -16776961},
-                    tracehit = {r = 255, g = 0, b = 0, color = -65536}
+                    tracehit = {r = 255, g = 0, b = 0, color = -65536},
+                    hudmain = {r = 255, g = 255, b = 255, color = -1},
+                    hudsecond = {r= 0, g = 255, b = 0, color = -16711936}
                 }
             end
             if config_colors.tracemiss == nil then config_colors.tracemiss = {r = 0, g = 0, b = 255, color = -16776961} end
@@ -1677,6 +1686,7 @@ function main()
             if type(config_colors.anschat.color) == 'string' then config_colors.anschat.color = ARGBtoRGB(join_argb(255, config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b)) end
             if type(config_colors.askchat.color) == 'string' then config_colors.askchat.color = ARGBtoRGB(join_argb(255, config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b)) end
             if type(config_colors.jbchat.color) == 'string' then config_colors.jbchat.color = ARGBtoRGB(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b)) end
+
             acolor      = imgui.ImFloat3(config_colors.admchat.r / 255, config_colors.admchat.g / 255, config_colors.admchat.b / 255)
             scolor      = imgui.ImFloat3(config_colors.supchat.r / 255, config_colors.supchat.g / 255, config_colors.supchat.b / 255)
             smscolor    = imgui.ImFloat3(config_colors.smschat.r / 255, config_colors.smschat.g / 255, config_colors.smschat.b / 255)
@@ -1686,6 +1696,7 @@ function main()
             anscolor    = imgui.ImFloat3(config_colors.anschat.r / 255, config_colors.anschat.g / 255, config_colors.anschat.b / 255)
             trhitcolor  = imgui.ImFloat3(config_colors.tracehit.r / 255, config_colors.tracehit.g / 255, config_colors.tracehit.b / 255)
             trmisscolor = imgui.ImFloat3(config_colors.tracemiss.r / 255, config_colors.tracemiss.g / 255, config_colors.tracemiss.b / 255)
+
             bulletTypes = {
                 [0] = config_colors.tracemiss.color,
                 [1] = config_colors.tracehit.color,
@@ -1694,6 +1705,16 @@ function main()
                 [4] = config_colors.tracemiss.color,
                 [5] = 0xFF00FF00
             }
+
+            if config_colors.hudmain == nil then 
+                config_colors.hudmain = {r = 255, g = 255, b = 255, color = -1} 
+            end
+            if config_colors.hudsecond == nil then
+                config_colors.hudsecond = {r= 0, g = 255, b = 0, color = -16711936}
+            end
+
+            hudmaincolor    = imgui.ImFloat3(config_colors.hudmain.r / 255, config_colors.hudmain.g / 255, config_colors.hudmain.b / 255)
+            hudsecondcolor  = imgui.ImFloat3(config_colors.hudsecond.r / 255, config_colors.hudsecond.g / 255, config_colors.hudsecond.b / 255)
         end
     end
     --Еще что то с рангами
@@ -1944,6 +1965,7 @@ function main()
                     local scX, scY = getScreenResolution()
 
                     -----------------------------------ЧИНИМ ТРЕЙСЕРА-----------------------------------
+
 					--[[local sx, sy, sz = convert3DCoordsToScreen(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
                     local fx, fy, fz = convert3DCoordsToScreen(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)]]
 
@@ -1956,6 +1978,7 @@ function main()
                         renderDrawLine(sx, sy, fx, fy, 1, bulletTypes[BulletSync[i].tType])
                         renderDrawPolygon(fx, fy-1, 3, 3, 4.0, 10, bulletTypes[BulletSync[i].tType])]]
                     --end
+
                     ----------------------------------------------------------------------------------
                     
                     local sx, sy, sz = calcScreenCoors(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
@@ -1963,7 +1986,7 @@ function main()
                     if sz > -0.03125 and fz > -0.03125 then
                         renderDrawLine(sx, sy, fx, fy, 1, bulletTypes[BulletSync[i].tType])
                         renderDrawPolygon(fx, fy-1, 3, 3, 4.0, 10, bulletTypes[BulletSync[i].tType])
-					end
+                    end
 				end
 			end
         end
@@ -2485,10 +2508,20 @@ function imgui.OnDrawFrame()
                 imgui.TextColoredRGB(line)
             end
         end
+        if imgui.CollapsingHeader(u8 'Остальные правила', btn_size) then
+            for line in lfs.dir('moonloader/Admin Tools/Rules') do
+                if line:match('.+.txt') and not line:find("ghetto") and not line:find("bikers") and not line:find("mafia") then
+                    if imgui.CollapsingHeader(u8(line:match('(.+).txt')), btn_size) then
+                        for line1 in io.lines('moonloader/Admin Tools/Rules/'..line) do
+                            imgui.TextColoredRGB(line1)
+                        end
+                    end
+                end
+            end
+        end
         imgui.End()
     end
     if mainwindow.v then
-        imgui.LockPlayer = false
         imgui.SetNextWindowSize(imgui.ImVec2(310, 300), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
         imgui.Begin(u8(('Admin Tools | Главное меню | Версия %s'):format(thisScript().version)), mainwindow, imgui.WindowFlags.NoResize)
@@ -2970,11 +3003,6 @@ function imgui.OnDrawFrame()
             imgui.End()
         end
         if settingwindows.v then
-            if not recon.state then
-                imgui.LockPlayer = true
-            else
-                imgui.LockPlayer = false
-            end
             imgui.SetNextWindowPos(imgui.ImVec2(screenx / 2, screeny / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(15,6))
             imgui.Begin(u8 'Admin Tools | Настройки', settingwindows, imgui.WindowFlags.NoResize)
             imgui.BeginChild('##set', imgui.ImVec2(200, 400), true)
@@ -3145,6 +3173,7 @@ function imgui.OnDrawFrame()
                 local autoupdateb = imgui.ImBool(cfg.other.autoupdate)
                 local killlistb = imgui.ImBool(cfg.killlist.startenable)
                 local socrmpb = imgui.ImBool(cfg.other.socrpm)
+                local resendb = imgui.ImBool(cfg.other.resend)
 				local ipass = imgui.ImBuffer(tostring(cfg.other.password), 256)
                 local iapass = imgui.ImBuffer(tostring(cfg.other.adminpass), 256)
                 local hudfontb = imgui.ImBuffer(tostring(cfg.other.hudfont), 256)
@@ -3152,6 +3181,7 @@ function imgui.OnDrawFrame()
                 local killsizeb = imgui.ImInt(cfg.other.killsize)
                 local hudsizeb = imgui.ImInt(cfg.other.hudsize)
                 local delayb = imgui.ImInt(cfg.other.delay)
+                local hudselect = imgui.ImInt(cfg.other.style)
 				imgui.CentrText(u8 'Остальное')
                 imgui.Separator()
 				if imadd.ToggleButton(u8 'reconw##1', reconwb) then cfg.other.reconw = reconwb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Варнинги на клео реконнект')
@@ -3160,6 +3190,7 @@ function imgui.OnDrawFrame()
                 if imadd.ToggleButton(u8 'Чатлог в консоли##11', conschat) then cfg.other.chatconsole = conschat.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Чатлог в консоли')
                 if imadd.ToggleButton(u8 'joinquit##11', joinquitb) then cfg.joinquit.enable = joinquitb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Лог подключившися/отключивашися игроков')
                 if imadd.ToggleButton(u8 'autoupd##11', autoupdateb) then cfg.other.autoupdate = autoupdateb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автообновление скрипта')
+                if imadd.ToggleButton(u8 'resend##11', resendb) then cfg.other.resend = resendb.v end; imgui.SameLine(); imgui.Text(u8 'Писать "слежу" при переходе в рекон по репорту')
                 if imadd.ToggleButton(u8 'killlist##11', killlistb) then cfg.killlist.startenable = killlistb.v end; imgui.SameLine(); imgui.Text(u8 'Замененный кил-лист при входе в игру')
                 if imadd.ToggleButton(u8 'socrpm', socrmpb) then cfg.other.socrpm = socrmpb.v
                     if cfg.other.socrpm then
@@ -3213,6 +3244,11 @@ function imgui.OnDrawFrame()
 					if imgui.InputText(u8 'Введите ваш админский пароль', iapass, imgui.InputTextFlags.Password) then cfg.other.adminpass = u8:decode(iapass.v) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
 					if imgui.Button(u8 'Узнать пароль##2') then atext('Ваш админский пароль: {66FF00}'..cfg.other.adminpass) end
                 end
+                if imgui.RadioButton(u8 "Стиль нижней панели: "..1, cfg.other.style == 1) then cfg.other.style = 1 saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                imgui.SameLine()
+                if imgui.RadioButton(u8 "Стиль нижней панели: "..2, cfg.other.style == 2) then cfg.other.style = 2 saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                imgui.SameLine()
+                if imgui.RadioButton(u8 "Стиль нижней панели: "..3, cfg.other.style == 3) then cfg.other.style = 3 saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 if imgui.InputText(u8 'Шрифт нижней панели##hud', hudfontb) then cfg.other.hudfont = hudfontb.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 if imgui.InputInt(u8 'Размер шрифта нижней панели##hud', hudsizeb, 0) then 
                     cfg.other.hudsize = hudsizeb.v 
@@ -3297,6 +3333,16 @@ function imgui.OnDrawFrame()
                     }
                     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
                 end
+                if imgui.ColorEdit3(u8 "Цвет первого цвета нижней панели", hudmaincolor) then
+                    config_colors.hudmain.r, config_colors.hudmain.g, config_colors.hudmain.b = hudmaincolor.v[1] * 255, hudmaincolor.v[2] * 255, hudmaincolor.v[3] * 255
+                    config_colors.hudmain.color = join_argb(255, hudmaincolor.v[1] * 255, hudmaincolor.v[2] * 255, hudmaincolor.v[3] * 255)
+                    saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
+                end
+                if imgui.ColorEdit3(u8 "Цвет второго цвета нижней панели", hudsecondcolor) then
+                    config_colors.hudsecond.r, config_colors.hudsecond.g, config_colors.hudsecond.b = hudsecondcolor.v[1] * 255, hudsecondcolor.v[2] * 255, hudsecondcolor.v[3] * 255
+                    config_colors.hudsecond.color = join_argb(255, hudsecondcolor.v[1] * 255, hudsecondcolor.v[2] * 255, hudsecondcolor.v[3] * 255)
+                    saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
+                end
                 if imgui.Button(u8 'Сбросить цвета') then
                     config_colors = {
                         admchat = {r = 255, g = 255, b = 0, color = 16776960},
@@ -3307,17 +3353,23 @@ function imgui.OnDrawFrame()
                         askchat = {r = 233, g = 165, b = 40, color = 15312168},
                         jbchat = {r = 217, g = 119, b = 0, color = 14251776},
                         tracemiss = {r = 0, g = 0, b = 255, color = -16776961},
-                        tracehit = {r = 255, g = 0, b = 0, color = -65536}
+                        tracehit = {r = 255, g = 0, b = 0, color = -65536},
+                        hudmain = {r = 255, g = 255, b = 255, color = -1},
+                        hudsecond = {r= 0, g = 255, b = 0, color = -16711936}
                     }
-                    acolor      = imgui.ImFloat3(config_colors.admchat.r / 255, config_colors.admchat.g / 255, config_colors.admchat.b / 255)
-                    scolor      = imgui.ImFloat3(config_colors.supchat.r / 255, config_colors.supchat.g / 255, config_colors.supchat.b / 255)
-                    smscolor    = imgui.ImFloat3(config_colors.smschat.r / 255, config_colors.smschat.g / 255, config_colors.smschat.b / 255)
-                    jbcolor     = imgui.ImFloat3(config_colors.jbchat.r / 255, config_colors.jbchat.g / 255, config_colors.jbchat.b / 255)
-                    askcolor    = imgui.ImFloat3(config_colors.askchat.r / 255, config_colors.askchat.g / 255, config_colors.askchat.b / 255)
-                    repcolor    = imgui.ImFloat3(config_colors.repchat.r / 255, config_colors.repchat.g / 255, config_colors.repchat.b / 255)
-                    anscolor    = imgui.ImFloat3(config_colors.anschat.r / 255, config_colors.anschat.g / 255, config_colors.anschat.b / 255)
-                    trhitcolor  = imgui.ImFloat3(config_colors.tracehit.r / 255, config_colors.tracehit.g / 255, config_colors.tracehit.b / 255)
-                    trmisscolor = imgui.ImFloat3(config_colors.tracemiss.r / 255, config_colors.tracemiss.g / 255, config_colors.tracemiss.b / 255)
+
+                    acolor          = imgui.ImFloat3(config_colors.admchat.r / 255, config_colors.admchat.g / 255, config_colors.admchat.b / 255)
+                    scolor          = imgui.ImFloat3(config_colors.supchat.r / 255, config_colors.supchat.g / 255, config_colors.supchat.b / 255)
+                    smscolor        = imgui.ImFloat3(config_colors.smschat.r / 255, config_colors.smschat.g / 255, config_colors.smschat.b / 255)
+                    jbcolor         = imgui.ImFloat3(config_colors.jbchat.r / 255, config_colors.jbchat.g / 255, config_colors.jbchat.b / 255)
+                    askcolor        = imgui.ImFloat3(config_colors.askchat.r / 255, config_colors.askchat.g / 255, config_colors.askchat.b / 255)
+                    repcolor        = imgui.ImFloat3(config_colors.repchat.r / 255, config_colors.repchat.g / 255, config_colors.repchat.b / 255)
+                    anscolor        = imgui.ImFloat3(config_colors.anschat.r / 255, config_colors.anschat.g / 255, config_colors.anschat.b / 255)
+                    trhitcolor      = imgui.ImFloat3(config_colors.tracehit.r / 255, config_colors.tracehit.g / 255, config_colors.tracehit.b / 255)
+                    trmisscolor     = imgui.ImFloat3(config_colors.tracemiss.r / 255, config_colors.tracemiss.g / 255, config_colors.tracemiss.b / 255)
+                    hudmaincolor    = imgui.ImFloat3(config_colors.hudmain.r / 255, config_colors.hudmain.g / 255, config_colors.hudmain.b / 255)
+                    hudsecondcolor  = imgui.ImFloat3(config_colors.hudsecond.r / 255, config_colors.hudsecond.g / 255, config_colors.hudsecond.b / 255)
+
                     bulletTypes = {
                         [0] = config_colors.tracemiss.color,
                         [1] = config_colors.tracehit.color,
@@ -3351,9 +3403,7 @@ function imgui.OnDrawFrame()
             imgui.End()
         end
 		if bMainWindow.v then
-			imgui.LockPlayer = true
 			imgui.ShowCursor = true
-			imgui.DisableInput = false
 			local iScreenWidth, iScreenHeight = getScreenResolution()
 			imgui.SetNextWindowPos(imgui.ImVec2(iScreenWidth / 2, iScreenHeight / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
 			imgui.SetNextWindowSize(imgui.ImVec2(1000, 530), imgui.Cond.FirstUseEver)
@@ -3475,13 +3525,8 @@ function fps_correction()
 end
 
 function initializeRender()
-    font = renderCreateFont("Tahoma", 10, FCR_BOLD + FCR_BORDER)
-    font2 = renderCreateFont("Arial", 8, FCR_ITALICS + FCR_BORDER)
-    deathfont = renderCreateFont('Arial', 10, 5)
-    nizfont = renderCreateFont('Arial', 10, 0)
     gunfont = renderCreateFont(getGameDirectory()..'\\gtaweap3.ttf', cfg.other.hudsize, 4)
     whfont = renderCreateFont(cfg.other.whfont, cfg.other.whsize, 4)
-    whhpfont = renderCreateFont("Verdana", 8, 4)
 	checkfont = renderCreateFont(cfg.other.checkfont, cfg.other.checksize, 4)
     hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4)
     killfont = renderCreateFont(cfg.other.killfont, cfg.other.killsize, 4)
@@ -3663,17 +3708,17 @@ function clickF()
                                 pos = Vector3D(colpoint2.pos[1], colpoint2.pos[2], colpoint2.pos[3] + 1)
                                 local curX, curY, curZ  = getCharCoordinates(playerPed)
                                 local dist              = getDistanceBetweenCoords3d(curX, curY, curZ, pos.x, pos.y, pos.z)
-                                local hoffs             = renderGetFontDrawHeight(font)
+                                local hoffs             = renderGetFontDrawHeight(hudfont)
                                 sy = sy - 2
                                 sx = sx - 2
-                                if colpoint.entityType ~= 2 then renderFontDrawText(font, string.format("%0.2fm", dist), sx, sy - hoffs, 0xEEEEEEEE) end
+                                if colpoint.entityType ~= 2 then renderFontDrawText(hudfont, string.format("%0.2fm", dist), sx, sy - hoffs, 0xEEEEEEEE) end
                                 local tpIntoCar = nil
                                 if colpoint.entityType == 2 then
                                     local car = getVehiclePointerHandle(colpoint.entity)
                                     if doesVehicleExist(car) and (not isCharInAnyCar(playerPed) or storeCarCharIsInNoSave(playerPed) ~= car) then
                                         local carx, cary, carz = getCarCoordinates(car)
                                         local scarx, scary = convert3DCoordsToScreen(carx, cary, carz)
-                                        renderFontDrawText(font,'TP: '..tCarsName[getCarModel(car)-399],scarx, scary, 0xEEEEEEEE)
+                                        renderFontDrawText(hudfont,'TP: '..tCarsName[getCarModel(car)-399],scarx, scary, 0xEEEEEEEE)
                                         --displayVehicleName(sx, sy - hoffs * 2, getNameOfVehicleModel(getCarModel(car)))
                                         local color = 0xAAFFFFFF
                                         tpIntoCar = car
@@ -3866,15 +3911,17 @@ function sampev.onServerMessage(color, text)
     if text:match('^ %->Вопрос .+') then color = argb_to_rgba(join_argb(255, config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b)) end
     --Получаем ID по репорту
     if text:match("^ Жалоба от .+%[%d+%] на .+%[%d+%]%: .+") then
-        reportid = text:match("Жалоба от .+%[%d+%] на .+%[(%d+)%]%: .+")
+        whorep, reportid = text:match("Жалоба от .+%[(%d+)%] на .+%[(%d+)%]%: .+")
         color = argb_to_rgba(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b))
     end
     if text:match('^ Репорт от .+%[%d+%]%:') then
         reportid = text:match('Репорт от .+%[(%d+)%]%:')
+        whorep = nil
         color = argb_to_rgba(join_argb(255, config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b))
     end
     if text:match('^ Жалоба от%: .+%[%d+%]%:') then
         reportid = text:match('Жалоба от%: .+%[(%d+)%]%:')
+        whorep = nil
         color = argb_to_rgba(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b))
     end
     --Цветной /warehouse
@@ -4141,20 +4188,22 @@ function sampev.onTextDrawSetString(id, text)
         imtext.lvl, imtext.warn, imtext.arm, imtext.hp, imtext.carhp, imtext.speed, imtext.ping, imtext.ammo, imtext.shot, imtext.timeshot, imtext.afktime, imtext.engine, imtext.prosport = text:match('~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)')
     end
     if id == 2188 then
-        if text:match('~w~.+') then
+        if text:match('~w~.+~n~ID:') then
             imtext.nick = (text:match('~w~(.+)~n~ID:')):gsub("_", " ")
             reafk = true
-        else
+        elseif text:match(".+~n~ID:") then
             imtext.nick = (text:match('(.+)~n~ID:')):gsub("_", " ")
             reafk = false
         end
-        recon.id = text:match('.+~n~ID%: (%d+)')
-        --traceid = tonumber(recon.id)
+        if recon.id ~= text:match('.+~n~ID%: (%d+)') then
+            recon.id = text:match('.+~n~ID%: (%d+)')
+            traceid = tonumber(recon.id)
+        end
     end
 end
 
 function sampev.onShowTextDraw(id, textdraw)
-    if id == 2187 then recon.state = true end
+    if id == 2187 then if textdraw.text ~= 10 then recon.state = true end end
     if cfg.recon.enable then
         if id == 2187 then imrecon.v = true vars.others.recon.select = 1 return false end
         local ids = {2182, 2183, 2184, 2185, 2186, 2187, 2188, 2189, 2190, 2191, 2192, 2193, 2194, 2195, 2196, 2197}
@@ -4225,23 +4274,25 @@ function sampev.onBulletSync(playerId, data)
 		end
         local id = BulletSync.lastId
         print(("%s [%s] / origin: %s %s %s / target: %s %s %s / type: %s"):format(sampGetPlayerNickname(playerId), playerId, data.origin.x, data.origin.y, data.origin.z, data.target.x, data.target.y, data.target.z, data.targetType))
-        if data.target.x <= 6 and  data.target.y <= 6 and data.target.z <= 0 then
-            if data.targetType == 1 then
-                if data.targetId ~= 65535 then
-                    local tX, tY, tZ = getCharCoordinates(select(2, sampGetCharHandleBySampPlayerId(data.targetId)))
-                    data.target.x, data.target.y, data.target.z = tX, tY, tZ
+        if data.target.x ~= nil and data.target.y ~= nil and data.target.z ~= nil then 
+            if data.target.x <= 6 and  data.target.y <= 6 and data.target.z <= 0 then
+                if data.targetType == 1 then
+                    if data.targetId ~= 65535 then
+                        local tX, tY, tZ = getCharCoordinates(select(2, sampGetCharHandleBySampPlayerId(data.targetId)))
+                        data.target.x, data.target.y, data.target.z = tX, tY, tZ
+                    else
+                        data.targetType = 5
+                    end
                 else
                     data.targetType = 5
                 end
-            else
-                data.targetType = 5
             end
+            BulletSync[id].enable = true
+            BulletSync[id].tType = data.targetType
+            BulletSync[id].time = os.time() + 15
+            BulletSync[id].o.x, BulletSync[id].o.y, BulletSync[id].o.z = data.origin.x, data.origin.y, data.origin.z
+            BulletSync[id].t.x, BulletSync[id].t.y, BulletSync[id].t.z = data.target.x, data.target.y, data.target.z
         end
-        BulletSync[id].enable = true
-        BulletSync[id].tType = data.targetType
-        BulletSync[id].time = os.time() + 15
-        BulletSync[id].o.x, BulletSync[id].o.y, BulletSync[id].o.z = data.origin.x, data.origin.y, data.origin.z
-        BulletSync[id].t.x, BulletSync[id].t.y, BulletSync[id].t.z = data.target.x, data.target.y, data.target.z
     end
 end
 
@@ -4322,6 +4373,7 @@ function renders()
             local checkerheight = renderGetFontDrawHeight(checkfont)
             local hudheight = renderGetFontDrawHeight(hudfont)
             local killheight = renderGetFontDrawHeight(killfont)
+            local hudtext = ""
             if #checker.temp.online == 0 then
                 tempRender = tempRenderPosY-(#checker.temp.online + 1)*checkerheight
             else
@@ -4383,7 +4435,38 @@ function renders()
                     end
                 end
             end
-            renderFontDrawText(hudfont, ('%s %s %s %s [%s %s] [FPS: %s]'):format(os.date("[%H:%M:%S]"), funcsStatus.Inv and '{00FF00}[Inv]{ffffff}' or '[Inv]', funcsStatus.AirBrk and '{00FF00}[AirBrk]{ffffff}' or '[AirBrk]', flyInfo.active and '{00FF00}[Fly]{ffffff}' or '[Fly]', hpos, hposint, hfps), 0, screeny-hudheight, -1)
+
+            local mainColor     = ("%06X"):format(bit.band(config_colors.hudmain.color, 0xFFFFFF))
+            local secondColor   = ("%06X"):format(bit.band(config_colors.hudsecond.color, 0xFFFFFF))
+
+            if cfg.other.style == 1 then
+                hudtext = ('%s %s %s %s [%s %s] [FPS: %s]'):format(os.date("[%H:%M:%S]"), 
+                funcsStatus.Inv and '{'..secondColor..'}[Inv]{'..mainColor..'}' or '[Inv]', 
+                funcsStatus.AirBrk and '{'..secondColor..'}[AirBrk]{'..mainColor..'}' or '[AirBrk]', 
+                flyInfo.active and '{'..secondColor..'}[Fly]{'..mainColor..'}' or '[Fly]', 
+                hpos, 
+                hposint, 
+                hfps)
+            elseif cfg.other.style == 2 then
+                hudtext = ('%s {'..secondColor..'}/{'..mainColor..'} %s {'..secondColor..'}/{'..mainColor..'} %s {'..secondColor..'}/{'..mainColor..'} %s {'..secondColor..'}/{'..mainColor..'} %s %s {'..secondColor..'}/{'..mainColor..'} FPS: %s'):format(os.date("%H:%M:%S"), 
+                funcsStatus.Inv and '{'..secondColor..'}Inv{'..mainColor..'}' or 'Inv', 
+                funcsStatus.AirBrk and '{'..secondColor..'}AirBrk{'..mainColor..'}' or 'AirBrk', 
+                flyInfo.active and '{'..secondColor..'}Fly{'..mainColor..'}' or 'Fly', 
+                hpos, 
+                hposint, 
+                hfps)
+            elseif cfg.other.style == 3 then
+                hudtext = ('%s %s %s %s %s %s FPS: %s'):format(os.date("%H:%M:%S"), 
+                funcsStatus.Inv and '{'..secondColor..'}Inv{'..mainColor..'}' or 'Inv', 
+                funcsStatus.AirBrk and '{'..secondColor..'}AirBrk{'..mainColor..'}' or 'AirBrk', 
+                flyInfo.active and '{'..secondColor..'}Fly{'..mainColor..'}' or 'Fly', 
+                hpos, 
+                hposint, 
+                hfps)
+            end
+
+            renderFontDrawText(hudfont, hudtext, 0, screeny-hudheight, config_colors.hudmain.color)
+            
             if cfg.admchecker.enable then
                 renderFontDrawText(checkfont, "Админы онлайн ["..#checker.admins.online.."]:", cfg.admchecker.posx, admRender, 0xFF00FF00)
                 if #checker.admins.online > 0 then
@@ -4662,48 +4745,50 @@ function wh()
                             local result, cped = sampGetCharHandleBySampPlayerId(wi)
                             if result then
                                 if doesCharExist(cped) and isCharOnScreen(cped) then
-                                    local wcolor = ("%06X"):format(bit.band(sampGetPlayerColor(wi), 0xFFFFFF))
                                     local cpos1X, cpos1Y, cpos1Z = getBodyPartCoordinates(6, cped)
-                                    local wcpedx, wcpedy, wcpedz = getCharCoordinates(cped)
                                     local wnick = sampGetPlayerNickname(wi)
                                     local wheadposx, wheadposy = convert3DCoordsToScreen(cpos1X, cpos1Y, cpos1Z)
-                                    local wcposx, wcposy = convert3DCoordsToScreen(wcpedx, wcpedy, wcpedz)
                                     local wisAfk = sampIsPlayerPaused(wi)
                                     local wcpedHealth = sampGetPlayerHealth(wi)
                                     local hp2 = wcpedHealth
                                     local wcpedArmor = sampGetPlayerArmor(wi)
                                     local wcpedlvl = sampGetPlayerScore(wi)
                                     local whhight = renderGetFontDrawHeight(whfont)
-                                    local whhphight = renderGetFontDrawHeight(whhpfont)
-                                    local whlenght = renderGetFontDrawTextLength(whfont,string.format('{%s}%s [%s]', wcolor, wnick, wi))
-                                    local lvllenght = renderGetFontDrawTextLength(whfont, 'LVL: '..wcpedlvl)
-                                    local hplenght = renderGetFontDrawTextLength(whfont, ('%s'):format(wcpedHealth))
-                                    local color = sampGetPlayerColor(wi)
-                                    local aa, rr, gg, bb = explode_argb(color)
+                                    local whlenght = renderGetFontDrawTextLength(whfont,string.format('%s [%s]', wnick, wi))
+                                    local hplenght = renderGetFontDrawTextLength(whfont, wcpedHealth)
+                                    local aa, rr, gg, bb = explode_argb(sampGetPlayerColor(wi))
                                     local color = join_argb(255, rr, gg, bb)
                                     local wposy = wheadposy - 40
                                     local wposx = wheadposx - 60
+
                                     for _, v in ipairs(nametagCoords) do
                                         if v["pos_y"] > wposy-whhight*2.33 and v["pos_y"] < wposy+whhight*2.33 and v["pos_x"] > wposx-whlenght and v["pos_x"] < wposx+whlenght then
                                             wposy = v["pos_y"] - whhight*2.33
                                         end
                                     end
+
                                     nametagCoords[#nametagCoords+1] = {
                                         pos_y = wposy,
                                         pos_x = wposx
                                     }
+
                                     renderFontDrawText(whfont, string.format('%s [%s] %s', wnick, wi, wisAfk and '{CCCCCC}[AFK]' or ''), wposx, wposy, color)
+
                                     if wcpedHealth > 100 then wcpedHealth = 100 end
                                     if wcpedArmor > 100 then wcpedArmor = 100 end
+
                                     renderDrawBoxWithBorder(wposx+1, wposy+whhight*1.33, math.floor(100 / 2) + 2, whhight/3+1, 0x80000000, 1, 0xFF000000)
                                     renderDrawBox(wposx+2, wposy+whhight*1.33, math.floor(wcpedHealth / 2) , whhight/3, 0xAACC0000)
+
                                     renderFontDrawText(whfont, ('%s'):format(hp2), wposx+60, wposy+whhight, 0xFFFF0000)
                                     renderFontDrawText(whfont, 'LVL: '..wcpedlvl, wposx+70+hplenght, wposy+whhight, -1)
+
                                     if wcpedArmor ~= 0 then
                                         renderDrawBoxWithBorder(wposx+1, wposy+whhight*2.33, math.floor(100 / 2) + 2, whhight/3+1, 0x80000000, 1, 0xFF000000)
                                         renderDrawBox(wposx+2, wposy+whhight*2.33, math.floor(wcpedArmor / 2) , whhight/3, 0xAAAAAAAA)
                                         renderFontDrawText(whfont, ('%s'):format(wcpedArmor), wposx+60, wposy+whhight*2, -1)
                                     end
+
                                     if cfg.other.skeletwh then
                                         local t = {3, 4, 5, 51, 52, 41, 42, 31, 32, 33, 21, 22, 23, 2}
                                         for v = 1, #t do
@@ -4993,7 +5078,18 @@ function kills() sampShowDialog(21321, '{ffffff}Последние убийства', '{ffffff}Уб
 --бинды
 function reportk()
     if reportid ~= nil then
-        sampSendChat('/re '..reportid)
+        lua_thread.create(function()
+            sampSendChat('/re '..reportid)
+            if cfg.other.resend then
+                while not recon.state do wait(0) end
+                wait(1400)
+                if whorep ~= nil then
+                    if tonumber(recon.id) == tonumber(reportid) then
+                        sampSendChat(("/pm %s Слежу."):format(whorep))
+                    end
+                end
+            end
+        end)
     end
 end
 
@@ -5383,7 +5479,6 @@ function getlvl(pam)
 end
 
 function hblist()
-    local lfs = require 'lfs'
     local hlist = {}
     for line in lfs.dir('moonloader/Admin Tools/hblist') do
         if line:match('.+.txt') then
@@ -5879,6 +5974,7 @@ function fly()
     if isCharInAnyCar(PLAYER_PED) then return end
     if posX < -20000 or posX > 20000 or posY < -20000 or posY > 20000 or posZ < -20000 or posZ > 20000 then return end
     if not flyInfo.isASvailable then return end
+    if not isPlayerPlaying() then return end
   
     ----- Стоим на земле
     if groundZ + 1.2 > posZ and groundZ - 1.2 < posZ then
