@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.19)
+script_version(2.2)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -3190,7 +3190,7 @@ function imgui.OnDrawFrame()
                 if imadd.ToggleButton(u8 'Чатлог в консоли##11', conschat) then cfg.other.chatconsole = conschat.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Чатлог в консоли')
                 if imadd.ToggleButton(u8 'joinquit##11', joinquitb) then cfg.joinquit.enable = joinquitb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Лог подключившися/отключивашися игроков')
                 if imadd.ToggleButton(u8 'autoupd##11', autoupdateb) then cfg.other.autoupdate = autoupdateb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автообновление скрипта')
-                if imadd.ToggleButton(u8 'resend##11', resendb) then cfg.other.resend = resendb.v end; imgui.SameLine(); imgui.Text(u8 'Писать "слежу" при переходе в рекон по репорту')
+                if imadd.ToggleButton(u8 'resend##11', resendb) then cfg.other.resend = resendb.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Писать "слежу" при переходе в рекон по репорту')
                 if imadd.ToggleButton(u8 'killlist##11', killlistb) then cfg.killlist.startenable = killlistb.v end; imgui.SameLine(); imgui.Text(u8 'Замененный кил-лист при входе в игру')
                 if imadd.ToggleButton(u8 'socrpm', socrmpb) then cfg.other.socrpm = socrmpb.v
                     if cfg.other.socrpm then
@@ -3867,11 +3867,20 @@ function sampev.onServerMessage(color, text)
                 file:close()
             end
             if banda == 'Yakuza' or banda == 'LCN' or banda == 'Rus Mafia' then
+                if banda == 'Rus Mafia' then banda = "RM" end
                 local file = io.open("moonloader/Admin Tools/setmatlog.txt", "a")
                 file:write(("\n[size=85][list][*] [color=#00BFFF]Игровой ник[/color]: %s\n"):format(nick))
                 file:write(("[*] [color=#00BFFF]Наименование мафии[/color]: %s\n"):format(banda))
                 file:write(("[*] [color=#00BFFF]Количество выданных материалов[/color]: %s\n"):format(mati))
                 file:write(("[*] [color=#00BFFF]Дата и время[/color]: %s / %s[/list][/size]\n"):format(("%s:%s"):format(time.wHour, time.wMinute), os.date('%d.%m.%Y')))
+                file:close()
+            end
+            if banda == "Pagans MC" or banda == "Warlocks MC" or banda == "Mongols MC" then
+                local file = io.open("moonloader/Admin Tools/setmatlog.txt", "a")
+                file:write(("\n[list][list][size=94][color=gray]Игровой ник:[/color] %s.\n"):format(nick))
+                file:write(("[color=gray]Наименование мотоклуба:[/color] %s.\n"):format(banda))
+                file:write(("[color=gray]Количество выданных материалов:[/color] %s.\n"):format(mati))
+                file:write((" [color=gray]Дата и время:[/color] %s [color=#FF0000]|[/color] %s[/size][/list][/list]\n"):format(("%s:%s"):format(time.wHour, time.wMinute), os.date('%d.%m.%Y')))
                 file:close()
             end
         end
@@ -4468,7 +4477,7 @@ function renders()
             renderFontDrawText(hudfont, hudtext, 0, screeny-hudheight, config_colors.hudmain.color)
             
             if cfg.admchecker.enable then
-                renderFontDrawText(checkfont, "Админы онлайн ["..#checker.admins.online.."]:", cfg.admchecker.posx, admRender, 0xFF00FF00)
+                renderFontDrawText(checkfont, "Администрация онлайн ["..#checker.admins.online.."]:", cfg.admchecker.posx, admRender, 0xFF00FF00)
                 if #checker.admins.online > 0 then
                     for k, v in pairs(checker.admins.online) do
                         local cText = ("{%s}%s [%s] %s{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
