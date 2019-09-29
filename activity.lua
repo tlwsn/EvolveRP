@@ -1,7 +1,7 @@
 script_name("Activity") 
 script_authors({ 'Edward_Franklin', 'Thomas_Lawson' })
-script_version("1.5") -- Final version
-script_version_number(14536)
+script_version("1.6") -- Final version
+script_version_number(14537)
 --------------------------------------------------------------------
 require "lib.moonloader"
 local inicfg              = require 'inicfg'
@@ -40,9 +40,6 @@ local pInfo = inicfg.load({
   	banip = 0,
   	rmute = 0,
   	jail = 0
-  },
-  others = {
-    houseplata = 0
   }
 }, "activity-checker")
 local sInfo = {
@@ -107,9 +104,6 @@ function main()
       pInfo.info.dayOnline = 0
       pInfo.info.dayAFK = 0
     end
-    if os.time(os.date("!*t")) > pInfo.others.houseplata - (3600 * 24 * 3) and pInfo.others.houseplata > 0 then -- Unix Timestamp
-      atext("Внимание! На домашнем счёту осталось слишком мало денег. Успейте пополнить счёт")
-    end
     if sampGetGamestate() == 3 then
       sampSendChat("/a")
       sendStat(false)
@@ -148,7 +142,7 @@ function calculateOnline()
     while true do wait(1000)
       if sInfo.isALogin == true then
         pInfo.info.dayOnline = pInfo.info.dayOnline + 1
-        pInfo.info.weekOnline = pInfo.info.weekOnline + 1
+        pInfo.info.weekOnline = tonumber(pInfo.info.weekOnline) + 1
         pInfo.info.dayAFK = pInfo.info.dayAFK + (os.time() - sInfo.updateAFK - 1)
         if updatecount >= 10 then saveconfig() updatecount = 0 end
         updatecount = updatecount + 1
@@ -213,7 +207,11 @@ function sendStat(bool)
     }
     if bool then zaprosTable[1].params.alogin = true end
     --url = ("https://redx-dev.web.app/api.html?dayAFK=%s&dayOnline=%s&dayPM=%s&level=%s&nick=%s&weekOnline=%s&weekPM=%s"):format(pInfo.info.dayAFK, pInfo.info.dayOnline, pInfo.info.dayPM, pInfo.info.admLvl, sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))), pInfo.info.weekOnline,pInfo.info.weekPM)
-    httpRequest("https://redx-dev.web.app/api?data="..encodeJson(zaprosTable), nil, function(response) end)
+    httpRequest("https://redx-dev.web.app/api?data="..encodeJson(zaprosTable), nil, function(response, code, headers, status)
+      if not response then
+        print(url, code)
+      end
+    end)
     --downloadUrlToFile(url, os.getenv('TEMP') .. '\\activity')
     --print("https://redx-dev.web.app/api?data="..encodeJson(zaprosTable))
   end)
@@ -510,10 +508,6 @@ function sampevents.onServerMessage(color, text)
     local string = string.format("[Заявка на смену ника] %s[%s] [lvl: %d] просит сменить ник на: %s", playernick, playerid, sampGetPlayerScore(tonumber(playerid)), nextname)
     return {string, color}
   end]]
-  if text:match("Новый баланс на домашнем счету: $.+") then
-    local balance = tonumber(text:match("Новый баланс на домашнем счету%: $(.+)"))
-    atext("balance = "..balance)
-  end
   if text:match("Nik %[.+%]  R%-IP %[.+%]  L%-IP %[.+%]  IP %[(.+)%]") and color == -10270806 then
     local nick, rip, ip = text:match("Nik %[(.+)%]  R%-IP %[(.+)%]  L%-IP %[.+%]  IP %[(.+)%]")
     if not checkIntable(pgetips, rip) then pgetips[#pgetips+1] = rip end
@@ -524,13 +518,6 @@ function sampevents.onServerMessage(color, text)
     if not checkIntable(pgetips, rip) then pgetips[#pgetips+1] = rip end
     if not checkIntable(pgetips, ip) then pgetips[#pgetips+1] = ip end
   end
-  --[[
-    [20:31:41]  Положили на домашний счет: $100
-    [20:31:41]  Новый баланс на домашнем счету: $33600
-    [20:31:41]  Новый баланс на счету: $2185475
-  if os.time(os.date("!*t")) > pInfo.others.houseplata - (3600 * 24 * 3) and pInfo.others.houseplata > 0 then -- Unix Timestamp
-    atext("Внимание! На домашнем счёту осталось слишком мало денег. Успейте пополнить счёт")
-  end]]
   if text:match("Время online за текущий день") then
     --sampAddChatMessage(("%06X"):format(bit.rshift(color, 8)), -1)
     sampAddChatMessage(string.format(" Время online за неделю - %s (Без учета АФК) | Ответов: %d", secToTime(pInfo.info.weekOnline), pInfo.info.weekPM), 0xBFC0C2)

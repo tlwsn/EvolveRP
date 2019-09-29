@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.2)
+script_version(2.3)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -5255,25 +5255,15 @@ end
 
 function cip(pam)
     local rdata = {}
+    local isRdata = false
     if #ips == 2 then
         atext('Идет проверка IP адресов. Ожидайте..')
         local site = "http://f0328004.xsph.ru/?ip1="..ips[1].."&ip2="..ips[2]
         httpRequest(site, _, function(response, code, headers, status)
             if response then
-                local rdata = decodeJson(response)
+                rdata = decodeJson(response)
                 if rdata.ipone.success and rdata.iptwo.success then
-                    local distances2 = distance_cord(rdata.ipone.latitude, rdata.ipone.longitude,rdata.iptwo.latitude, rdata.iptwo.longitude)
-                    if tonumber(pam) == nil then
-                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(u8:decode(rdata.ipone.country), u8:decode(rdata.ipone.city), u8:decode(rdata.ipone.isp), u8:decode(rdata.ipone.ip)), -1)
-                        sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(u8:decode(rdata.iptwo.country), u8:decode(rdata.iptwo.city), u8:decode(rdata.iptwo.isp), u8:decode(rdata.iptwo.ip)), -1)
-                        sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s %s'):format(math.floor(distances2), rnick, sampGetPlayerIdByNickname(rnick) and '['..sampGetPlayerIdByNickname(rnick)..']' or ''), -1)
-                    else
-                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(u8:decode(rdata.ipone.country), u8:decode(rdata.ipone.city), u8:decode(rdata.ipone.isp), u8:decode(rdata.ipone.ip)))
-                        wait(cfg.other.delay)
-                        sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(u8:decode(rdata.iptwo.country), u8:decode(rdata.iptwo.city), u8:decode(rdata.iptwo.isp), u8:decode(rdata.iptwo.ip)))
-                        wait(cfg.other.delay)
-                        sampSendChat(('/a Расстояние: %s км. | Ник: %s %s'):format(math.floor(distances2), rnick, sampGetPlayerIdByNickname(rnick) and '['..sampGetPlayerIdByNickname(rnick)..']' or ''))
-                    end
+                    isRdata = true
                 else
                     atext('Произошла ошибка проверки IP адресов')
                 end
@@ -5281,10 +5271,25 @@ function cip(pam)
                 atext('Произошла ошибка проверки IP адресов')
             end
         end)
+        if isRdata then
+            local distances2 = distance_cord(rdata.ipone.latitude, rdata.ipone.longitude,rdata.iptwo.latitude, rdata.iptwo.longitude)
+            if tonumber(pam) == nil then
+                sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(u8:decode(rdata.ipone.country), u8:decode(rdata.ipone.city), u8:decode(rdata.ipone.isp), u8:decode(rdata.ipone.ip)), -1)
+                sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город:{66FF00} %s{ffffff} | ISP: {66FF00}%s [IP: %s]'):format(u8:decode(rdata.iptwo.country), u8:decode(rdata.iptwo.city), u8:decode(rdata.iptwo.isp), u8:decode(rdata.iptwo.ip)), -1)
+                sampAddChatMessage((' Расстояние: {66FF00}%s {ffffff}км. | Ник: {66FF00}%s %s'):format(math.floor(distances2), rnick, sampGetPlayerIdByNickname(rnick) and '['..sampGetPlayerIdByNickname(rnick)..']' or ''), -1)
+            else
+                sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [R-IP: %s]'):format(u8:decode(rdata.ipone.country), u8:decode(rdata.ipone.city), u8:decode(rdata.ipone.isp), u8:decode(rdata.ipone.ip)))
+                wait(cfg.other.delay)
+                sampSendChat(('/a Страна: %s | Город: %s | ISP: %s [IP: %s]'):format(u8:decode(rdata.iptwo.country), u8:decode(rdata.iptwo.city), u8:decode(rdata.iptwo.isp), u8:decode(rdata.iptwo.ip)))
+                wait(cfg.other.delay)
+                sampSendChat(('/a Расстояние: %s км. | Ник: %s %s'):format(math.floor(distances2), rnick, sampGetPlayerIdByNickname(rnick) and '['..sampGetPlayerIdByNickname(rnick)..']' or ''))
+            end
+        end
     else
         atext('Не найдено IP адресов для сравнения')
     end
     local rdata = {}
+    local isRdata = false
 end
 
 function givehb(pam)
