@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.3)
+script_version(2.4)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -3880,7 +3880,7 @@ function sampev.onServerMessage(color, text)
                 file:write(("\n[list][list][size=94][color=gray]Игровой ник:[/color] %s.\n"):format(nick))
                 file:write(("[color=gray]Наименование мотоклуба:[/color] %s.\n"):format(banda))
                 file:write(("[color=gray]Количество выданных материалов:[/color] %s.\n"):format(mati))
-                file:write((" [color=gray]Дата и время:[/color] %s [color=#FF0000]|[/color] %s[/size][/list][/list]\n"):format(("%s:%s"):format(time.wHour, time.wMinute), os.date('%d.%m.%Y')))
+                file:write(("[color=gray]Дата и время:[/color] %s [color=#FF0000]|[/color] %s.[/size][/list][/list]\n"):format(("%s:%s"):format(time.wHour, time.wMinute), os.date('%d.%m.%Y')))
                 file:close()
             end
         end
@@ -5271,7 +5271,8 @@ function cip(pam)
                 atext('Произошла ошибка проверки IP адресов')
             end
         end)
-        if isRdata then
+        lua_thread.create(function()
+            while not isRdata do wait(0) end
             local distances2 = distance_cord(rdata.ipone.latitude, rdata.ipone.longitude,rdata.iptwo.latitude, rdata.iptwo.longitude)
             if tonumber(pam) == nil then
                 sampAddChatMessage((' Страна: {66FF00}%s{ffffff} | Город: {66FF00}%s{ffffff} | ISP: {66FF00}%s [R-IP: %s]'):format(u8:decode(rdata.ipone.country), u8:decode(rdata.ipone.city), u8:decode(rdata.ipone.isp), u8:decode(rdata.ipone.ip)), -1)
@@ -5284,7 +5285,7 @@ function cip(pam)
                 wait(cfg.other.delay)
                 sampSendChat(('/a Расстояние: %s км. | Ник: %s %s'):format(math.floor(distances2), rnick, sampGetPlayerIdByNickname(rnick) and '['..sampGetPlayerIdByNickname(rnick)..']' or ''))
             end
-        end
+        end)
     else
         atext('Не найдено IP адресов для сравнения')
     end
