@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.4)
+script_version(2.5)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -383,16 +383,16 @@ local frakrang = {
         inv = 3
     },
     Mafia = {
-        rang_7 = 9,
+        rang_7 = 8,
         rang_8 = 10,
-        rang_9 = 12,
-        inv = 7
+        rang_9 = 11,
+        inv = 5
     },
     Bikers = {
         rang_5 = 6,
         rang_6 = 7,
-        rang_7 = 10,
-        rang_8 = 11,
+        rang_7 = 8,
+        rang_8 = 10,
         inv = 4
     }
 }
@@ -4026,13 +4026,13 @@ function sampev.onServerMessage(color, text)
                             table.insert(checkf.f, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
                         end
                     end
-                    if crang == 7 or crang == 8 or crang == 9 then
+                    --[[if crang == 7 or crang == 8 or crang == 9 then
                         local dayInvite = os.time({ day = cday, month = cmonth, year = cyear })
                         local today = os.time({day = os.date('%d'), month = os.date('%m'), year = os.date('%Y')})
                         if today - dayInvite < 345600 then
                             table.insert(checkf.f, string.format("Nick: %s [%s] | LVL: %s | Rang: %s — находится во фракции менее 4-ех дней. Дата принятия: %s.%s.%s", cnick, cid, lvl, crang, cday,cmonth,cyear))
                         end
-                    end
+                    end]]
                 elseif checkf.frak == 11 then
                     if lvl < frakrang.Autoschool.inv and lvl ~= 0 then
                         table.insert(checkf.f, string.format('Nick: %s [%s] | LVL: %s | Rang: %s', cnick, cid, lvl, crang))
