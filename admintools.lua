@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.5)
+script_version(2.51)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -2889,7 +2889,7 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Использование: /mcbug [id]')
             end
             if imgui.CollapsingHeader('/vkv', btn_size) then
-                imgui.TextWrapped(u8 'Описание: Посадить игрока на 30 минут по причине "Война вне квадрата"')
+                imgui.TextWrapped(u8 'Описание: Посадить игрока на 60 минут по причине "Война вне квадрата"')
                 imgui.TextWrapped(u8 'Использование: /vkv [id]')
             end
 			if imgui.CollapsingHeader('/cheat', btn_size) then
@@ -5897,7 +5897,7 @@ function vkv(pam)
     local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     if id ~= nil then
         if sampIsPlayerConnectedFixed(id) then
-            sampSendChat(("/prison %s 30 Война вне квадрата"):format(id--[[, cfg.timers.sbivtimer]]))
+            sampSendChat(("/prison %s 60 Война вне квадрата"):format(id--[[, cfg.timers.sbivtimer]]))
         else
             atext('Игрок оффлайн')
         end
