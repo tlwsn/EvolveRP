@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.51)
+script_version(2.52)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -2885,7 +2885,7 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Использование: /mnarko [id]')
             end
             if imgui.CollapsingHeader('/mcbug', btn_size) then
-                imgui.TextWrapped(u8 ('Описание: Добавить игрока в ЧС мафий на %s дня по причине "+С на стреле"'):format(cfg.timers.mcbugtimer))
+                imgui.TextWrapped(u8 ('Описание: Добавить игрока в ЧС мафий на %s дня по причине "НРП стрельба"'):format(cfg.timers.mcbugtimer))
                 imgui.TextWrapped(u8 'Использование: /mcbug [id]')
             end
             if imgui.CollapsingHeader('/vkv', btn_size) then
@@ -3163,7 +3163,7 @@ function imgui.OnDrawFrame()
 				if imgui.InputInt(u8 'Таймер клео сбива (/csbiv)', csbivb, 0) then cfg.timers.csbivtimer = csbivb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 if imgui.InputInt(u8 'Таймер +C вне гетто (/cbug)', cbugb, 0) then cfg.timers.cbugtimer = cbugb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 if imgui.InputInt(u8 'Таймер наркотиков в мафии(дни) (/mnarko)', mnarkob, 0) then cfg.timers.mnarkotimer = mnarkob.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
-                if imgui.InputInt(u8 'Таймер +C на стреле(дни) (/mcbug)', mcbugb, 0) then cfg.timers.mcbugtimer = mcbugb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.InputInt(u8 'Таймер НРП стрельба(дни) (/mcbug)', mcbugb, 0) then cfg.timers.mcbugtimer = mcbugb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
             elseif data.imgui.menu == 5 then
                 local reconwb = imgui.ImBool(cfg.other.reconw)
 				local ipassb = imgui.ImBool(cfg.other.passb)
@@ -5855,7 +5855,7 @@ function mcbug(pam)
     local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     if id ~= nil then
         if sampIsPlayerConnectedFixed(id) then
-            sampSendChat(("/addabl %s %s 4 +C на стреле"):format(id, cfg.timers.mcbugtimer))
+            sampSendChat(("/addabl %s %s 4 НРП стрельба"):format(id, cfg.timers.mcbugtimer))
         else
             atext('Игрок оффлайн')
         end
