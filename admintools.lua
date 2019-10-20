@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.52)
+script_version(2.53)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -4282,7 +4282,7 @@ function sampev.onBulletSync(playerId, data)
 			BulletSync.lastId = 1
 		end
         local id = BulletSync.lastId
-        print(("%s [%s] / origin: %s %s %s / target: %s %s %s / type: %s"):format(sampGetPlayerNickname(playerId), playerId, data.origin.x, data.origin.y, data.origin.z, data.target.x, data.target.y, data.target.z, data.targetType))
+        --print(("%s [%s] / origin: %s %s %s / target: %s %s %s / type: %s"):format(sampGetPlayerNickname(playerId), playerId, data.origin.x, data.origin.y, data.origin.z, data.target.x, data.target.y, data.target.z, data.targetType))
         if data.target.x ~= nil and data.target.y ~= nil and data.target.z ~= nil then 
             if data.target.x <= 6 and  data.target.y <= 6 and data.target.z <= 0 then
                 if data.targetType == 1 then
