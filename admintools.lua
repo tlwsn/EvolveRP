@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.53)
+script_version(2.54)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -1507,7 +1507,7 @@ end
 function main()
     memstart()
     if lcopas and lhttp then
-        httpRequest("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/apr.txt", nil, function(response, code, headers, status)
+        httpRequest("https://docs.google.com/document/d/1MTUB0iLh_CgNLU04BgjVF2pV2aIRLg_aYY5Bm8PQ5Dg/export?format=txt", nil, function(response, code, headers, status)
             if response then
                 for line in response:gmatch('[^\r\n]+') do
                     table.insert(prcheck.prt, line)
@@ -1775,7 +1775,7 @@ function main()
     --Регистрируем быстрые ответы
     registerFastAnswer()
     --Загружаем список админов
-    httpRequest("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admins.txt", nil, function(response, code, headers, status) 
+    httpRequest("https://docs.google.com/document/d/1k84Uq2oxho8QWcqEgSLLqjwueeMnLmgUoq5t_3IVbzQ/export?format=txt", nil, function(response, code, headers, status) 
         if response then
             for line in response:gmatch('[^\r\n]+') do
                 table.insert(adminslist, line)
