@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.54)
+script_version(2.55)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -65,7 +65,6 @@ local bMainWindow               = imgui.ImBool(false)
 local sInputEdit                = imgui.ImBuffer(256)
 local bIsEnterEdit              = imgui.ImBool(false)
 local leadwindow                = imgui.ImBool(false)
-local arul                      = imgui.ImBool(false)
 local mpend                     = imgui.ImBool(false)
 local tunwindow                 = imgui.ImBool(false)
 local tpname                    = imgui.ImBuffer(256)
@@ -332,7 +331,8 @@ local recon = {
     {
         name = 'Exit',
         onclick = function() sampSendClickTextdraw(2197) end
-    }
+    },
+    id = -1
 }
 local frakrang = {
     Mayor = {
@@ -584,7 +584,8 @@ local cfg = {
 		csbivtimer = 60,
         cbugtimer = 60,
         mnarkotimer = 7,
-        mcbugtimer = 3
+        mcbugtimer = 3,
+        vkvtimer = 60
     },
     joinquit = {
         joinposx = 3,
@@ -1330,18 +1331,10 @@ function autoupdate(json_url, url)
                     local dlstatus = require('moonloader').download_status
                     atext(("Обнаружено обновление. Пытаюсь обновиться с %s на %s"):format(thisScript().version, updateversion))
                     downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23) 
-                        if status1 == dlstatus.STATUS_DOWNLOADINGDATA then
-                            print(("Загружено %d из %d."):format(p13, p23))
-                        elseif status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
-                            print("Загрузка обновления завершена.")
-                            atext("Обновление завершено!")
-                            goupdatestatus = true
+                        if status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
                             thisScript():reload()
-                        end
-                        if status1 == dlstatus.STATUSEX_ENDDOWNLOAD then
-                            if not goupdatestatus then
-                                atext("Обновление прошло неудачно. Запускаю устаревшую версию.")
-                            end
+                        elseif status1 == 64 then
+                            atext("Скачивание обновления прошло не успешно. Запускаю старую версию")
                         end
                     end)
                 end)
@@ -1507,7 +1500,7 @@ end
 function main()
     memstart()
     if lcopas and lhttp then
-        httpRequest("https://docs.google.com/document/d/1MTUB0iLh_CgNLU04BgjVF2pV2aIRLg_aYY5Bm8PQ5Dg/export?format=txt", nil, function(response, code, headers, status)
+        httpRequest("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/apr.txt", nil, function(response, code, headers, status)
             if response then
                 for line in response:gmatch('[^\r\n]+') do
                     table.insert(prcheck.prt, line)
@@ -1517,7 +1510,7 @@ function main()
             end
         end)
     end
-    local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools', 'moonloader/Admin Tools/Check Banned', 'moonloader/Admin Tools/Rules'}
+    local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools', 'moonloader/Admin Tools/Check Banned'}
     local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt', 'moonloader/Admin Tools/punishjb.txt', 'moonloader/Admin Tools/punishlogs.txt', 'moonloader/Admin Tools/Check Banned/players.txt', "moonloader/Admin Tools/setmatlog.txt"}
     --Проверяем и создаем папки
     for k, v in pairs(directors) do
@@ -1569,6 +1562,7 @@ function main()
                 cfg.crecon = nil
                 saveData(cfg, 'moonloader/config/Admin Tools/config.json')
             end
+            if cfg.timers.vkvtimer == nil then cfg.timers.vkvtimer = 60 end
             if cfg.other.resend == nil then cfg.other.resend = true end
             if cfg.other.style == nil then cfg.other.style = 1 end
             if cfg.recon.fFontSize == nil then
@@ -1751,21 +1745,6 @@ function main()
         end
     end
     if cfg.killlist.startenable then killlistmode = 1 end
-    --Проверка правил
-    for k, v in pairs({'ghetto.txt', 'mafia.txt', 'bikers.txt'}) do
-        if not doesFileExist("moonloader/Admin Tools/Rules/"..v) then
-            httpRequest("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/at_rules/"..v, nil, function(response, code, headers, status)
-                if response then rultext = response
-                else io.open("moonloader/Admin Tools/Rules/"..v, 'w'):close() rulesready = true
-                end
-            end)
-            while not rultext do wait(0) end
-            local file = io.open("moonloader/Admin Tools/Rules/"..v, 'w')
-            file:write(rultext)
-            file:close()
-            rultext = nil
-        end
-    end
     --Автоалогин
     if #tostring(cfg.other.adminpass) >=6 and cfg.other.apassb then autoal() end
     --Автообновление
@@ -1775,7 +1754,7 @@ function main()
     --Регистрируем быстрые ответы
     registerFastAnswer()
     --Загружаем список админов
-    httpRequest("https://docs.google.com/document/d/1k84Uq2oxho8QWcqEgSLLqjwueeMnLmgUoq5t_3IVbzQ/export?format=txt", nil, function(response, code, headers, status) 
+    httpRequest("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admins.txt", nil, function(response, code, headers, status) 
         if response then
             for line in response:gmatch('[^\r\n]+') do
                 table.insert(adminslist, line)
@@ -1791,7 +1770,6 @@ function main()
     sampRegisterChatCommand("vkv", vkv)
     sampRegisterChatCommand("ranks", ranks)
     sampRegisterChatCommand("atp", function() tpwindow.v = not tpwindow.v end)
-    sampRegisterChatCommand("arules", function() arul.v = not arul.v end)
     sampRegisterChatCommand('mnarko', mnarko)
     sampRegisterChatCommand('mcbug', mcbug)
     sampRegisterChatCommand('checkb', checkB)
@@ -2045,7 +2023,7 @@ function main()
             mainwindow.v = true
             saveData(cfg, 'moonloader/config/Admin Tools/config.json')
         end
-        imgui.Process = mainwindow.v or imrecon.v or arul.v or tpwindow.v
+        imgui.Process = mainwindow.v or imrecon.v or tpwindow.v
     end
 end
 
@@ -2146,7 +2124,7 @@ function rkeys.onHotKey(id, keys)
 end
 
 function imgui.OnDrawFrame()
-    imgui.ShowCursor = mainwindow.v or arul.v
+    imgui.ShowCursor = mainwindow.v
     local btn_size = imgui.ImVec2(-0.1, 0)
     local ir, ig, ib, ia = rainbow(1, 1)
     if tpwindow.v then
@@ -2486,38 +2464,6 @@ function imgui.OnDrawFrame()
             local pos =  imgui.GetWindowPos()
             cfg.recon.fSizeX, cfg.recon.fSizeY = wX, wY
             cfg.recon.fPosX, cfg.recon.fPosY = pos.x, pos.y
-        end
-        imgui.End()
-    end
-    if arul.v then
-        imgui.SetNextWindowSize(imgui.ImVec2(500, 500), imgui.Cond.FirstUseEver)
-        imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-        imgui.Begin(u8'Admin Tools | Правила', arul)
-        if imgui.CollapsingHeader(u8 'Правила гетто', btn_size) then
-            for line in io.lines('moonloader/Admin Tools/Rules/ghetto.txt') do
-                imgui.TextColoredRGB(line)
-            end
-        end
-        if imgui.CollapsingHeader(u8 'Правила мафий', btn_size) then
-            for line in io.lines('moonloader/Admin Tools/Rules/mafia.txt') do
-                imgui.TextColoredRGB(line)
-            end
-        end
-        if imgui.CollapsingHeader(u8 'Правила байкеров', btn_size) then
-            for line in io.lines('moonloader/Admin Tools/Rules/bikers.txt') do
-                imgui.TextColoredRGB(line)
-            end
-        end
-        if imgui.CollapsingHeader(u8 'Остальные правила', btn_size) then
-            for line in lfs.dir('moonloader/Admin Tools/Rules') do
-                if line:match('.+.txt') and not line:find("ghetto") and not line:find("bikers") and not line:find("mafia") then
-                    if imgui.CollapsingHeader(u8(line:match('(.+).txt')), btn_size) then
-                        for line1 in io.lines('moonloader/Admin Tools/Rules/'..line) do
-                            imgui.TextColoredRGB(line1)
-                        end
-                    end
-                end
-            end
         end
         imgui.End()
     end
@@ -2865,7 +2811,7 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Использование: /gs [id]')
             end
             if imgui.CollapsingHeader('/ags', btn_size) then
-                imgui.TextWrapped(u8 'Описание: Сокращение команды /agetstats')
+                imgui.TextWrapped(u8 'Описание: Сокращение команды /agetstats\nВ реконе можно ид не указывать, сразу проверит статистику игрока, за которым слежка')
                 imgui.TextWrapped(u8 'Использование: /ags [id/nick]')
             end
             if imgui.CollapsingHeader('/sbiv', btn_size) then
@@ -2889,7 +2835,7 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Использование: /mcbug [id]')
             end
             if imgui.CollapsingHeader('/vkv', btn_size) then
-                imgui.TextWrapped(u8 'Описание: Посадить игрока на 60 минут по причине "Война вне квадрата"')
+                imgui.TextWrapped(u8 ('Описание: Посадить игрока на %s минут по причине "Война вне квадрата"'):format(cfg.timers.vkvtimer))
                 imgui.TextWrapped(u8 'Использование: /vkv [id]')
             end
 			if imgui.CollapsingHeader('/cheat', btn_size) then
@@ -2983,10 +2929,6 @@ function imgui.OnDrawFrame()
             if imgui.CollapsingHeader('/checkb', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Проверить аккаунты из файла на блокировку (Файл находится по пути moonloader/Admin Tools/Check Banned/players.txt)')
                 imgui.TextWrapped(u8 'Использование: /checkb')
-            end
-            if imgui.CollapsingHeader('/arules', btn_size) then
-                imgui.TextWrapped(u8 'Описание: Посмотреть правила каптов / стрел прямо в игре')
-                imgui.TextWrapped(u8 'Использование: /arules')
             end
             if imgui.CollapsingHeader('/atp', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Открыть меню телепорта')
@@ -3147,6 +3089,7 @@ function imgui.OnDrawFrame()
                 local cbugb = imgui.ImInt(cfg.timers.cbugtimer)
                 local mnarkob = imgui.ImInt(cfg.timers.mnarkotimer)
                 local mcbugb = imgui.ImInt(cfg.timers.mcbugtimer)
+                local vkvb = imgui.ImInt(cfg.timers.vkvtimer)
 				imgui.CentrText(u8 'Настройка выдачи наказаний')
                 imgui.Separator()
                 if imadd.HotKey('##punaccept', config_keys.punaccept, tLastKeys, 100) then
@@ -3164,6 +3107,7 @@ function imgui.OnDrawFrame()
                 if imgui.InputInt(u8 'Таймер +C вне гетто (/cbug)', cbugb, 0) then cfg.timers.cbugtimer = cbugb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 if imgui.InputInt(u8 'Таймер наркотиков в мафии(дни) (/mnarko)', mnarkob, 0) then cfg.timers.mnarkotimer = mnarkob.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 if imgui.InputInt(u8 'Таймер НРП стрельба(дни) (/mcbug)', mcbugb, 0) then cfg.timers.mcbugtimer = mcbugb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.InputInt(u8 'Таймер войны вне квадрата (/vkv)', vkvb, 0) then cfg.timers.vkvtimer = vkvb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
             elseif data.imgui.menu == 5 then
                 local reconwb = imgui.ImBool(cfg.other.reconw)
 				local ipassb = imgui.ImBool(cfg.other.passb)
@@ -5207,7 +5151,16 @@ function ags(pam)
             sampSendChat('/agetstats '..pam)
         end
     else
-        atext('Введите: /ags [id/nick]')
+        if recon.id ~= -1 then
+            if sampIsPlayerConnected(recon.id) then
+                local nick = sampGetPlayerNickname(recon.id)
+                sampSendChat(("/agetstats %s"):format(recon.nick))
+            else
+                atext('Введите: /ags [id/nick]')
+            end
+        else
+            atext('Введите: /ags [id/nick]')
+        end
     end
 end
 
@@ -5897,7 +5850,7 @@ function vkv(pam)
     local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     if id ~= nil then
         if sampIsPlayerConnectedFixed(id) then
-            sampSendChat(("/prison %s 60 Война вне квадрата"):format(id--[[, cfg.timers.sbivtimer]]))
+            sampSendChat(("/prison %s %s Война вне квадрата"):format(id, cfg.timers.vkvtimer))
         else
             atext('Игрок оффлайн')
         end
