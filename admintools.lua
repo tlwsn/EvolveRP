@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.55)
+script_version(2.56)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -5154,7 +5154,7 @@ function ags(pam)
         if recon.id ~= -1 then
             if sampIsPlayerConnected(recon.id) then
                 local nick = sampGetPlayerNickname(recon.id)
-                sampSendChat(("/agetstats %s"):format(recon.nick))
+                sampSendChat(("/agetstats %s"):format(nick))
             else
                 atext('¬ведите: /ags [id/nick]')
             end
