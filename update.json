@@ -1,7 +1,7 @@
 {
     "admintools":{
         "url":"https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admintools.luac",
-        "version":2.56
+        "version":2.57
     },
     "activity":{
         "url":"https://raw.githubusercontent.com/WhackerH/EvolveRP/master/activity.luac",

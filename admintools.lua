@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.56)
+script_version(2.57)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -3742,6 +3742,10 @@ local frakcolor = {
 function sampev.onSpectatePlayer(id, type)
     recon.id = id
     traceid = id
+end
+
+function sampev.onTogglePlayerSpectating(state)
+    if not state then recon.id = -1 end
 end
 
 function sampev.onSetPlayerPos()
