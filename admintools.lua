@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.57)
+script_version(2.58)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -620,7 +620,8 @@ local cfg = {
         skeletwh = true,
         socrpm = false,
         style = 1,
-        resend = true
+        resend = true,
+        trace = true
     }
 }
 local fraklist = {
@@ -1329,7 +1330,8 @@ function autoupdate(json_url, url)
             if tonumber(updateversion) > tonumber(thisScript().version) then
                 lua_thread.create(function()
                     local dlstatus = require('moonloader').download_status
-                    atext(("Обнаружено обновление. Пытаюсь обновиться с %s на %s"):format(thisScript().version, updateversion))
+                    atext(("Обнаружено обновление. Пытаюсь обновиться с %s на %s."):format(thisScript().version, updateversion))
+                    atext("В ходе обновления игра может зависнуть на пару секунд.")
                     downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23) 
                         if status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
                             thisScript():reload()
@@ -1562,6 +1564,7 @@ function main()
                 cfg.crecon = nil
                 saveData(cfg, 'moonloader/config/Admin Tools/config.json')
             end
+            if cfg.other.trace == nil then cfg.other.trace = true end
             if cfg.timers.vkvtimer == nil then cfg.timers.vkvtimer = 60 end
             if cfg.other.resend == nil then cfg.other.resend = true end
             if cfg.other.style == nil then cfg.other.style = 1 end
@@ -1936,37 +1939,39 @@ function main()
         --Чистка списка киллов
         if #tkills > 50 then table.remove(tkills, 1) end
         --Рендер трейсеров
-        local oTime = os.time()
-        if not isPauseMenuActive() then
-			for i = 1, BulletSync.maxLines do
-                if BulletSync[i].enable == true and BulletSync[i].time >= oTime then
-                    local scX, scY = getScreenResolution()
+        if cfg.other.trace then
+            local oTime = os.time()
+            if not isPauseMenuActive() then
+                for i = 1, BulletSync.maxLines do
+                    if BulletSync[i].enable == true and BulletSync[i].time >= oTime then
+                        local scX, scY = getScreenResolution()
 
-                    -----------------------------------ЧИНИМ ТРЕЙСЕРА-----------------------------------
+                        -----------------------------------ЧИНИМ ТРЕЙСЕРА-----------------------------------
 
-					--[[local sx, sy, sz = convert3DCoordsToScreen(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
-                    local fx, fy, fz = convert3DCoordsToScreen(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)]]
+                        --[[local sx, sy, sz = convert3DCoordsToScreen(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
+                        local fx, fy, fz = convert3DCoordsToScreen(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)]]
 
-                    --[[if sx < 0 then sx = scX end
-                    if fx < 0 then fx = scX end
-                    if sy < 0 then sy = scY end
-                    if fy < 0 then fy = scY end]]
-                    --if sz > -0.03125 and fz > -0.03125 then
-                        --[[print(("%s / %s / %s / %s"):format(sx, sy, fx, fy))
-                        renderDrawLine(sx, sy, fx, fy, 1, bulletTypes[BulletSync[i].tType])
-                        renderDrawPolygon(fx, fy-1, 3, 3, 4.0, 10, bulletTypes[BulletSync[i].tType])]]
-                    --end
+                        --[[if sx < 0 then sx = scX end
+                        if fx < 0 then fx = scX end
+                        if sy < 0 then sy = scY end
+                        if fy < 0 then fy = scY end]]
+                        --if sz > -0.03125 and fz > -0.03125 then
+                            --[[print(("%s / %s / %s / %s"):format(sx, sy, fx, fy))
+                            renderDrawLine(sx, sy, fx, fy, 1, bulletTypes[BulletSync[i].tType])
+                            renderDrawPolygon(fx, fy-1, 3, 3, 4.0, 10, bulletTypes[BulletSync[i].tType])]]
+                        --end
 
-                    ----------------------------------------------------------------------------------
-                    
-                    local sx, sy, sz = calcScreenCoors(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
-                    local fx, fy, fz = calcScreenCoors(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)
-                    if sz > -0.03125 and fz > -0.03125 then
-                        renderDrawLine(sx, sy, fx, fy, 1, bulletTypes[BulletSync[i].tType])
-                        renderDrawPolygon(fx, fy-1, 3, 3, 4.0, 10, bulletTypes[BulletSync[i].tType])
+                        ----------------------------------------------------------------------------------
+                        
+                        local sx, sy, sz = calcScreenCoors(BulletSync[i].o.x, BulletSync[i].o.y, BulletSync[i].o.z)
+                        local fx, fy, fz = calcScreenCoors(BulletSync[i].t.x, BulletSync[i].t.y, BulletSync[i].t.z)
+                        if sz > -0.03125 and fz > -0.03125 then
+                            renderDrawLine(sx, sy, fx, fy, 1, bulletTypes[BulletSync[i].tType])
+                            renderDrawPolygon(fx, fy-1, 3, 3, 4.0, 10, bulletTypes[BulletSync[i].tType])
+                        end
                     end
-				end
-			end
+                end
+            end
         end
         --Смена позиций
         if data.imgui.admcheckpos then
@@ -3109,6 +3114,7 @@ function imgui.OnDrawFrame()
                 if imgui.InputInt(u8 'Таймер НРП стрельба(дни) (/mcbug)', mcbugb, 0) then cfg.timers.mcbugtimer = mcbugb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 if imgui.InputInt(u8 'Таймер войны вне квадрата (/vkv)', vkvb, 0) then cfg.timers.vkvtimer = vkvb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
             elseif data.imgui.menu == 5 then
+                local traceb = imgui.ImBool(cfg.other.trace)
                 local reconwb = imgui.ImBool(cfg.other.reconw)
 				local ipassb = imgui.ImBool(cfg.other.passb)
 				local iapassb = imgui.ImBool(cfg.other.apassb)
@@ -3128,6 +3134,7 @@ function imgui.OnDrawFrame()
                 local hudselect = imgui.ImInt(cfg.other.style)
 				imgui.CentrText(u8 'Остальное')
                 imgui.Separator()
+                if imadd.ToggleButton(u8 "Трейсера", traceb) then cfg.other.trace = traceb.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end imgui.SameLine() imgui.Text(u8 "Включить / Выключить трейсера")
 				if imadd.ToggleButton(u8 'reconw##1', reconwb) then cfg.other.reconw = reconwb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Варнинги на клео реконнект')
 				if imadd.ToggleButton(u8 'Автологин##11', ipassb) then cfg.other.passb = ipassb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автологин')
                 if imadd.ToggleButton(u8 'Автоалогин##11', iapassb) then cfg.other.apassb = iapassb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автоалогин')
@@ -4126,19 +4133,60 @@ function sampev.onServerMessage(color, text)
             if not result then table.insert(checker.temp.loaded, {{nick = cnick, color = 'FFFFFF', text = ''}}) end
 		end
     end
-    --Добавляем ID в чате
+    --[[--Добавляем ID в чате
     for i = 0, 1000 do
         if sampIsPlayerConnectedFixed(i) then
-            local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
+            local nick = sampGetPlayerNickname(i)
             local a = text:gsub('{.+}', '')
             if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                 text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
             end
         end
     end
     --Рисуем текст с ID
-    return { color, text }
+    return { color, text }]]
+
+    --ID`s
+    for i = 0, sampGetMaxPlayerId(false) do
+        if sampIsPlayerConnectedFixed(i) then
+
+            local nick = sampGetPlayerNickname(i)
+
+            if text:find(nick) and not text:find(nick..'%['..i..'%]') and not text:find('%['..i..'%] '..nick) and not text:find(nick..' %['..i..'%]') then
+                text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+            end
+
+        end
+    end
+
+    local color = ("0x%06X"):format(bit.rshift(color, 8))
+
+    sampAddChatMessage(text, color)
+
+    return false
+
 end
+
+--[[function sampev.onServerMessage(color, text)
+    --ID`s
+    for i = 0, sampGetMaxPlayerId(false) do
+        if sampIsPlayerConnectedFixed(i) then
+
+            local nick = sampGetPlayerNickname(i)
+
+            if text:find(nick) and not text:find(nick..'%['..i..'%]') and not text:find('%['..i..'%] '..nick) and not text:find(nick..' %['..i..'%]') then
+                text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+            end
+
+        end
+    end
+
+    local color = ("0x%06X"):format(bit.rshift(color, 8))
+
+    sampAddChatMessage(text, color)
+
+    return false
+end]]
 
 function sampev.onTextDrawSetString(id, text)
     if id == 2187 then
