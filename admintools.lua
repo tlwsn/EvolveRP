@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.58)
+script_version(2.59)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -41,11 +41,13 @@ local dlstatus                  = require('moonloader').download_status
 encoding.default                = 'CP1251'
 local u8                        = encoding.UTF8
 local prcheck                   = {pr = 0, prt = {}}
+local imset                     = {}
 local wrecon                    = {}
 local adminslist                = {}
 local imtext                    = {}
 local tkilllist                 = {}
 local checkf                    = {}
+local ocheckf                   = {c5 = 0, c6 = 0, c7 = 0, c8 = 0, c9 = 0}
 local ips                       = {}
 local ban                       = {}
 local recon                     = {}
@@ -380,20 +382,28 @@ local frakrang = {
         rang_7 = 5,
         rang_8 = 8,
         rang_9 = 9,
-        inv = 3
+        inv = 3,
+        max_8 = 25,
+        max_9 = 20
     },
     Mafia = {
         rang_7 = 8,
         rang_8 = 10,
         rang_9 = 11,
-        inv = 5
+        inv = 5,
+        max_8 = 14,
+        max_9 = 12
     },
     Bikers = {
         rang_5 = 6,
         rang_6 = 7,
         rang_7 = 8,
         rang_8 = 10,
-        inv = 4
+        inv = 4,
+        max_5 = 3,
+        max_6 = 3,
+        max_7 = 3,
+        max_8 = 3
     }
 }
 local tBindList = {
@@ -413,7 +423,7 @@ local tBindList = {
         name = 'Бинд3'
     }
 }
-local punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}}
+local punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}, addabl = {}}
 local flyInfo = {
     active = false,
     fly_active = false,
@@ -621,7 +631,8 @@ local cfg = {
         socrpm = false,
         style = 1,
         resend = true,
-        trace = true
+        trace = true,
+        spiartext = "Есть вопросы по игре? Задайте их нашим саппортам - /ask"
     }
 }
 local fraklist = {
@@ -1564,6 +1575,7 @@ function main()
                 cfg.crecon = nil
                 saveData(cfg, 'moonloader/config/Admin Tools/config.json')
             end
+            if cfg.other.spiartext == nil then cfg.other.spiartext = "Есть вопросы по игре? Задайте их нашим саппортам - /ask" end
             if cfg.other.trace == nil then cfg.other.trace = true end
             if cfg.timers.vkvtimer == nil then cfg.timers.vkvtimer = 60 end
             if cfg.other.resend == nil then cfg.other.resend = true end
@@ -1574,6 +1586,65 @@ function main()
                 saveData(cfg, 'moonloader/config/Admin Tools/config.json')
             end
             file:close()
+
+            imset = {
+                set = {
+                    trace       = imgui.ImBool(cfg.other.trace),
+                    recon       = imgui.ImBool(cfg.other.reconw),
+                    pass        = imgui.ImBool(cfg.other.passb),
+                    apass       = imgui.ImBool(cfg.other.apassb),
+                    sfchat      = imgui.ImBool(cfg.other.chatconsole),
+                    joinquit    = imgui.ImBool(cfg.joinquit.enable),
+                    autoupd     = imgui.ImBool(cfg.other.autoupdate),
+                    killist     = imgui.ImBool(cfg.killlist.startenable),
+                    socrpm      = imgui.ImBool(cfg.other.socrpm),
+                    resend      = imgui.ImBool(cfg.other.resend),
+
+                    passbuff    = imgui.ImBuffer(tostring(cfg.other.password), 256),
+                    apassbuff   = imgui.ImBuffer(tostring(cfg.other.adminpass), 256),
+                    hudfont     = imgui.ImBuffer(tostring(cfg.other.hudfont), 256),
+                    killfont    = imgui.ImBuffer(tostring(cfg.other.killfont), 256),
+                    spiar       = imgui.ImBuffer(u8(tostring(cfg.other.spiartext)), 256),
+
+                    killsize    = imgui.ImInt(cfg.other.killsize),
+                    hudsize     = imgui.ImInt(cfg.other.hudsize),
+                    delay       = imgui.ImInt(cfg.other.delay)                
+                },
+                timers = {
+                    sbiv        = imgui.ImInt(cfg.timers.sbivtimer),
+                    csbiv       = imgui.ImInt(cfg.timers.csbivtimer),
+                    cbug        = imgui.ImInt(cfg.timers.cbugtimer),
+                    mnarko      = imgui.ImInt(cfg.timers.mnarkotimer),
+                    mcbug       = imgui.ImInt(cfg.timers.mcbugtimer),
+                    vkv         = imgui.ImInt(cfg.timers.vkvtimer)
+                },
+                checkers = {
+                    checksize   = imgui.ImInt(cfg.other.checksize),
+                    checkfont   = imgui.ImBuffer(tostring(cfg.other.checkfont), 256),
+                    admcheck    = imgui.ImBool(cfg.admchecker.enable),
+                    playercheck = imgui.ImBool(cfg.playerChecker.enable),
+                    tempcheck   = imgui.ImBool(cfg.tempChecker.enable),
+                    tempwarning = imgui.ImBool(cfg.tempChecker.wadd),
+                    leadcheck   = imgui.ImBool(cfg.leadersChecker.enable),
+                    colornick   = imgui.ImBool(cfg.leadersChecker.cvetnick)
+                },
+                cheat = {
+                    whfont      = imgui.ImBuffer(tostring(cfg.other.whfont), 256),
+                    whsize      = imgui.ImInt(cfg.other.whsize),
+                    skeletwh    = imgui.ImBool(cfg.other.skeletwh),
+                    gm          = imgui.ImBool(cfg.cheat.autogm),
+                    airspeed    = imgui.ImFloat(cfg.cheat.airbrkspeed)
+                },
+                recon = {
+                    enable      = imgui.ImBool(cfg.recon.enable),
+                    fcoff       = imgui.ImFloat(cfg.recon.fCoff),
+                    scoff       = imgui.ImFloat(cfg.recon.sCoff),
+                    bsize       = imgui.ImFloat(cfg.recon.bSize),
+                    fsize       = imgui.ImFloat(cfg.recon.fFontSize),
+                    ssize       = imgui.ImFloat(cfg.recon.sFontSize)
+                }
+            }
+
         end
     end
     --Файл своих телепортов
@@ -1723,6 +1794,22 @@ function main()
         local fr = io.open("moonloader/config/Admin Tools/rangset.json", 'r')
         if fr then
             frakrang = decodeJson(fr:read('*a'))
+            if frakrang.Gangs.max_8 == nil then
+
+                frakrang.Gangs.max_8 = 25
+                frakrang.Gangs.max_9 = 20
+
+                frakrang.Mafia.max_8 = 14
+                frakrang.Mafia.max_9 = 12
+
+                frakrang.Bikers.max_5 = 3
+                frakrang.Bikers.max_6 = 3
+                frakrang.Bikers.max_7 = 3
+                frakrang.Bikers.max_8 = 3
+                
+                saveData(frakrang, "moonloader/config/Admin Tools/rangset.json")
+
+            end
         end
     end
     --Проверка загруженности сампа
@@ -1798,7 +1885,8 @@ function main()
     sampRegisterChatCommand('al', function() sampSendChat('/alogin') end)
     sampRegisterChatCommand('at_reload', function() showCursor(false); nameTagOn(); thisScript():reload() end)
     sampRegisterChatCommand('checkrangs', checkrangs)
-    sampRegisterChatCommand('spiar', function() sampSendChat('/o Есть вопросы по игре? Задайте их нашим саппортам - /ask') end)
+    sampRegisterChatCommand('ocheckrangs', ocheckrangs)
+    sampRegisterChatCommand('spiar', function() sampSendChat(('/o %s'):format(cfg.other.spiartext)) end)
     sampRegisterChatCommand('fonl', fonline)
     sampRegisterChatCommand('kills', kills)
     sampRegisterChatCommand('cbug', cbug)
@@ -1883,7 +1971,7 @@ function main()
         if punkey.delay ~= nil then
             if (os.time() - punkey.delay) > 20 then
                 atext('Время выдачи наказания истекло.')
-                punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}}
+                punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}, addabl = {}}
             end
         end
         --Киллист
@@ -2128,6 +2216,75 @@ function rkeys.onHotKey(id, keys)
     end
 end
 
+local teleports = {
+    ["Общественные места"] = {
+        {'Автовокзал ЛС', 1154.2769775391, -1756.1109619141, 13.634266853333, 0},
+        {'Автовокзал СФ', -1985.5826416016, 137.61878967285, 27.6875, 0},
+        {'Автовокзал ЛВ', 2838.7587890625, 1291.5477294922, 11.390625, 0},
+        {'Пейнтбол', 2586.6628417969, 2788.6235351563, 10.8203125, 0},
+        {'Бейсджамп', 1577.3891601563, -1331.9245605469, 16.484375, 0},
+        {'Центр регистрации семей', 2356.6359863281, 2377.3544921875, 10.8203125, 0},
+        {'Казино 4 дракона', 2030.9317626953, 1009.9556274414, 10.8203125, 0},
+        {'Казино калигула', 2177.9311523438, 1676.1583251953, 10.8203125, 0},
+        {'Наркопритон', 2196.3066, -1682.1842, 14.0373, 0}
+    },
+    ["Гос. фракции"] = {
+        {'LSPD', 1544.1212158203, -1675.3117675781, 13.557789802551, 0},
+        {'SFPD', -1606.0246582031, 719.93884277344, 12.054424285889, 0},
+        {'LVPD', 2333.9365234375, 2455.9772949219, 14.96875, 0},
+        {'FBI', -2444.9887695313, 502.21490478516, 30.094774246216, 0},
+        {'Армия СФ', -1335.8016357422, 471.39276123047, 7.1875, 0},
+        {'Армия ЛВ', 209.3503112793, 1916.1086425781, 17.640625, 0},
+        {'Мэрия', 1478.6057128906, -1738.2475585938, 13.546875, 0},
+        {'Автошкола', -2032.9953613281, -84.548896789551, 35.82837677002, 0},
+        {'Медики ЛС', 1188.4862, -1323.5518, 13.5668, 0},
+        {'Медики СФ', -2662.4634, 628.8812, 14.4531, 0},
+        {'Медики ЛВ', 1608.7927, 1827.4063, 10.8203, 0},
+        {'Медики ФК', -315.7561, 1060.4156, 19.7422, 0}
+    },
+    ["Гетто"] = {
+        {'Rifa', 2184.4729003906, -1807.0772705078, 13.372615814209, 0},
+        {'Grove', 2492.5004882813, -1675.2270507813, 13.335947036743, 0},
+        {'Vagos', 2780.037109375, -1616.1085205078, 10.921875, 0},
+        {'Ballas', 2645.5832519531, -2009.6373291016, 13.5546875, 0},
+        {'Aztec', 1679.7568359375, -2112.7685546875, 13.546875, 0}
+    },
+    ["Мафии"] = {
+        {'RM', 948.29113769531, 1732.6284179688, 8.8515625, 0},
+        {'Yakuza', 1462.0941162109, 2773.9204101563, 10.8203125, 0},
+        {'LCN', 1448.5999755859, 752.29913330078, 11.0234375, 0}
+    },
+    ["Новости"] = {
+        {'Los Santos News', 1658.7456054688, -1694.8518066406, 15.609375, 0},
+        {'San Fierro News', -2047.3449707031, 462.86468505859, 35.171875, 0},
+        {'Las Venturas News', 2647.6062011719, 1182.9040527344, 10.8203125, 0}
+    },
+    ["Байкеры"] = {
+        {'Warlocks MC', 657.96783447266, 1724.9599609375, 6.9921875, 0},
+        {'Pagans MC', -236.41778564453, 2602.8095703125, 62.703125, 0},
+        {'Mongols MC', 682.31365966797, -478.36148071289, 16.3359375, 0}
+    },
+    ["Работы"] = {
+        {'Такси 5+ скилла', 2460.7641601563, 1339.7041015625, 10.8203125, 0},
+        {'Грузчики', 2191.8410644531, -2255.1296386719, 13.533205986023, 0},
+        {'Стоянка хотдогов', -2462.2663574219, 717.34100341797, 35.009593963623, 0},
+        {'Стоянка механиков в ЛС', -87.400039672852, -1183.9016113281, 1.8439817428589, 0},
+        {'Стоянка механиков в СФ', -1915.9177246094, 286.88238525391, 41.046875, 0},
+        {'Стоянка механиков в ЛВ', 2131.244140625, 954.09143066406, 10.8203125, 0},
+        {'Склад продуктов', -495.78558349609, -486.47967529297, 25.517845153809, 0},
+        {'Дальнобойщики', 2382.5662, 2752.3003, 10.8203, 0}
+    }
+}
+
+function imadd.fHotKey(name, xuy1, xuy2, xyu3, xuy4)
+    if imadd.HotKey("##"..name, xuy1, xuy2, xuy3) then
+        rkeys.changeHotKey(xuy4, xuy1.v)
+        saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
+    end
+    imgui.SameLine()
+    imgui.Text(u8(name))
+end
+
 function imgui.OnDrawFrame()
     imgui.ShowCursor = mainwindow.v
     local btn_size = imgui.ImVec2(-0.1, 0)
@@ -2137,63 +2294,15 @@ function imgui.OnDrawFrame()
         imgui.SetNextWindowPos(imgui.ImVec2(screenx/2+400, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
         imgui.SetNextWindowSize(imgui.ImVec2(500, 300), imgui.Cond.FirstUseEver)
         imgui.Begin(u8 'Admin Tools | Телепорты', tpwindow)
-        if imgui.CollapsingHeader(u8 'Общественные места') then
-            imgui.TeleportButton('Автовокзал ЛС', 1154.2769775391, -1756.1109619141, 13.634266853333, 0)
-            imgui.TeleportButton('Автовокзал СФ', -1985.5826416016, 137.61878967285, 27.6875, 0)
-            imgui.TeleportButton('Автовокзал ЛВ', 2838.7587890625, 1291.5477294922, 11.390625, 0)
-            imgui.TeleportButton('Пейнтбол', 2586.6628417969, 2788.6235351563, 10.8203125, 0)
-            imgui.TeleportButton('Бейсджамп', 1577.3891601563, -1331.9245605469, 16.484375, 0)
-            imgui.TeleportButton('Центр регистрации семей', 2356.6359863281, 2377.3544921875, 10.8203125, 0)
-            imgui.TeleportButton('Казино 4 дракона', 2030.9317626953, 1009.9556274414, 10.8203125, 0)
-            imgui.TeleportButton('Казино калигула', 2177.9311523438, 1676.1583251953, 10.8203125, 0)
-            imgui.TeleportButton('Наркопритон', 2196.3066, -1682.1842, 14.0373, 0)
+
+        for k, v in pairs(teleports) do
+            if imgui.CollapsingHeader(u8(k)) then
+                for k1, v1 in pairs(v) do
+                    imgui.TeleportButton(v1[1], v1[2], v1[3], v1[4])
+                end
+            end
         end
-        if imgui.CollapsingHeader(u8 'Гос. фракции') then
-            imgui.TeleportButton('LSPD', 1544.1212158203, -1675.3117675781, 13.557789802551, 0)
-            imgui.TeleportButton('SFPD', -1606.0246582031, 719.93884277344, 12.054424285889, 0)
-            imgui.TeleportButton('LVPD', 2333.9365234375, 2455.9772949219, 14.96875, 0)
-            imgui.TeleportButton('FBI', -2444.9887695313, 502.21490478516, 30.094774246216, 0)
-            imgui.TeleportButton('Армия СФ', -1335.8016357422, 471.39276123047, 7.1875, 0)
-            imgui.TeleportButton('Армия ЛВ', 209.3503112793, 1916.1086425781, 17.640625, 0)
-            imgui.TeleportButton('Мэрия', 1478.6057128906, -1738.2475585938, 13.546875, 0)
-            imgui.TeleportButton('Автошкола', -2032.9953613281, -84.548896789551, 35.82837677002, 0)
-            imgui.TeleportButton('Медики ЛС', 1188.4862, -1323.5518, 13.5668, 0)
-            imgui.TeleportButton('Медики СФ', -2662.4634, 628.8812, 14.4531, 0)
-            imgui.TeleportButton('Медики ЛВ', 1608.7927, 1827.4063, 10.8203, 0)
-            imgui.TeleportButton('Медики ФК', -315.7561, 1060.4156, 19.7422, 0)
-        end
-        if imgui.CollapsingHeader(u8 'Гетто') then
-            imgui.TeleportButton('Rifa', 2184.4729003906, -1807.0772705078, 13.372615814209, 0)
-            imgui.TeleportButton('Grove', 2492.5004882813, -1675.2270507813, 13.335947036743, 0)
-            imgui.TeleportButton('Vagos', 2780.037109375, -1616.1085205078, 10.921875, 0)
-            imgui.TeleportButton('Ballas', 2645.5832519531, -2009.6373291016, 13.5546875, 0)
-            imgui.TeleportButton('Aztec', 1679.7568359375, -2112.7685546875, 13.546875, 0)
-        end
-        if imgui.CollapsingHeader(u8 'Мафии') then
-            imgui.TeleportButton('RM', 948.29113769531, 1732.6284179688, 8.8515625, 0)
-            imgui.TeleportButton('Yakuza', 1462.0941162109, 2773.9204101563, 10.8203125, 0)
-            imgui.TeleportButton('LCN', 1448.5999755859, 752.29913330078, 11.0234375)
-        end
-        if imgui.CollapsingHeader(u8 'Новости') then
-            imgui.TeleportButton('Los Santos News', 1658.7456054688, -1694.8518066406, 15.609375, 0)
-            imgui.TeleportButton('San Fierro News', -2047.3449707031, 462.86468505859, 35.171875, 0)
-            imgui.TeleportButton('Las Venturas News', 2647.6062011719, 1182.9040527344, 10.8203125, 0)
-        end
-        if imgui.CollapsingHeader(u8 'Байкеры') then
-            imgui.TeleportButton('Warlocks MC', 657.96783447266, 1724.9599609375, 6.9921875, 0)
-            imgui.TeleportButton('Pagans MC', -236.41778564453, 2602.8095703125, 62.703125, 0)
-            imgui.TeleportButton('Mongols MC', 682.31365966797, -478.36148071289, 16.3359375, 0)
-        end
-        if imgui.CollapsingHeader(u8 'Работы') then
-            imgui.TeleportButton('Такси 5+ скилла', 2460.7641601563, 1339.7041015625, 10.8203125, 0)
-            imgui.TeleportButton('Грузчики', 2191.8410644531, -2255.1296386719, 13.533205986023, 0)
-            imgui.TeleportButton('Стоянка хотдогов', -2462.2663574219, 717.34100341797, 35.009593963623, 0)
-            imgui.TeleportButton('Стоянка механиков в ЛС', -87.400039672852, -1183.9016113281, 1.8439817428589, 0)
-            imgui.TeleportButton('Стоянка механиков в СФ', -1915.9177246094, 286.88238525391, 41.046875, 0)
-            imgui.TeleportButton('Стоянка механиков в ЛВ', 2131.244140625, 954.09143066406, 10.8203125, 0)
-            imgui.TeleportButton('Склад продуктов', -495.78558349609, -486.47967529297, 25.517845153809, 0)
-            imgui.TeleportButton('Дальнобойщики', 2382.5662, 2752.3003, 10.8203, 0)
-        end
+
         if imgui.CollapsingHeader(u8 'Интерьеры') then
             imgui.TeleportButton('24/7 1', -25.884498,-185.868988,1003.546875, 17)
             imgui.TeleportButton('24/7 2', 6.091179,-29.271898,1003.549438, 10)
@@ -2306,6 +2415,7 @@ function imgui.OnDrawFrame()
             imgui.TeleportButton("LS Atruim", 1710.433715,-1669.379272,20.225049, 18)
             imgui.TeleportButton("Bike School", 1494.325195,1304.942871,1093.289062, 3)
         end
+
         if imgui.CollapsingHeader(u8 'Сохраненные места') then
             for k, v in ipairs(tplist) do
                 imgui.TeleportButton(v['text']..'##'..k, v['coords'][1], v['coords'][2], v['coords'][3], 0)
@@ -2352,6 +2462,7 @@ function imgui.OnDrawFrame()
                 tpcoords.v[1], tpcoords.v[2], tpcoords.v[3] = 0,0,0
                 saveData(tplist, "moonloader/config/Admin Tools/tplist.json")  end
         end
+
         imgui.End()
     end
     if imrecon.v or (data.imgui.menu == 7 and settingwindows.v and mainwindow.v) then
@@ -2811,6 +2922,10 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Описание: Проверить фракцию на несовпадения LVL - Ранг')
                 imgui.TextWrapped(u8 'Использование: /checkrangs [id фракции]')
             end
+            if imgui.CollapsingHeader('/ocheckrangs', btn_size) then
+                imgui.TextWrapped(u8 'Описание: Проверить /offmembers фракции на перебор рангов')
+                imgui.TextWrapped(u8 'Использование: /ocheckrangs [id фракции]')
+            end
             if imgui.CollapsingHeader('/gs', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Сокращение команды /getstats.\nВ реконе можно ид не указывать, сразу проверит статистику игрока, за которым слежка')
                 imgui.TextWrapped(u8 'Использование: /gs [id]')
@@ -2975,175 +3090,138 @@ function imgui.OnDrawFrame()
             imgui.SameLine()
             imgui.BeginChild('##set1', imgui.ImVec2(840, 400), true)
             if data.imgui.menu == 1 then
-                if imadd.HotKey('##warningkey', config_keys.warningkey, tLastKeys, 100) then
-                    rkeys.changeHotKey(warningbind, config_keys.warningkey.v)
-					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
-                end
-                imgui.SameLine(); imgui.Text(u8 'Клавиша перехода по серверным варнингам')
-				if imadd.HotKey('##warningkey1', config_keys.cwarningkey, tLastKeys, 100) then
-                    rkeys.changeHotKey(cwarningbind, config_keys.cwarningkey.v)
-					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
-                end
-                imgui.SameLine(); imgui.Text(u8 'Клавиша перехода по клиентским варнингам')
-                if imadd.HotKey('##reportkey', config_keys.reportkey, tLastKeys, 100) then
-                    rkeys.changeHotKey(reportbind, config_keys.reportkey.v)
-					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
-                end
-                imgui.SameLine(); imgui.Text(u8 'Клавиша перехода по репорту')
-                if imadd.HotKey('##banipkey', config_keys.banipkey, tLastKeys, 100) then
-                    rkeys.changeHotKey(banipbind, config_keys.banipkey.v)
-					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
-                end
-                imgui.SameLine(); imgui.Text(u8 'Клавиша бана IP адреса')
-                if imadd.HotKey('##saveposkey', config_keys.saveposkey, tLastKeys, 100) then
-                    rkeys.changeHotKey(saveposbind, config_keys.saveposkey.v)
-					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
-                end
-                imgui.SameLine(); imgui.Text(u8 'Клавиша сохранения координат')
-                if imadd.HotKey('##goposkey', config_keys.goposkey, tLastKeys, 100) then
-                    rkeys.changeHotKey(goposbind, config_keys.goposkey.v)
-					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
-                end
-                imgui.SameLine(); imgui.Text(u8 'Клавиша телепорта на сохраненные координаты')
+
+                imadd.fHotKey("Клавиша перехода по серверным варнингам", config_keys.warningkey, tLastKeys, 100, warningbind)
+                imadd.fHotKey('Клавиша перехода по клиентским варнингам', config_keys.cwarningkey, tLastKeys, 100, cwarningbind)
+                imadd.fHotKey('Клавиша перехода по репорту', config_keys.reportkey, tLastKeys, 100, reportbind)
+                imadd.fHotKey('Клавиша бана IP адреса', config_keys.banipkey, tLastKeys, 100, banipbind)
+                imadd.fHotKey('Клавиша сохранения координат', config_keys.saveposkey, tLastKeys, 100, saveposbind)
+                imadd.fHotKey('Клавиша телепорта на сохраненные координаты', config_keys.goposkey, tLastKeys, 100, goposbind)
+            
             elseif data.imgui.menu == 2 then
                 if data.imgui.cheat == 1 then
-					local airfloat = imgui.ImFloat(cfg.cheat.airbrkspeed)
+
                     imgui.CentrText(u8 'AirBrake')
                     imgui.Separator()
-                    if imgui.SliderFloat(u8 'Начальная скорость', airfloat, 0.05, 10, '%0.2f') then cfg.cheat.airbrkspeed = airfloat.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+
+                    if imgui.SliderFloat(u8 'Начальная скорость', imset.cheat.airspeed, 0.05, 10, '%0.2f') then cfg.cheat.airbrkspeed = airfloat.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                    
                     imgui.TextWrapped(u8 'Начальная скорость - это та скорость, которая будет всегда при включении AirBrake. Саму скорость можно изменить во время полета клавишами пробел(увеличить скорость) или левый шифт(уменьшить скокрость)')
+                
                 elseif data.imgui.cheat == 2 then
-                    local godModeB = imgui.ImBool(cfg.cheat.autogm)
+
                     imgui.CentrText(u8 'GodMode')
                     imgui.Separator()
-                    if imadd.ToggleButton(u8 'Включить гмм##11', godModeB) then cfg.cheat.autogm = godModeB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автоматически включать ГМ при входе в игру')
+
+                    if imadd.ToggleButton(u8 'Включить гмм##11', imset.cheat.gm) then cfg.cheat.autogm = imset.cheat.gm.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автоматически включать ГМ при входе в игру')
                 elseif data.imgui.cheat == 3 then
-                    local whfontb = imgui.ImBuffer(tostring(cfg.other.whfont), 256)
-                    local whsizeb = imgui.ImInt(cfg.other.whsize)
-                    local skeletwhb = imgui.ImBool(cfg.other.skeletwh)
+
                     imgui.CentrText(u8 'WallHack')
                     imgui.Separator()
-                    if imadd.ToggleButton(u8 'ВХ по скелетам', skeletwhb) then cfg.other.skeletwh = skeletwhb.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'ВХ по скелетам')
-                    if imadd.HotKey('##whkey', config_keys.whkey, tLastKeys, 100) then
-                        rkeys.changeHotKey(whbind, config_keys.whkey.v)
-                        saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
-                    end
-                    imgui.SameLine(); imgui.Text(u8 'Включить / выключить ВХ')
-                    if imadd.HotKey('##whskeletkey', config_keys.skeletwhkey, tLastKeys, 100) then
-                        rkeys.changeHotKey(skeletwhbind, config_keys.skeletwhkey.v)
-                        saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
-                    end
-                    imgui.SameLine(); imgui.Text(u8 'Включить / выключить ВХ по скелетам')
-                    if imgui.InputText(u8 'Шрифт##wh', whfontb) then cfg.other.whfont = whfontb.v whfont = renderCreateFont(cfg.other.whfont, cfg.other.whsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
-                    if imgui.InputInt(u8 'Размер шрифта##wh', whsizeb, 0) then cfg.other.whsize = whsizeb.v whfont = renderCreateFont(cfg.other.whfont, cfg.other.whsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+
+                    if imadd.ToggleButton(u8 'ВХ по скелетам', imset.cheat.skeletwh) then cfg.other.skeletwh = imset.cheat.skeletwh.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'ВХ по скелетам')
+                    
+                    imadd.fHotKey('Включить / выключить ВХ', config_keys.whkey, tLastKeys, 100, whbind)
+                    imadd.fHotKey('Включить / выключить ВХ по скелетам', config_keys.skeletwhkey, tLastKeys, 100, skeletwhbind)
+
+                    if imgui.InputText(u8 'Шрифт##wh', imset.cheat.whfont) then cfg.other.whfont = imset.cheat.whfont.v whfont = renderCreateFont(cfg.other.whfont, cfg.other.whsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                    if imgui.InputInt(u8 'Размер шрифта##wh', imset.cheat.whsize, 0) then cfg.other.whsize = imset.cheat.whsize.v whfont = renderCreateFont(cfg.other.whfont, cfg.other.whsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 end
+            
             elseif data.imgui.menu == 3 then
-                local checksizeb = imgui.ImInt(cfg.other.checksize)
-                local checkfontb = imgui.ImBuffer(tostring(cfg.other.checkfont), 256)
+
                 if data.imgui.checker == 1 then
-                    local admCheckerB = imgui.ImBool(cfg.admchecker.enable)
+
                     imgui.CentrText(u8 'Чекер админов')
                     imgui.Separator()
-                    if imadd.ToggleButton(u8 'Включить чекер##1', admCheckerB) then cfg.admchecker.enable = admCheckerB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
+
+                    if imadd.ToggleButton(u8 'Включить чекер##1', imset.checkers.admcheck) then cfg.admchecker.enable = imset.checkers.admcheck.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
+                    
                     if cfg.admchecker.enable then
                         imgui.Text(u8 'Местоположение чекера')
                         imgui.SameLine()
                         if imgui.Button(u8 'Изменить##1') then data.imgui.admcheckpos = true; mainwindow.v = false end
                     end
+
                 elseif data.imgui.checker == 2 then
-                    local playerCheckerB = imgui.ImBool(cfg.playerChecker.enable)
+
                     imgui.CentrText(u8 'Чекер игроков')
                     imgui.Separator()
-                    if imadd.ToggleButton(u8 'Включить чекер##2', playerCheckerB) then cfg.playerChecker.enable = playerCheckerB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
+
+                    if imadd.ToggleButton(u8 'Включить чекер##2', imset.checkers.playercheck) then cfg.playerChecker.enable = imset.checkers.playercheck.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
+                    
                     if cfg.playerChecker.enable then
                         imgui.Text(u8 'Местоположение чекера')
                         imgui.SameLine()
                         if imgui.Button(u8 'Изменить##2') then data.imgui.playercheckpos = true; mainwindow.v = false end
                     end
+
                 elseif data.imgui.checker == 3 then
-					local tempChetckerB = imgui.ImBool(cfg.tempChecker.enable)
-					imgui.CentrText(u8 'Временный чекер')
+
+                    imgui.CentrText(u8 'Временный чекер')
 					imgui.Separator()
-					if imadd.ToggleButton(u8 'Включить чекер##3', tempChetckerB) then cfg.tempChecker.enable = tempChetckerB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
-					if cfg.tempChecker.enable then
-						local tempWarningB = imgui.ImBool(cfg.tempChecker.wadd)
+                    
+                    if imadd.ToggleButton(u8 'Включить чекер##3', imset.checkers.tempcheck) then cfg.tempChecker.enable = imset.checkers.tempcheck.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
+                    
+                    if cfg.tempChecker.enable then
                         imgui.Text(u8 'Местоположение чекера')
                         imgui.SameLine()
                         if imgui.Button(u8 'Изменить##3') then data.imgui.tempcheckpos = true; mainwindow.v = false end
-						if imadd.ToggleButton(u8 'Добавлять в черер игроков по варнингу', tempWarningB) then cfg.tempChecker.wadd = tempWarningB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Добавлять в черер игроков по варнингу')
+                        if imadd.ToggleButton(u8 'Добавлять в черер игроков по варнингу', imset.checkers.tempwarning) then cfg.tempChecker.wadd = imset.checkers.tempwarning.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Добавлять в черер игроков по варнингу')
                     end
+
                 elseif data.imgui.checker == 4 then
-                    local leaderCheckerB = imgui.ImBool(cfg.leadersChecker.enable)
-                    local colornickb = imgui.ImBool(cfg.leadersChecker.cvetnick)
+
                     imgui.CentrText(u8 'Чекер лидеров')
                     imgui.Separator()
-                    if imadd.ToggleButton(u8 'Включить чекер##4', leaderCheckerB) then cfg.leadersChecker.enable = leaderCheckerB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
+
+                    if imadd.ToggleButton(u8 'Включить чекер##4', imset.checkers.leadcheck) then cfg.leadersChecker.enable = imset.checkers.leadcheck.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить чекер')
+                    
                     if cfg.leadersChecker.enable then
                         imgui.Text(u8 'Местоположение чекера')
                         imgui.SameLine()
                         if imgui.Button(u8 'Изменить##2') then data.imgui.leadercheckerpos = true; mainwindow.v = false end
-                        if imadd.ToggleButton(u8 'Цвет ника', colornickb) then cfg.leadersChecker.cvetnick = colornickb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Цвет ника в цвет фракции')
+                        if imadd.ToggleButton(u8 'Цвет ника', imset.checkers.colornick) then cfg.leadersChecker.cvetnick = imset.checkers.colornick.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Цвет ника в цвет фракции')
                     end
                 end
+
                 imgui.Separator()
-                if imgui.InputText(u8 'Шрифт', checkfontb) then cfg.other.checkfont = checkfontb.v checkfont = renderCreateFont(cfg.other.checkfont, cfg.other.checksize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
-                if imgui.InputInt(u8 'Размер шрифта', checksizeb, 0) then cfg.other.checksize = checksizeb.v; checkfont = renderCreateFont(cfg.other.checkfont, cfg.other.checksize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+
+                if imgui.InputText(u8 'Шрифт', imset.checkers.checkfont) then cfg.other.checkfont = imset.checkers.checkfont.v checkfont = renderCreateFont(cfg.other.checkfont, cfg.other.checksize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.InputInt(u8 'Размер шрифта', imset.checkers.checksize, 0) then cfg.other.checksize = imset.checkers.checksize.v; checkfont = renderCreateFont(cfg.other.checkfont, cfg.other.checksize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+            
             elseif data.imgui.menu == 4 then
-				local sbivb = imgui.ImInt(cfg.timers.sbivtimer)
-				local csbivb = imgui.ImInt(cfg.timers.csbivtimer)
-                local cbugb = imgui.ImInt(cfg.timers.cbugtimer)
-                local mnarkob = imgui.ImInt(cfg.timers.mnarkotimer)
-                local mcbugb = imgui.ImInt(cfg.timers.mcbugtimer)
-                local vkvb = imgui.ImInt(cfg.timers.vkvtimer)
+
 				imgui.CentrText(u8 'Настройка выдачи наказаний')
                 imgui.Separator()
-                if imadd.HotKey('##punaccept', config_keys.punaccept, tLastKeys, 100) then
-                    rkeys.changeHotKey(punacceptbind, config_keys.punaccept.v)
-					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
-                end
-                imgui.SameLine(); imgui.Text(u8 'Клавиша выдачи наказания по просьбе в /a')
-                if imadd.HotKey('##pundeny', config_keys.pundeny, tLastKeys, 100) then
-                    rkeys.changeHotKey(pundenybind, config_keys.pundeny.v)
-					saveData(config_keys, "moonloader/config/Admin Tools/keys.json")
-                end
-                imgui.SameLine(); imgui.Text(u8 'Клавиша отмены выдачи наказания по просьбе в /a')
-				if imgui.InputInt(u8 'Таймер сбива (/sbiv)', sbivb, 0) then cfg.timers.sbivtimer = sbivb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
-				if imgui.InputInt(u8 'Таймер клео сбива (/csbiv)', csbivb, 0) then cfg.timers.csbivtimer = csbivb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
-                if imgui.InputInt(u8 'Таймер +C вне гетто (/cbug)', cbugb, 0) then cfg.timers.cbugtimer = cbugb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
-                if imgui.InputInt(u8 'Таймер наркотиков в мафии(дни) (/mnarko)', mnarkob, 0) then cfg.timers.mnarkotimer = mnarkob.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
-                if imgui.InputInt(u8 'Таймер НРП стрельба(дни) (/mcbug)', mcbugb, 0) then cfg.timers.mcbugtimer = mcbugb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
-                if imgui.InputInt(u8 'Таймер войны вне квадрата (/vkv)', vkvb, 0) then cfg.timers.vkvtimer = vkvb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+
+                imadd.fHotKey('Клавиша выдачи наказания по просьбе в /a', config_keys.punaccept, tLastKeys, 100, punacceptbind)
+                imadd.fHotKey('Клавиша отмены выдачи наказания по просьбе в /a', config_keys.pundeny, tLastKeys, 100, pundenybind)
+
+				if imgui.InputInt(u8 'Таймер сбива (/sbiv)', imset.timers.sbiv, 0) then cfg.timers.sbivtimer = imset.timers.sbiv.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+				if imgui.InputInt(u8 'Таймер клео сбива (/csbiv)', imset.timers.csbiv, 0) then cfg.timers.csbivtimer = cimset.timers.sbiv.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.InputInt(u8 'Таймер +C вне гетто (/cbug)', imset.timers.cbug, 0) then cfg.timers.cbugtimer = imset.timers.cbug.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.InputInt(u8 'Таймер наркотиков в мафии [дни] (/mnarko)', imset.timers.mnarko, 0) then cfg.timers.mnarkotimer = imset.timers.mnarko.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.InputInt(u8 'Таймер НРП стрельба [дни] (/mcbug)', imset.timers.mcbug, 0) then cfg.timers.mcbugtimer = imset.timers.mcbug.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.InputInt(u8 'Таймер войны вне квадрата (/vkv)', imset.timers.vkv, 0) then cfg.timers.vkvtimer = imset.timers.vkv.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+            
             elseif data.imgui.menu == 5 then
-                local traceb = imgui.ImBool(cfg.other.trace)
-                local reconwb = imgui.ImBool(cfg.other.reconw)
-				local ipassb = imgui.ImBool(cfg.other.passb)
-				local iapassb = imgui.ImBool(cfg.other.apassb)
-                local conschat = imgui.ImBool(cfg.other.chatconsole)
-                local joinquitb = imgui.ImBool(cfg.joinquit.enable)
-                local autoupdateb = imgui.ImBool(cfg.other.autoupdate)
-                local killlistb = imgui.ImBool(cfg.killlist.startenable)
-                local socrmpb = imgui.ImBool(cfg.other.socrpm)
-                local resendb = imgui.ImBool(cfg.other.resend)
-				local ipass = imgui.ImBuffer(tostring(cfg.other.password), 256)
-                local iapass = imgui.ImBuffer(tostring(cfg.other.adminpass), 256)
-                local hudfontb = imgui.ImBuffer(tostring(cfg.other.hudfont), 256)
-                local killfontb = imgui.ImBuffer(tostring(cfg.other.killfont), 256)
-                local killsizeb = imgui.ImInt(cfg.other.killsize)
-                local hudsizeb = imgui.ImInt(cfg.other.hudsize)
-                local delayb = imgui.ImInt(cfg.other.delay)
-                local hudselect = imgui.ImInt(cfg.other.style)
+
 				imgui.CentrText(u8 'Остальное')
                 imgui.Separator()
-                if imadd.ToggleButton(u8 "Трейсера", traceb) then cfg.other.trace = traceb.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end imgui.SameLine() imgui.Text(u8 "Включить / Выключить трейсера")
-				if imadd.ToggleButton(u8 'reconw##1', reconwb) then cfg.other.reconw = reconwb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Варнинги на клео реконнект')
-				if imadd.ToggleButton(u8 'Автологин##11', ipassb) then cfg.other.passb = ipassb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автологин')
-                if imadd.ToggleButton(u8 'Автоалогин##11', iapassb) then cfg.other.apassb = iapassb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автоалогин')
-                if imadd.ToggleButton(u8 'Чатлог в консоли##11', conschat) then cfg.other.chatconsole = conschat.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Чатлог в консоли')
-                if imadd.ToggleButton(u8 'joinquit##11', joinquitb) then cfg.joinquit.enable = joinquitb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Лог подключившися/отключивашися игроков')
-                if imadd.ToggleButton(u8 'autoupd##11', autoupdateb) then cfg.other.autoupdate = autoupdateb.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автообновление скрипта')
-                if imadd.ToggleButton(u8 'resend##11', resendb) then cfg.other.resend = resendb.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Писать "слежу" при переходе в рекон по репорту')
-                if imadd.ToggleButton(u8 'killlist##11', killlistb) then cfg.killlist.startenable = killlistb.v end; imgui.SameLine(); imgui.Text(u8 'Замененный кил-лист при входе в игру')
-                if imadd.ToggleButton(u8 'socrpm', socrmpb) then cfg.other.socrpm = socrmpb.v
+
+                if imgui.InputText(u8 "Текст пиара саппортов [/spiar] (после /o)", imset.set.spiar) then cfg.other.spiartext = u8:decode(imset.set.spiar.v) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+
+                if imadd.ToggleButton(u8 "Трейсера", imset.set.trace) then cfg.other.trace = imset.set.trace.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end imgui.SameLine() imgui.Text(u8 "Включить / Выключить трейсера")
+				if imadd.ToggleButton(u8 'reconw##1', imset.set.recon) then cfg.other.reconw = imset.set.recon.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Варнинги на клео реконнект')
+				if imadd.ToggleButton(u8 'Автологин##11', imset.set.pass) then cfg.other.passb = imset.set.pass.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автологин')
+                if imadd.ToggleButton(u8 'Автоалогин##11', imset.set.apass) then cfg.other.apassb = imset.set.apass.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автоалогин')
+                if imadd.ToggleButton(u8 'Чатлог в консоли##11', imset.set.sfchat) then cfg.other.chatconsole = imset.set.sfchat.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Чатлог в консоли')
+                if imadd.ToggleButton(u8 'joinquit##11', imset.set.joinquit) then cfg.joinquit.enable = imset.set.joinquit.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Лог подключившися/отключивашися игроков')
+                if imadd.ToggleButton(u8 'autoupd##11', imset.set.autoupd) then cfg.other.autoupdate = imset.set.autoupd.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автообновление скрипта')
+                if imadd.ToggleButton(u8 'resend##11', imset.set.resend) then cfg.other.resend = imset.set.resend.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Писать "слежу" при переходе в рекон по репорту')
+                if imadd.ToggleButton(u8 'killlist##11', imset.set.killist) then cfg.killlist.startenable = imset.set.killist.v end; imgui.SameLine(); imgui.Text(u8 'Замененный кил-лист при входе в игру')
+                if imadd.ToggleButton(u8 'socrpm', imset.set.socrpm) then cfg.other.socrpm = imset.set.socrpm.v
                     if cfg.other.socrpm then
                         registerFastAnswer()
                     else
@@ -3157,7 +3235,9 @@ function imgui.OnDrawFrame()
                     saveData(cfg, 'moonloader/config/Admin Tools/config.json') 
                 end
                 imgui.SameLine(); imgui.Text(u8 'Сокращеные команды на ответы (заполнять в файл moonloader/config/Admin Tools/fa.txt команда = текст)')
-                if imgui.InputInt(u8 'Настройка задержки', delayb, 0) then cfg.other.delay = delayb.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                
+                if imgui.InputInt(u8 'Настройка задержки', imset.set.delay, 0) then cfg.other.delay = imset.set.delay.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                
                 if imgui.Button(u8 'Проверка задержки') then 
                     lua_thread.create(function()
                         for i = 1, 7 do
@@ -3166,10 +3246,11 @@ function imgui.OnDrawFrame()
                         end
                     end)
                 end
-                if imgui.InputText(u8 'Шрифт кил-листа##hud', killfontb) then cfg.other.killfont = killfontb.v killfont = renderCreateFont(cfg.other.killfont, cfg.other.killsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
-                if imgui.InputInt(u8 'Размер шрифта кил-листа##hud', killsizeb, 0) then 
+                if imgui.InputText(u8 'Шрифт кил-листа##hud', imset.set.killfont) then cfg.other.killfont = imset.set.killfont.v killfont = renderCreateFont(cfg.other.killfont, cfg.other.killsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                
+                if imgui.InputInt(u8 'Размер шрифта кил-листа##hud', imset.set.killsize, 0) then 
                     lua_thread.create(function()
-                        cfg.other.killsize = killsizeb.v 
+                        cfg.other.killsize = imset.set.killsize.v 
                         killfont = renderCreateFont(cfg.other.killfont, cfg.other.killsize, 4)
                         if fonts_loaded then
                             fonts_loaded = false
@@ -3181,31 +3262,38 @@ function imgui.OnDrawFrame()
                         saveData(cfg, 'moonloader/config/Admin Tools/config.json')
                     end)
                 end
+                
                 if imgui.Button(u8 'Изменить местоположения кил-листа') then data.imgui.killlist = true mainwindow.v = false end
-                if joinquitb.v then 
+                
+                if imset.set.joinquit.v then 
                     if imgui.Button(u8'Изменить местоположения подключившихся##1') then data.imgui.joinpos = true; mainwindow.v = false end
                     imgui.SameLine()
                     if imgui.Button(u8'Изменить местоположения отключившихся##1') then data.imgui.quitpos = true; mainwindow.v = false end
                 end
-				if ipassb.v then
-					if imgui.InputText(u8 'Введите ваш пароль', ipass, imgui.InputTextFlags.Password) then cfg.other.password = u8:decode(ipass.v) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                
+                if imset.set.pass.v then
+					if imgui.InputText(u8 'Введите ваш пароль', imset.set.passbuff, imgui.InputTextFlags.Password) then cfg.other.password = u8:decode(imset.set.passbuff.v) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
 					if imgui.Button(u8 'Узнать пароль##1') then atext('Ваш пароль: {66FF00}'..cfg.other.password) end
 				end
-				if iapassb.v then
-					if imgui.InputText(u8 'Введите ваш админский пароль', iapass, imgui.InputTextFlags.Password) then cfg.other.adminpass = u8:decode(iapass.v) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                
+                if imset.set.apass.v then
+					if imgui.InputText(u8 'Введите ваш админский пароль', imset.set.apassbuff, imgui.InputTextFlags.Password) then cfg.other.adminpass = u8:decode(imset.set.apassbuff.v) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
 					if imgui.Button(u8 'Узнать пароль##2') then atext('Ваш админский пароль: {66FF00}'..cfg.other.adminpass) end
                 end
+                
                 if imgui.RadioButton(u8 "Стиль нижней панели: "..1, cfg.other.style == 1) then cfg.other.style = 1 saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 imgui.SameLine()
                 if imgui.RadioButton(u8 "Стиль нижней панели: "..2, cfg.other.style == 2) then cfg.other.style = 2 saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                 imgui.SameLine()
                 if imgui.RadioButton(u8 "Стиль нижней панели: "..3, cfg.other.style == 3) then cfg.other.style = 3 saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
-                if imgui.InputText(u8 'Шрифт нижней панели##hud', hudfontb) then cfg.other.hudfont = hudfontb.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
-                if imgui.InputInt(u8 'Размер шрифта нижней панели##hud', hudsizeb, 0) then 
-                    cfg.other.hudsize = hudsizeb.v 
+                
+                if imgui.InputText(u8 'Шрифт нижней панели##hud', imset.set.hudfont) then cfg.other.hudfont = imset.set.hudfont.v hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                if imgui.InputInt(u8 'Размер шрифта нижней панели##hud', imset.set.hudsize, 0) then 
+                    cfg.other.hudsize = imset.set.hudsize.v 
                     hudfont = renderCreateFont(cfg.other.hudfont, cfg.other.hudsize, 4)
                     saveData(cfg, 'moonloader/config/Admin Tools/config.json') 
                 end
+
             elseif data.imgui.menu == 6 then
                 imgui.CentrText(u8 'Настройка цветов')
                 imgui.Separator()
@@ -3332,26 +3420,27 @@ function imgui.OnDrawFrame()
                     saveData(config_colors, "moonloader/config/Admin Tools/colors.json")
                 end
             elseif data.imgui.menu == 7 then
+
                 imgui.CentrText(u8 "Настройки рекона")
                 imgui.Separator()
-                local creconB = imgui.ImBool(cfg.recon.enable)
-                local fCoffb = imgui.ImFloat(cfg.recon.fCoff)
-                local sCoffb = imgui.ImFloat(cfg.recon.sCoff)
-                local bSizeb = imgui.ImFloat(cfg.recon.bSize)
-                local fSizeb = imgui.ImFloat(cfg.recon.fFontSize)
-                local sSizeb = imgui.ImFloat(cfg.recon.sFontSize)
-                if imadd.ToggleButton(u8 'Включить замененный рекон##1', creconB) then cfg.recon.enable = creconB.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить замененный рекон')
-                if imgui.SliderFloat(u8 "Размер текста", sCoffb, 0.01, 2) then cfg.recon.sCoff = sCoffb.v end
-                if imgui.SliderFloat(u8 "Размер отступ между кнопками", fCoffb, 0.01, 2) then cfg.recon.fCoff = fCoffb.v end
-                if imgui.SliderFloat(u8 "Размер кнопок", bSizeb, 5, 30) then cfg.recon.bSize = bSizeb.v end
-                if imgui.SliderFloat(u8 "Размер шрифта левой панели", fSizeb, 0, 5) then cfg.recon.fFontSize = fSizeb.v end
-                if imgui.SliderFloat(u8 "Размер шрифта правой панели", sSizeb, 0, 5) then cfg.recon.sFontSize = sSizeb.v end
+
+                if imadd.ToggleButton(u8 'Включить замененный рекон##1', imset.recon.enable) then cfg.recon.enable = imset.recon.enable.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Включить замененный рекон')
+                
+                if imgui.SliderFloat(u8 "Размер текста", imset.recon.scoff, 0.01, 2) then cfg.recon.sCoff = imset.recon.scoff.v end
+                if imgui.SliderFloat(u8 "Размер отступ между кнопками", imset.recon.fcoff, 0.01, 2) then cfg.recon.fCoff = imset.recon.fcoff.v end
+                if imgui.SliderFloat(u8 "Размер кнопок", imset.recon.bsize, 5, 30) then cfg.recon.bSize = imset.recon.bsize.v end
+                if imgui.SliderFloat(u8 "Размер шрифта левой панели", imset.recon.fsize, 0, 5) then cfg.recon.fFontSize = imset.recon.fsize.v end
+                if imgui.SliderFloat(u8 "Размер шрифта правой панели", imset.recon.ssize, 0, 5) then cfg.recon.sFontSize = imset.recon.ssize.v end
+                
                 if imgui.Button(u8 "Сохранить настройки##recon") then
                     saveData(cfg, 'moonloader/config/Admin Tools/config.json')
                 end
+
             end
+
             imgui.EndChild()
             imgui.End()
+
         end
 		if bMainWindow.v then
 			imgui.ShowCursor = true
@@ -3803,7 +3892,7 @@ function sampev.onServerMessage(color, text)
             if text:find(sampGetPlayerNickname(punkey.warn.id)) or text:find(sampGetPlayerNickname(punkey.ban.id)) or text:find(sampGetPlayerNickname(punkey.prison.id)) then
                 if not text:find(mynick) then
                     atext('Команду выполнил другой администратор')
-                    punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}}
+                    punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}, addabl = {}}
                 end
             end
         end
@@ -4098,6 +4187,35 @@ function sampev.onServerMessage(color, text)
         end
         if text:find('Члены организации Он%-лайн%:') then return false end
         if text == ' ' and color == -1 then return false end
+    end
+    --Оффмемберс
+    if ocheckf.state then
+
+        if text == " Список игроков: [Ранг] [Ник] [Дата принятия] [Последний вход]" then
+
+            return false
+
+        elseif text:match("%[%d+%] %[%S+%] %[%d+:%d+ %d+.%d+.%d+%] %[%d+-%d+-%d+ %d+:%d+:%d+]") then
+
+            local rang = tonumber(text:match("%[(%d+)%] %[%S+%] %[%d+:%d+ %d+.%d+.%d+%] %[%d+-%d+-%d+ %d+:%d+:%d+]"))
+            
+            if rang == 5 then ocheckf.c5 = ocheckf.c5 + 1 end
+            if rang == 6 then ocheckf.c6 = ocheckf.c6 + 1 end
+            if rang == 7 then ocheckf.c7 = ocheckf.c7 + 1 end
+            if rang == 8 then ocheckf.c8 = ocheckf.c8 + 1 end
+            if rang == 9 then ocheckf.c9 = ocheckf.c9 + 1 end
+            
+            if rang < 5 then ocheckf.done = true end
+
+            return false
+
+        else
+            
+            ocheckf.state = false
+
+            if ocheckf.state == false and not ocheckf.done then ocheckf.done = true end
+
+        end
     end
     --Получения кол-во игрококов во фракции
     if fonl.check then
@@ -4945,6 +5063,7 @@ end
 function sampev.onSendClientJoin(version, mod, nick) rebuildUsers() end
 
 function sampev.onSendCommand(text)
+
     if text:match("^/o .+") or text:match("^/ooc .+") then --Огран /o для 1 лвл-ов
         if cfg.other.admlvl < 2 then
             local msg = text:match("^/%S+ (.+)")
@@ -4965,14 +5084,29 @@ function sampev.onSendCommand(text)
             end
         end
     end
-    local aCommands = {"warn", "ban", "prison", "pspawn"} --Отправка команд в /a
+
+    local aCommands = {"warn", "ban", "prison", "pspawn", "addabl"} --Отправка команд в /a
+
     for k, v in pairs(aCommands) do
+
         if cfg.other.admlvl == 1 then
             if text:match("^/"..v.." .+") then
                 return {"/a "..text}
             end
         end
+
+        if cfg.other.admlvl < 3 then
+            if text:match("^/addabl .+") then
+                return {"/a "..text}
+            end
+        end
+
     end
+
+end
+
+function sampev.onSendClickPlayer(id, source)
+    sampSendChat(("/re %s"):format(id))
 end
 
 function sampev.onShowDialog(id, style, title, button1, button2, text)
@@ -5509,145 +5643,181 @@ function hblist()
 end
 
 function admchat()
-    local zaprtabl = {"^re %d+", "^/re %d+", "^warn %d+ %d+ .+", '^/warn %d+ %d+ .+', '^ban %d+ .+', '^/ban %d+ .+', '^prison %d+ %d+ .+', '^/prison %d+ %d+ .+', '^pspawn %d+', '^/pspawn %d+', '^auninvite %d+ .+', '^/auninvite %d+ .+', '^sban %d+ .+', '^/sban %d+ .+'}
-    local function checkInText(t, key)
-        for k, v in pairs(t) do
-            if key:match(v) then return true end
-        end
-        return false
-    end
     while true do wait(0)
+
         local wtext, wprefix, wcolor, wpcolor = sampGetChatString(99)
         local mynick = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
         local w1color = ("%06X"):format(bit.band(wcolor, 0xFFFFFF))
+
         if string.rlower(w1color) == string.match(bit.tohex(config_colors.admchat.color), '00(.+)') and wtext:match('^ <ADM%-CHAT> .+ %[%d+%]: .+') then
             local nick, id, text = wtext:match('^ <ADM%-CHAT> (.+) %[(%d+)%]: (.+)')
+
             if cfg.other.admlvl > 1 and nick ~= mynick then
-                if checkInText(zaprtabl, text) then
-                    if not (punkey.re.id or punkey.warn.id or punkey.ban.id or punkey.prison.id or punkey.auninvite.id or punkey.sban.id or punkey.pspawn.id) then
-                        if text:match('^re %d+') or text:match('^/re %d+') then
-                            if sampIsPlayerConnected(tonumber(text:match('re (%d+)'))) then
-                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('re (%d+)')))) then
-                                    punkey.re.id = text:match('re (%d+)')
-                                    punkey.re.nick = nick
-                                    punkey.delay = os.time()
-                                    atext(('Администратор %s [%s] просит зайти в слежку за игроком %s [%s]'):format(nick, id, sampGetPlayerNickname(punkey.re.id), punkey.re.id))
-                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                                end
-                            end
-                        end
-                        if text:match('^warn %d+ %d+ .+') or text:match('^/warn %d+ %d+ .+') then
-                            if sampIsPlayerConnected(tonumber(text:match('warn (%d+) %d+ .+'))) then
-                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('warn (%d+) %d+ .+')))) then
-                                    punkey.warn.id, punkey.warn.day, punkey.warn.reason = text:match('warn (%d+) (%d+) (.+)')
-                                    punkey.warn.admin = nick
-                                    punkey.delay = os.time()
-                                    atext(("Администратор %s [%s] хочет заварнить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.warn.id), punkey.warn.id, punkey.warn.reason))
-                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                                end
-                            end
-                        end
-                        if text:match('^ban %d+ .+') or text:match('^/ban %d+ .+') then
-                            if sampIsPlayerConnected(tonumber(text:match('ban (%d+) .+'))) then
-                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('ban (%d+) .+')))) then
-                                    punkey.ban.id, punkey.ban.reason = text:match('ban (%d+) (.+)')
-                                    punkey.ban.admin = nick
-                                    punkey.delay = os.time()
-                                    atext(("Администратор %s [%s] хочет забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.ban.id), punkey.ban.id, punkey.ban.reason))
-                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                                end
-                            end
-                        end
-                        if text:match('^prison %d+ %d+ .+') or text:match('^/prison %d+ %d+ .+') then
-                            if sampIsPlayerConnected(tonumber(text:match('prison (%d+) %d+ .+'))) then
-                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('prison (%d+) %d+ .+')))) then
-                                    punkey.prison.id, punkey.prison.day, punkey.prison.reason = text:match('prison (%d+) (%d+) (.+)')
-                                    punkey.prison.admin = nick
-                                    punkey.delay = os.time()
-                                    atext(("Администратор %s [%s] хочет посадить в присон игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.prison.id), punkey.prison.id, punkey.prison.reason))
-                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                                end
-                            end
-                        end
-                        if text:match('^pspawn %d+') or text:match('^/pspawn %d+') then
-                            if sampIsPlayerConnected(tonumber(text:match('pspawn (%d+)'))) then
-                                punkey.pspawn.id = text:match('pspawn (%d+)')
-                                punkey.pspawn.admin = nick
+
+                if not (punkey.re.id or punkey.warn.id or punkey.ban.id or punkey.prison.id or punkey.auninvite.id or punkey.sban.id or punkey.pspawn.id or punkey.addabl.id) then
+
+                    if text:match('^re %d+') or text:match('^/re %d+') then
+                        if sampIsPlayerConnected(tonumber(text:match('re (%d+)'))) then
+                            if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('re (%d+)')))) then
+                                punkey.re.id = text:match('re (%d+)')
+                                punkey.re.nick = nick
                                 punkey.delay = os.time()
-                                atext(("Администратор %s [%s] хочет заспавнить игрока %s [%s]"):format(nick, id, sampGetPlayerNickname(punkey.pspawn.id), punkey.pspawn.id))
+                                atext(('Администратор %s [%s] просит зайти в слежку за игроком %s [%s]'):format(nick, id, sampGetPlayerNickname(punkey.re.id), punkey.re.id))
                                 atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
                             end
                         end
-                        if cfg.other.admlvl >= 4 then
-                            if text:match('^auninvite %d+ .+') or text:match('^/auninvite %d+ .+') then
-                                if sampIsPlayerConnected(tonumber(text:match('auninvite (%d+) .+'))) then
-                                    punkey.auninvite.id, punkey.auninvite.reason = text:match('auninvite (%d+) (.+)')
-                                    punkey.auninvite.admin = nick
+                    end
+
+                    if text:match('^warn %d+ %d+ .+') or text:match('^/warn %d+ %d+ .+') then
+                        if sampIsPlayerConnected(tonumber(text:match('warn (%d+) %d+ .+'))) then
+                            if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('warn (%d+) %d+ .+')))) then
+                                punkey.warn.id, punkey.warn.day, punkey.warn.reason = text:match('warn (%d+) (%d+) (.+)')
+                                punkey.warn.admin = nick
+                                punkey.delay = os.time()
+                                atext(("Администратор %s [%s] хочет заварнить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.warn.id), punkey.warn.id, punkey.warn.reason))
+                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                            end
+                        end
+                    end
+
+                    if text:match('^ban %d+ .+') or text:match('^/ban %d+ .+') then
+                        if sampIsPlayerConnected(tonumber(text:match('ban (%d+) .+'))) then
+                            if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('ban (%d+) .+')))) then
+                                punkey.ban.id, punkey.ban.reason = text:match('ban (%d+) (.+)')
+                                punkey.ban.admin = nick
+                                punkey.delay = os.time()
+                                atext(("Администратор %s [%s] хочет забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.ban.id), punkey.ban.id, punkey.ban.reason))
+                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                            end
+                        end
+                    end
+
+                    if text:match('^prison %d+ %d+ .+') or text:match('^/prison %d+ %d+ .+') then
+                        if sampIsPlayerConnected(tonumber(text:match('prison (%d+) %d+ .+'))) then
+                            if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('prison (%d+) %d+ .+')))) then
+                                punkey.prison.id, punkey.prison.day, punkey.prison.reason = text:match('prison (%d+) (%d+) (.+)')
+                                punkey.prison.admin = nick
+                                punkey.delay = os.time()
+                                atext(("Администратор %s [%s] хочет посадить в присон игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.prison.id), punkey.prison.id, punkey.prison.reason))
+                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                            end
+                        end
+                    end
+
+                    if text:match('^pspawn %d+') or text:match('^/pspawn %d+') then
+                        if sampIsPlayerConnected(tonumber(text:match('pspawn (%d+)'))) then
+                            punkey.pspawn.id = text:match('pspawn (%d+)')
+                            punkey.pspawn.admin = nick
+                            punkey.delay = os.time()
+                            atext(("Администратор %s [%s] хочет заспавнить игрока %s [%s]"):format(nick, id, sampGetPlayerNickname(punkey.pspawn.id), punkey.pspawn.id))
+                            atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                        end
+                    end
+
+                    if cfg.other.admlvl >= 3 then
+
+                        if text:match("^/addabl %d+ %d+ %d+ .+") or text:match("^addabl %d+ %d+ %d+ .+") then
+                            if sampIsPlayerConnected(tonumber(text:match("addabl (%d+) %d+ %d+ .+"))) then
+                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match("addabl (%d+) %d+ %d+ .+")))) then
+                                    punkey.addabl.id, punkey.addabl.day, punkey.addabl.group, punkey.addabl.reason = text:match("addabl (%d+) (%d+) (%d+) (.+)")
+                                    punkey.addabl.admin = nick
                                     punkey.delay = os.time()
-                                    atext(("Администратор %s [%s] хочет уволить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.auninvite.id), punkey.auninvite.id, punkey.auninvite.reason))
+                                    atext(("Администратор %s [%s] хочет выдать ЧС игроку %s [%s]. Группа: %s. Причина: %s"):format(nick, id, sampGetPlayerNickname(punkey.addabl.id), punkey.addabl.id, punkey.addabl.group, punkey.addabl.reason))
                                     atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
                                 end
                             end
-                            if text:match('^sban %d+ .+') or text:match('^/sban %d+ .+') then
-                                if sampIsPlayerConnected(tonumber(text:match('sban (%d+) .+'))) then
-                                    if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('sban (%d+) .+')))) then
-                                        punkey.sban.id, punkey.sban.reason = text:match('sban (%d+) (.+)')
-                                        punkey.sban.admin = nick
-                                        punkey.delay = os.time()
-                                        atext(("Администратор %s [%s] хочет тихо забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.sban.id), punkey.sban.id, punkey.sban.reason))
-                                        atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                                    end
+                        end
+
+                    end
+
+                    if cfg.other.admlvl >= 4 then
+
+                        if text:match('^auninvite %d+ .+') or text:match('^/auninvite %d+ .+') then
+                            if sampIsPlayerConnected(tonumber(text:match('auninvite (%d+) .+'))) then
+                                punkey.auninvite.id, punkey.auninvite.reason = text:match('auninvite (%d+) (.+)')
+                                punkey.auninvite.admin = nick
+                                punkey.delay = os.time()
+                                atext(("Администратор %s [%s] хочет уволить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.auninvite.id), punkey.auninvite.id, punkey.auninvite.reason))
+                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                            end
+                        end
+
+                        if text:match('^sban %d+ .+') or text:match('^/sban %d+ .+') then
+                            if sampIsPlayerConnected(tonumber(text:match('sban (%d+) .+'))) then
+                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('sban (%d+) .+')))) then
+                                    punkey.sban.id, punkey.sban.reason = text:match('sban (%d+) (.+)')
+                                    punkey.sban.admin = nick
+                                    punkey.delay = os.time()
+                                    atext(("Администратор %s [%s] хочет тихо забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.sban.id), punkey.sban.id, punkey.sban.reason))
+                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
                                 end
                             end
                         end
-                    else
-                        atext(("У вас уже есть активный запрос на выдачу наказания. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+
                     end
+
+                else
+                    atext(("У вас есть активный запрос на выдачу наказания. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
                 end
             end
         end
+
     end
 end
 
 function punaccept()
+
     if punkey.pspawn.id then
         sampSendChat(("/pspawn %s"):format(punkey.pspawn.id))
         punkey.pspawn.id, punkey.pspawn.nick, punkey.delay = nil, nil, nil
     end
+
     if punkey.re.id then
         sampSendChat(('/re %s'):format(punkey.re.id))
         punkey.re.id, punkey.re.nick, punkey.delay = nil, nil
     end
+
     if punkey.prison.id then
         local admnick, admfam = punkey.prison.admin:match('(.+)_(.+)')
         sampSendChat(('/prison %s %s %s • %s.%s'):format(punkey.prison.id, punkey.prison.day, punkey.prison.reason, admnick:sub(1,1), admfam))
         punkey.prison.id, punkey.prison.day, punkey.prison.reason, punkey.prison.admin, punkey.delay = nil, nil, nil, nil, nil
     end
+
     if punkey.warn.id then
         local admnick, admfam = punkey.warn.admin:match('(.+)_(.+)')
         sampSendChat(('/warn %s %s %s • %s.%s'):format(punkey.warn.id, punkey.warn.day, punkey.warn.reason, admnick:sub(1,1), admfam))
         punkey.warn.id, punkey.warn.day, punkey.warn.reason, punkey.warn.admin, punkey.delay = nil, nil, nil, nil, nil
     end
+
     if punkey.ban.id then
         local admnick, admfam = punkey.ban.admin:match('(.+)_(.+)')
         sampSendChat(('/ban %s %s • %s.%s'):format(punkey.ban.id, punkey.ban.reason, admnick:sub(1,1), admfam))
         punkey.ban.id, punkey.ban.reason, punkey.ban.admin, punkey.delay = nil, nil, nil, nil
     end
+
     if punkey.sban.id then
         local admnick, admfam = punkey.sban.admin:match('(.+)_(.+)')
         sampSendChat(('/sban %s %s • %s.%s'):format(punkey.sban.id, punkey.sban.reason, admnick:sub(1,1), admfam))
         punkey.sban.id, punkey.sban.reason, punkey.sban.admin, punkey.delay = nil, nil, nil, nil
     end
+
     if punkey.auninvite.id then
         local admnick, admfam = punkey.auninvite.admin:match('(.+)_(.+)')
         sampSendChat(('/auninvite %s %s • %s.%s'):format(punkey.auninvite.id, punkey.auninvite.reason, admnick:sub(1,1), admfam))
         punkey.auninvite.id, punkey.auninvite.reason, punkey.auninvite.admin, punkey.delay = nil, nil, nil, nil
     end
+
+    if punkey.addabl.id then
+        local admnick, admfam = punkey.addabl.admin:match('(.+)_(.+)')
+        sampSendChat(("/addabl %s %s %s %s • %s.%s"):format(punkey.addabl.id, punkey.addabl.day, punkey.addabl.group, punkey.addabl.reason, admnick:sub(1,1), admfam))
+        punkey.addabl.id, punkey.addabl.day, punkey.addabl.group, punkey.addabl.reason, punkey.addabl.admin, punkey.delay = nil, nil, nil, nil, nil, nil
+    end
+
 end
 
 function pundeny()
-    if punkey.re.id or punkey.warn.id or punkey.ban.id or punkey.prison.id or punkey.auninvite.id or punkey.sban.id or punkey.pspawn.id then
-        punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}}
+    if punkey.re.id or punkey.warn.id or punkey.ban.id or punkey.prison.id or punkey.auninvite.id or punkey.sban.id or punkey.pspawn.id or punkey.addabl.id then
+        punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}, addabl = {}}
         atext('Выдача наказаний отменена')
     end
 end
@@ -6474,4 +6644,101 @@ function unlimBullets(bool)
     else
         mem.write(0x969178, 0, 1, true)
     end
+end
+
+function ocheckrangs(pam)
+
+    lua_thread.create(function()
+
+        ocheckf = {c5 = 0, c6 = 0, c7 = 0, c8 = 0, c9 = 0}
+
+        local frak = tonumber(pam)
+        local perebor = false
+
+        if cfg.other.admlvl >= 5 then
+
+            if frak ~= nil then
+
+                local fraks = {5, 6, 12, 13, 14, 15, 17, 18, 24, 26, 29}
+                local gangs = {12, 13, 15, 17, 18}
+                local mafia = {5, 6, 14}
+                local biker = {24, 26, 29}
+
+                if checkIntable(fraks, frak) then
+
+                    ocheckf.frak = frak
+                    ocheckf.state = true
+
+                    sampSendChat(("/offmembers %s"):format(frak))
+
+                    while not ocheckf.done do wait(0) end
+
+                    --[[for line in io.lines("moonloader/off.txt") do
+
+                        if line:match("%[%d+%] %[%S+%] %[%d+:%d+ %d+.%d+.%d+%] %[%d+-%d+-%d+ %d+:%d+:%d+]") then
+
+
+                            local rang = tonumber(line:match("%[(%d+)%] %[%S+%] %[%d+:%d+ %d+.%d+.%d+%] %[%d+-%d+-%d+ %d+:%d+:%d+]"))
+
+                            if rang == 5 then ocheckf.c5 = ocheckf.c5 + 1 end
+                            if rang == 6 then ocheckf.c6 = ocheckf.c6 + 1 end
+                            if rang == 7 then ocheckf.c7 = ocheckf.c7 + 1 end
+                            if rang == 8 then ocheckf.c8 = ocheckf.c8 + 1 end
+                            if rang == 9 then ocheckf.c9 = ocheckf.c9 + 1 end
+
+                        end
+                            
+                    end]]
+
+
+                    if checkIntable(gangs, frak) then
+
+                        if ocheckf.c8 > frakrang.Gangs.max_8 then atext(("Во фракции №%s перебор 8 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c8, frakrang.Gangs.max_8)) perebor = true end
+                        if ocheckf.c9 > frakrang.Gangs.max_9 then atext(("Во фракции №%s перебор 9 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c9, frakrang.Gangs.max_9)) perebor = true end
+                        
+                        --if perebor then return end
+
+                    elseif checkIntable(mafia, frak) then
+
+                        if ocheckf.c8 > frakrang.Mafia.max_8 then atext(("Во фракции №%s перебор 8 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c8, frakrang.Mafia.max_8)) perebor = true end
+                        if ocheckf.c9 > frakrang.Mafia.max_9 then atext(("Во фракции №%s перебор 9 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c9, frakrang.Mafia.max_9)) perebor = true end
+                        
+                        --if perebor then return end
+
+                    elseif checkIntable(biker, frak) then
+
+                        if ocheckf.c5 > frakrang.Bikers.max_5 then atext(("Во фракции №%s перебор 5 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c5, frakrang.Bikers.max_5)) perebor = true end
+                        if ocheckf.c6 > frakrang.Bikers.max_6 then atext(("Во фракции №%s перебор 6 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c6, frakrang.Bikers.max_6)) perebor = true end
+                        if ocheckf.c7 > frakrang.Bikers.max_7 then atext(("Во фракции №%s перебор 7 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c7, frakrang.Bikers.max_7)) perebor = true end
+                        if ocheckf.c8 > frakrang.Bikers.max_8 then atext(("Во фракции №%s перебор 8 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c8, frakrang.Bikers.max_8)) perebor = true end
+                        
+                        --if perebor then return end
+
+                    end
+
+                    if not perebor then atext(("Во фракции №%s все нормально с офф-рангами."):format(frak)) end
+
+                    --return
+
+                else
+
+                    atext("Команда доступна только для следующих фракций:")
+                    atext("Список фракций: "..table.concat(fraks, ", ")..".")
+
+                end
+
+            else
+
+                atext("Введите: /ocheckrangs [id фракции]")
+
+            end
+
+        else
+
+            atext("Команда доступна с 5 уровня админки")
+        
+        end
+
+    end)
+
 end
