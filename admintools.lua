@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.59)
+script_version(2.6)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -107,7 +107,8 @@ local oCheat                    = {
     wind            = imgui.ImBool(false), 
     extra           = imgui.ImBool(false), 
     spread          = imgui.ImBool(false), 
-    unlimBullets    = imgui.ImBool(false)
+    unlimBullets    = imgui.ImBool(false),
+    aim             = imgui.ImBool(false)
 }
 local checker                   = {
     admins = {
@@ -632,7 +633,8 @@ local cfg = {
         style = 1,
         resend = true,
         trace = true,
-        spiartext = "Есть вопросы по игре? Задайте их нашим саппортам - /ask"
+        spiartext = "Есть вопросы по игре? Задайте их нашим саппортам - /ask",
+        chatid = true
     }
 }
 local fraklist = {
@@ -1087,6 +1089,8 @@ function apply_custom_style()
     colors[clr.TextSelectedBg] = ImVec4(0.25, 1.00, 0.00, 0.43)
     colors[clr.ModalWindowDarkening] = ImVec4(1.00, 0.98, 0.95, 0.73)
 end
+
+
 
 function transform2d(x, y, z)
     local view = require("ffi").cast("float *", 0xB6FA2C)
@@ -1575,6 +1579,7 @@ function main()
                 cfg.crecon = nil
                 saveData(cfg, 'moonloader/config/Admin Tools/config.json')
             end
+            if cfg.other.chatid == nil then cfg.other.chatid = true end
             if cfg.other.spiartext == nil then cfg.other.spiartext = "Есть вопросы по игре? Задайте их нашим саппортам - /ask" end
             if cfg.other.trace == nil then cfg.other.trace = true end
             if cfg.timers.vkvtimer == nil then cfg.timers.vkvtimer = 60 end
@@ -1589,6 +1594,7 @@ function main()
 
             imset = {
                 set = {
+                    chatid      = imgui.ImBool(cfg.other.chatid),
                     trace       = imgui.ImBool(cfg.other.trace),
                     recon       = imgui.ImBool(cfg.other.reconw),
                     pass        = imgui.ImBool(cfg.other.passb),
@@ -1965,6 +1971,18 @@ function main()
         else
             unlimBullets(false)
         end
+
+        --aim
+        if oCheat.aim.v then
+            if isKeyDown(1) then
+                local _, ped = storeClosestEntities(1)
+                if ped ~= -1 then
+                    local x, y, z = getCharCoordinates(ped)
+                    TurnCamTo(x, y, z)
+                end
+            end
+        end
+
         --Reset remove
         if mem.read(0x8E4CB4, 4, true) > 419430400 then cleanStreamMemoryBuffer() end
         --Время на выдачу наказания
@@ -2590,7 +2608,7 @@ function imgui.OnDrawFrame()
         if imgui.Button(u8 'Настройки', btn_size) then settingwindows.v = not settingwindows.v end
         if imgui.Button(u8 'Телепорты', btn_size) then tpwindow.v = not tpwindow.v end
         if imgui.Button(u8 'Команды скрипта', btn_size) then cmdwindow.v = not cmdwindow.v end
-        if imgui.Button(u8 'Мероприятие', btn_size) then imgui.OpenPopup('##1') mpwindow.v = not mpwindow.v end
+        --if imgui.Button(u8 'Мероприятие', btn_size) then imgui.OpenPopup('##1') mpwindow.v = not mpwindow.v end
         if imgui.Button(u8 'Лидеры', btn_size) then leadwindow.v = not leadwindow.v end
         if imgui.Button(u8 'Биндер', btn_size) then bMainWindow.v = not bMainWindow.v end
         if imgui.Button(u8 "Прочие читы", btn_size) then oCheat.wind.v = not oCheat.wind.v end
@@ -2790,6 +2808,7 @@ function imgui.OnDrawFrame()
                 noRecoilDynamicCrosshair(oCheat.spread.v)
             end
             imgui.Checkbox(u8 "No reload", oCheat.unlimBullets)
+            imgui.Checkbox("Aim", oCheat.aim)
             imgui.End()
         end
         if leadwindow.v then
@@ -3104,7 +3123,7 @@ function imgui.OnDrawFrame()
                     imgui.CentrText(u8 'AirBrake')
                     imgui.Separator()
 
-                    if imgui.SliderFloat(u8 'Начальная скорость', imset.cheat.airspeed, 0.05, 10, '%0.2f') then cfg.cheat.airbrkspeed = airfloat.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
+                    if imgui.SliderFloat(u8 'Начальная скорость', imset.cheat.airspeed, 0.05, 10, '%0.2f') then cfg.cheat.airbrkspeed = imset.cheat.airspeed.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
                     
                     imgui.TextWrapped(u8 'Начальная скорость - это та скорость, которая будет всегда при включении AirBrake. Саму скорость можно изменить во время полета клавишами пробел(увеличить скорость) или левый шифт(уменьшить скокрость)')
                 
@@ -3212,6 +3231,7 @@ function imgui.OnDrawFrame()
 
                 if imgui.InputText(u8 "Текст пиара саппортов [/spiar] (после /o)", imset.set.spiar) then cfg.other.spiartext = u8:decode(imset.set.spiar.v) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
 
+                if imadd.ToggleButton(u8 "chatid", imset.set.chatid) then cfg.other.chatid = imset.set.chatid.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end imgui.SameLine() imgui.Text(u8 "Включить / Выключить ID игроков в чате")
                 if imadd.ToggleButton(u8 "Трейсера", imset.set.trace) then cfg.other.trace = imset.set.trace.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end imgui.SameLine() imgui.Text(u8 "Включить / Выключить трейсера")
 				if imadd.ToggleButton(u8 'reconw##1', imset.set.recon) then cfg.other.reconw = imset.set.recon.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Варнинги на клео реконнект')
 				if imadd.ToggleButton(u8 'Автологин##11', imset.set.pass) then cfg.other.passb = imset.set.pass.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автологин')
@@ -3877,6 +3897,7 @@ function sampev.onTrailerSync(playerId, data)
 end
 
 function sampev.onServerMessage(color, text)
+
     local mynick = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
     --Лог наказаных
     punishlog(text)
@@ -4191,6 +4212,24 @@ function sampev.onServerMessage(color, text)
     --Оффмемберс
     if ocheckf.state then
 
+        if text == " Вы не состоите во фракции" then
+
+            ocheckf.error = true
+            ocheckf.done = true
+
+            return false
+
+        end
+        
+        if text:match(" Данная функция доступна с %d+ ранга") then 
+            
+            ocheckf.error = true
+            ocheckf.done = true
+
+            return false
+
+        end
+
         if text == " Список игроков: [Ранг] [Ник] [Дата принятия] [Последний вход]" then
 
             return false
@@ -4265,16 +4304,20 @@ function sampev.onServerMessage(color, text)
     return { color, text }]]
 
     --ID`s
-    for i = 0, sampGetMaxPlayerId(false) do
-        if sampIsPlayerConnectedFixed(i) then
+    if cfg.other.chatid then
 
-            local nick = sampGetPlayerNickname(i)
+        for i = 0, sampGetMaxPlayerId(false) do
+            if sampIsPlayerConnectedFixed(i) then
 
-            if text:find(nick) and not text:find(nick..'%['..i..'%]') and not text:find('%['..i..'%] '..nick) and not text:find(nick..' %['..i..'%]') then
-                text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                local nick = sampGetPlayerNickname(i)
+
+                if text:find(nick) and not text:find(nick..'%['..i..'%]') and not text:find('%['..i..'%] '..nick) and not text:find(nick..' %['..i..'%]') then
+                    text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                end
+
             end
-
         end
+
     end
 
     local color = ("0x%06X"):format(bit.rshift(color, 8))
@@ -6651,94 +6694,83 @@ function ocheckrangs(pam)
     lua_thread.create(function()
 
         ocheckf = {c5 = 0, c6 = 0, c7 = 0, c8 = 0, c9 = 0}
+        local fraks = {5, 6, 12, 13, 14, 15, 17, 18, 24, 26, 29}
+        local gangs = {12, 13, 15, 17, 18}
+        local mafia = {5, 6, 14}
+        local biker = {24, 26, 29}
 
         local frak = tonumber(pam)
         local perebor = false
 
-        if cfg.other.admlvl >= 5 then
-
-            if frak ~= nil then
-
-                local fraks = {5, 6, 12, 13, 14, 15, 17, 18, 24, 26, 29}
-                local gangs = {12, 13, 15, 17, 18}
-                local mafia = {5, 6, 14}
-                local biker = {24, 26, 29}
-
-                if checkIntable(fraks, frak) then
-
-                    ocheckf.frak = frak
-                    ocheckf.state = true
-
-                    sampSendChat(("/offmembers %s"):format(frak))
-
-                    while not ocheckf.done do wait(0) end
-
-                    --[[for line in io.lines("moonloader/off.txt") do
-
-                        if line:match("%[%d+%] %[%S+%] %[%d+:%d+ %d+.%d+.%d+%] %[%d+-%d+-%d+ %d+:%d+:%d+]") then
+        if frak ~= nil then
 
 
-                            local rang = tonumber(line:match("%[(%d+)%] %[%S+%] %[%d+:%d+ %d+.%d+.%d+%] %[%d+-%d+-%d+ %d+:%d+:%d+]"))
+            if checkIntable(fraks, frak) then
 
-                            if rang == 5 then ocheckf.c5 = ocheckf.c5 + 1 end
-                            if rang == 6 then ocheckf.c6 = ocheckf.c6 + 1 end
-                            if rang == 7 then ocheckf.c7 = ocheckf.c7 + 1 end
-                            if rang == 8 then ocheckf.c8 = ocheckf.c8 + 1 end
-                            if rang == 9 then ocheckf.c9 = ocheckf.c9 + 1 end
+                ocheckf.state = true
 
-                        end
-                            
-                    end]]
-
-
-                    if checkIntable(gangs, frak) then
-
-                        if ocheckf.c8 > frakrang.Gangs.max_8 then atext(("Во фракции №%s перебор 8 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c8, frakrang.Gangs.max_8)) perebor = true end
-                        if ocheckf.c9 > frakrang.Gangs.max_9 then atext(("Во фракции №%s перебор 9 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c9, frakrang.Gangs.max_9)) perebor = true end
-                        
-                        --if perebor then return end
-
-                    elseif checkIntable(mafia, frak) then
-
-                        if ocheckf.c8 > frakrang.Mafia.max_8 then atext(("Во фракции №%s перебор 8 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c8, frakrang.Mafia.max_8)) perebor = true end
-                        if ocheckf.c9 > frakrang.Mafia.max_9 then atext(("Во фракции №%s перебор 9 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c9, frakrang.Mafia.max_9)) perebor = true end
-                        
-                        --if perebor then return end
-
-                    elseif checkIntable(biker, frak) then
-
-                        if ocheckf.c5 > frakrang.Bikers.max_5 then atext(("Во фракции №%s перебор 5 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c5, frakrang.Bikers.max_5)) perebor = true end
-                        if ocheckf.c6 > frakrang.Bikers.max_6 then atext(("Во фракции №%s перебор 6 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c6, frakrang.Bikers.max_6)) perebor = true end
-                        if ocheckf.c7 > frakrang.Bikers.max_7 then atext(("Во фракции №%s перебор 7 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c7, frakrang.Bikers.max_7)) perebor = true end
-                        if ocheckf.c8 > frakrang.Bikers.max_8 then atext(("Во фракции №%s перебор 8 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c8, frakrang.Bikers.max_8)) perebor = true end
-                        
-                        --if perebor then return end
-
-                    end
-
-                    if not perebor then atext(("Во фракции №%s все нормально с офф-рангами."):format(frak)) end
-
-                    --return
-
-                else
-
-                    atext("Команда доступна только для следующих фракций:")
-                    atext("Список фракций: "..table.concat(fraks, ", ")..".")
-
-                end
+                sampSendChat(("/offmembers %s"):format(frak))
 
             else
 
-                atext("Введите: /ocheckrangs [id фракции]")
+                atext("Команда доступна только для следующих фракций:")
+                atext("Список фракций: "..table.concat(fraks, ", ")..".")
 
             end
 
         else
 
-            atext("Команда доступна с 5 уровня админки")
-        
+            if cfg.other.admlvl < 5 then
+
+            atext("Введите: /ocheckrangs [id фракции (пока вы не 5 лвл, используется для определения, в какой группе фракций проверять)]")
+            atext("Примечание: Пока вы не 5 лвл админки, вы должны стоять под лидеркой для проверки")
+
+            else
+                atext("Введите: /ocheckrangs [id фракции")
+                
+            end
+
         end
+
+        while not ocheckf.done do wait(0) end
+
+        if ocheckf.error then atext("Вы должны стоять под лидеркой для проверки оффмемберса") return end
+
+        if checkIntable(gangs, frak) then
+
+            if ocheckf.c8 > frakrang.Gangs.max_8 then atext(("Во фракции №%s перебор 8 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c8, frakrang.Gangs.max_8)) perebor = true end
+            if ocheckf.c9 > frakrang.Gangs.max_9 then atext(("Во фракции №%s перебор 9 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c9, frakrang.Gangs.max_9)) perebor = true end
+            
+        elseif checkIntable(mafia, frak) then
+
+            if ocheckf.c8 > frakrang.Mafia.max_8 then atext(("Во фракции №%s перебор 8 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c8, frakrang.Mafia.max_8)) perebor = true end
+            if ocheckf.c9 > frakrang.Mafia.max_9 then atext(("Во фракции №%s перебор 9 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c9, frakrang.Mafia.max_9)) perebor = true end
+
+        elseif checkIntable(biker, frak) then
+
+            if ocheckf.c5 > frakrang.Bikers.max_5 then atext(("Во фракции №%s перебор 5 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c5, frakrang.Bikers.max_5)) perebor = true end
+            if ocheckf.c6 > frakrang.Bikers.max_6 then atext(("Во фракции №%s перебор 6 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c6, frakrang.Bikers.max_6)) perebor = true end
+            if ocheckf.c7 > frakrang.Bikers.max_7 then atext(("Во фракции №%s перебор 7 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c7, frakrang.Bikers.max_7)) perebor = true end
+            if ocheckf.c8 > frakrang.Bikers.max_8 then atext(("Во фракции №%s перебор 8 рангов. Сейчас: %s / Должно: %s"):format(frak, ocheckf.c8, frakrang.Bikers.max_8)) perebor = true end
+            
+        end
+
+        if not perebor then atext(("Во фракции №%s все нормально с офф-рангами."):format(frak)) end
 
     end)
 
+end
+
+function TurnCamTo(coordX, coordY, coordZ)
+    local camX, camY, camZ = getActiveCameraCoordinates()
+    local vector = {
+        fX = camX - coordX,
+        fY = camY - coordY,
+        fZ = camZ - coordZ
+    }
+    local AngleX = math.atan2(vector.fY, -vector.fX) - (math.pi / 2)
+    local AngleZ = math.atan2(math.sqrt((vector.fX * vector.fX) + (vector.fY * vector.fY)), -vector.fZ)
+    local FIXED_X = AngleX - (math.pi / 2 + 0.04)
+    local FIXED_Z = AngleZ - (math.pi / 2 - 0.103)
+    setCameraPositionUnfixed(-FIXED_Z, -FIXED_X)
 end
