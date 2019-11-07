@@ -3,9 +3,7 @@ Angel_Espejo
 Laurence_Lawson
 Vito_Scalleto
 Thomas_Lawson
-Mihail_Klimov
 Sam_Teller
-Chester_James
 Vincent_Vinograd
 Edward_Franklin
 Eduardo_Carmone
@@ -18,7 +16,6 @@ Morphius_Mulphers
 Fill_Slipslide
 Riki_Maru
 Yoshito_Nagasaki
-Native_Pechenkov
 Elijah_Smith
 Raul_Malomadro
 Luis_Guerra
