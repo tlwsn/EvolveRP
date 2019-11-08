@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.6)
+script_version(2.61)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -5635,7 +5635,7 @@ function punish()
 end
 
 function punishlog(text)
-    local triggers = {'OffBan', "забанил (.+) Причина", 'SBan', 'IOffBan', 'выдал warn', "получил предупреждение до", "кикнул .+ Причина", "поместил в ДеМорган", "посажен в prison", "заблокировал чат игрока", "OffMute", "забанил IP", "выдал затычку на репорт", "Вы посадили .+ в тюрьму"}
+    local triggers = {'OffBan', "забанил %S+ Причина", 'SBan', 'IOffBan', 'выдал warn', "получил предупреждение до", "кикнул %S+ Причина", "поместил в ДеМорган", "посажен в prison", "заблокировал чат игрока", "OffMute", "забанил IP", "выдал затычку на репорт", "Вы посадили .+ в тюрьму"}
     local mynick = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
     if text:find(mynick) then
         for k, v in pairs(triggers) do
@@ -5644,6 +5644,7 @@ function punishlog(text)
                 local file = io.open('moonloader/Admin Tools/punishlogs.txt', 'a')
                 file:write(('[%s || %s] %s\n'):format(os.date('%d.%m.%Y'), ("%s:%s:%s.%s"):format(time.wHour, time.wMinute, time.wSecond, time.wMilliseconds), text))
                 file:close()
+                break
             end
         end
     end
@@ -6726,7 +6727,7 @@ function ocheckrangs(pam)
             atext("Примечание: Пока вы не 5 лвл админки, вы должны стоять под лидеркой для проверки")
 
             else
-                atext("Введите: /ocheckrangs [id фракции")
+                atext("Введите: /ocheckrangs [id фракции]")
                 
             end
 
