@@ -16,7 +16,6 @@ Morphius_Mulphers
 Fill_Slipslide
 Riki_Maru
 Yoshito_Nagasaki
-Danechka_Heavenly
 Elijah_Smith
 Raul_Malomadro
 Luis_Guerra
@@ -38,5 +37,4 @@ Masson_Aoki
 Christian_Moon
 Riley_Evans
 Laymont_Murray
-Yan_Woozie
 Hayley_Lewis
