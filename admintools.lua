@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.61)
+script_version(2.62)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -1959,8 +1959,6 @@ function main()
     lua_thread.create(whon)
     --Загружаем список для чекеров
     loadUsers()
-    --Обновляем список чекеров
-    rebuildUsers()
     --Загружаем анимации для флая
     requestAnimation("SWIM")
     requestAnimation("PARACHUTE")
@@ -3918,38 +3916,7 @@ function sampev.onServerMessage(color, text)
             end
         end
     end
-    --Логирование выдачи склада в гетто / мафиях
-    if text:match("^ Администратор %S+ добавил %d+ материалов на склад фракции .+. Текущее состояние склада: %d+$") and color == -65366 then
-        local nick, mati, banda = text:match("^ Администратор (%S+) добавил (%d+) материалов на склад фракции (.+). Текущее состояние склада: %d+$")
-        if nick == sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED))) then
-            local time = localTime()
-            if banda == 'Grove' or banda == 'Rifa' or banda == 'Ballas' or banda == 'Vagos' or banda == 'Aztec' then
-                local file = io.open("moonloader/Admin Tools/setmatlog.txt", "a")
-                file:write(("\n[size=85][list][*] [color=#00BFFF]Игровой ник[/color]: %s\n"):format(nick))
-                file:write(("[*] [color=#00BFFF]Наименование банды[/color]: %s\n"):format(banda))
-                file:write(("[*] [color=#00BFFF]Количество выданных материалов[/color]: %s\n"):format(mati))
-                file:write(("[*] [color=#00BFFF]Дата и время[/color]: %s / %s[/list][/size]\n"):format(("%s:%s"):format(time.wHour, time.wMinute), os.date('%d.%m.%Y')))
-                file:close()
-            end
-            if banda == 'Yakuza' or banda == 'LCN' or banda == 'Rus Mafia' then
-                if banda == 'Rus Mafia' then banda = "RM" end
-                local file = io.open("moonloader/Admin Tools/setmatlog.txt", "a")
-                file:write(("\n[size=85][list][*] [color=#00BFFF]Игровой ник[/color]: %s\n"):format(nick))
-                file:write(("[*] [color=#00BFFF]Наименование мафии[/color]: %s\n"):format(banda))
-                file:write(("[*] [color=#00BFFF]Количество выданных материалов[/color]: %s\n"):format(mati))
-                file:write(("[*] [color=#00BFFF]Дата и время[/color]: %s / %s[/list][/size]\n"):format(("%s:%s"):format(time.wHour, time.wMinute), os.date('%d.%m.%Y')))
-                file:close()
-            end
-            if banda == "Pagans MC" or banda == "Warlocks MC" or banda == "Mongols MC" then
-                local file = io.open("moonloader/Admin Tools/setmatlog.txt", "a")
-                file:write(("\n[list][list][size=94][color=gray]Игровой ник:[/color] %s.\n"):format(nick))
-                file:write(("[color=gray]Наименование мотоклуба:[/color] %s.\n"):format(banda))
-                file:write(("[color=gray]Количество выданных материалов:[/color] %s.\n"):format(mati))
-                file:write(("[color=gray]Дата и время:[/color] %s [color=#FF0000]|[/color] %s.[/size][/list][/list]\n"):format(("%s:%s"):format(time.wHour, time.wMinute), os.date('%d.%m.%Y')))
-                file:close()
-            end
-        end
-    end
+
     --/checkb
     if ban.check and text:find("Игрок не найден") then 
         atext(("Игрок %s не заблокирован"):format(ban.nick)) 
@@ -3965,11 +3932,13 @@ function sampev.onServerMessage(color, text)
         ban.check = false 
         return false 
     end
+
     --Запись в единый чатлог
     chatlogfile = io.open('moonloader/Admin Tools/chatlog_all.txt', 'a')
     local time = localTime()
     chatlogfile:write(('[%s || %s]\t%s\n'):format(os.date('%d.%m.%Y'), ("%s:%s:%s.%s"):format(time.wHour, time.wMinute, time.wSecond, time.wMilliseconds), text))
     chatlogfile:close()
+
     --Цвета
     if text:match('^ Ответ от .+%[%d+%] к .+%[%d+%]:') then color = argb_to_rgba(join_argb(255, config_colors.anschat.r, config_colors.anschat.g, config_colors.anschat.b)) end
     if text:match('^ <ADM%-CHAT> .+: .+') then color = argb_to_rgba(join_argb(255, config_colors.admchat.r, config_colors.admchat.g, config_colors.admchat.b)) end
@@ -3983,26 +3952,31 @@ function sampev.onServerMessage(color, text)
         return {argb_to_rgba(join_argb(255, config_colors.smschat.r, config_colors.smschat.g, config_colors.smschat.b)), text} 
     end
     if text:match('^ %->Вопрос .+') then color = argb_to_rgba(join_argb(255, config_colors.askchat.r, config_colors.askchat.g, config_colors.askchat.b)) end
+
     --Получаем ID по репорту
     if text:match("^ Жалоба от .+%[%d+%] на .+%[%d+%]%: .+") then
         whorep, reportid = text:match("Жалоба от .+%[(%d+)%] на .+%[(%d+)%]%: .+")
         color = argb_to_rgba(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b))
     end
+    
     if text:match('^ Репорт от .+%[%d+%]%:') then
         reportid = text:match('Репорт от .+%[(%d+)%]%:')
         whorep = nil
         color = argb_to_rgba(join_argb(255, config_colors.repchat.r, config_colors.repchat.g, config_colors.repchat.b))
     end
+
     if text:match('^ Жалоба от%: .+%[%d+%]%:') then
         reportid = text:match('Жалоба от%: .+%[(%d+)%]%:')
         whorep = nil
         color = argb_to_rgba(join_argb(255, config_colors.jbchat.r, config_colors.jbchat.g, config_colors.jbchat.b))
     end
+
     --Цветной /warehouse
     if text:match('^ На складе .+ %d+/%d+') and color == -1 then
         local mfrak = text:match('^ На складе (.+) %d+/%d+')
         if frakcolor[mfrak] ~= nil then text = text:gsub(mfrak, frakcolor[mfrak]) end
     end
+
     --Проверка лвл / ранг
     if checkf.state then
         if text:match('^ ID: %d+ |.+') then
@@ -4209,6 +4183,7 @@ function sampev.onServerMessage(color, text)
         if text:find('Члены организации Он%-лайн%:') then return false end
         if text == ' ' and color == -1 then return false end
     end
+
     --Оффмемберс
     if ocheckf.state then
 
@@ -4256,6 +4231,7 @@ function sampev.onServerMessage(color, text)
 
         end
     end
+
     --Получения кол-во игрококов во фракции
     if fonl.check then
         if text:match('^ ID: %d+ |.+') then
@@ -4269,6 +4245,7 @@ function sampev.onServerMessage(color, text)
         if text:find('Члены организации Он%-лайн%:') then return false end
         if text == ' ' and color == -1 then return false end
     end
+
     --Получение IP для проверки регов
     if text:match("Nik %[.+%]  R%-IP %[.+%]  L%-IP %[.+%]  IP %[(.+)%]") and color == -10270806 then
         local nick, rip, ip = text:match("Nik %[(.+)%]  R%-IP %[(.+)%]  L%-IP %[.+%]  IP %[(.+)%]")
@@ -4281,6 +4258,7 @@ function sampev.onServerMessage(color, text)
         ips = {rip, ip}
 		rnick = nick
     end
+
     --Получение ID по серверному варнингу
     if text:match('<Warning> .+%[%d+%]%: .+') and color == -16763905 then
         local cnick, ccwid = text:match('<Warning> (.+)%[(%d+)%]%: .+')
@@ -4290,26 +4268,14 @@ function sampev.onServerMessage(color, text)
             if not result then table.insert(checker.temp.loaded, {{nick = cnick, color = 'FFFFFF', text = ''}}) end
 		end
     end
-    --[[--Добавляем ID в чате
-    for i = 0, 1000 do
-        if sampIsPlayerConnectedFixed(i) then
-            local nick = sampGetPlayerNickname(i)
-            local a = text:gsub('{.+}', '')
-            if a:find(nick) and not a:find(nick..'%['..i..'%]') and not a:find('%['..i..'%] '..nick) and not a:find(nick..' %['..i..'%]') then
-                text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-            end
-        end
-    end
-    --Рисуем текст с ID
-    return { color, text }]]
 
-    --ID`s
+    --Чат ID
     if cfg.other.chatid then
 
         for i = 0, sampGetMaxPlayerId(false) do
             if sampIsPlayerConnectedFixed(i) then
 
-                local nick = sampGetPlayerNickname(i)
+                local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
 
                 if text:find(nick) and not text:find(nick..'%['..i..'%]') and not text:find('%['..i..'%] '..nick) and not text:find(nick..' %['..i..'%]') then
                     text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
@@ -4320,34 +4286,18 @@ function sampev.onServerMessage(color, text)
 
     end
 
-    local color = ("0x%06X"):format(bit.rshift(color, 8))
-
-    sampAddChatMessage(text, color)
-
-    return false
+    return {color, text:sub(1, 144)}
 
 end
 
---[[function sampev.onServerMessage(color, text)
-    --ID`s
-    for i = 0, sampGetMaxPlayerId(false) do
-        if sampIsPlayerConnectedFixed(i) then
-
-            local nick = sampGetPlayerNickname(i)
-
-            if text:find(nick) and not text:find(nick..'%['..i..'%]') and not text:find('%['..i..'%] '..nick) and not text:find(nick..' %['..i..'%]') then
-                text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
-            end
-
-        end
-    end
-
-    local color = ("0x%06X"):format(bit.rshift(color, 8))
-
-    sampAddChatMessage(text, color)
-
-    return false
-end]]
+function addMsg(color, text)
+    BS = raknetNewBitStream()
+    raknetBitStreamWriteInt32(BS, color)
+    raknetBitStreamWriteInt32(BS, #text)
+    raknetBitStreamWriteString(BS, text)
+    raknetEmulRpcReceiveBitStream(93, BS)
+    raknetDeleteBitStream(BS)
+end
 
 function sampev.onTextDrawSetString(id, text)
     if id == 2187 then
