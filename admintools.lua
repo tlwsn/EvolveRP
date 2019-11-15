@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.62)
+script_version(2.63)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -4278,7 +4278,7 @@ function sampev.onServerMessage(color, text)
                 local nick = sampGetPlayerNickname(i):gsub('%p', '%%%1')
 
                 if text:find(nick) and not text:find(nick..'%['..i..'%]') and not text:find('%['..i..'%] '..nick) and not text:find(nick..' %['..i..'%]') then
-                    text = text:gsub(sampGetPlayerNickname(i), ('%s [%s]'):format(sampGetPlayerNickname(i), i))
+                    text = text:gsub(replaceNick(sampGetPlayerNickname(i)), ('%s [%s]'):format(replaceNick(sampGetPlayerNickname(i)), i))
                 end
 
             end
@@ -4288,6 +4288,17 @@ function sampev.onServerMessage(color, text)
 
     return {color, text:sub(1, 144)}
 
+end
+
+function replaceNick(nick)
+    local name = ""
+    for i = 1, #nick do
+        local c = nick:sub(i,i)
+        if c == "[" or c == "]" or c == "(" or c == ")" then
+            name = name.."\\"..c
+        else name = name..c end
+    end
+    return name
 end
 
 function addMsg(color, text)
@@ -5643,8 +5654,15 @@ function admchat()
         local mynick = sampGetPlayerNickname(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
         local w1color = ("%06X"):format(bit.band(wcolor, 0xFFFFFF))
 
-        if string.rlower(w1color) == string.match(bit.tohex(config_colors.admchat.color), '00(.+)') and wtext:match('^ <ADM%-CHAT> .+ %[%d+%]: .+') then
-            local nick, id, text = wtext:match('^ <ADM%-CHAT> (.+) %[(%d+)%]: (.+)')
+        if string.rlower(w1color) == string.match(bit.tohex(config_colors.admchat.color), '00(.+)') and wtext:match('^ <ADM%-CHAT> ') then
+            local nick, id, text
+
+            if cfg.other.chatid then
+                nick, id, text = wtext:match('^ <ADM%-CHAT> (%S+) %[(%d+)%]: (.+)')
+            else
+                nick, text = wtext:match('^ <ADM%-CHAT> (%S+): (.+)')
+                id = sampGetPlayerIdByNickname(nick)
+            end
 
             if cfg.other.admlvl > 1 and nick ~= mynick then
 
