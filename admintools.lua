@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.63)
+script_version(2.64)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -1591,68 +1591,69 @@ function main()
                 saveData(cfg, 'moonloader/config/Admin Tools/config.json')
             end
             file:close()
-
-            imset = {
-                set = {
-                    chatid      = imgui.ImBool(cfg.other.chatid),
-                    trace       = imgui.ImBool(cfg.other.trace),
-                    recon       = imgui.ImBool(cfg.other.reconw),
-                    pass        = imgui.ImBool(cfg.other.passb),
-                    apass       = imgui.ImBool(cfg.other.apassb),
-                    sfchat      = imgui.ImBool(cfg.other.chatconsole),
-                    joinquit    = imgui.ImBool(cfg.joinquit.enable),
-                    autoupd     = imgui.ImBool(cfg.other.autoupdate),
-                    killist     = imgui.ImBool(cfg.killlist.startenable),
-                    socrpm      = imgui.ImBool(cfg.other.socrpm),
-                    resend      = imgui.ImBool(cfg.other.resend),
-
-                    passbuff    = imgui.ImBuffer(tostring(cfg.other.password), 256),
-                    apassbuff   = imgui.ImBuffer(tostring(cfg.other.adminpass), 256),
-                    hudfont     = imgui.ImBuffer(tostring(cfg.other.hudfont), 256),
-                    killfont    = imgui.ImBuffer(tostring(cfg.other.killfont), 256),
-                    spiar       = imgui.ImBuffer(u8(tostring(cfg.other.spiartext)), 256),
-
-                    killsize    = imgui.ImInt(cfg.other.killsize),
-                    hudsize     = imgui.ImInt(cfg.other.hudsize),
-                    delay       = imgui.ImInt(cfg.other.delay)                
-                },
-                timers = {
-                    sbiv        = imgui.ImInt(cfg.timers.sbivtimer),
-                    csbiv       = imgui.ImInt(cfg.timers.csbivtimer),
-                    cbug        = imgui.ImInt(cfg.timers.cbugtimer),
-                    mnarko      = imgui.ImInt(cfg.timers.mnarkotimer),
-                    mcbug       = imgui.ImInt(cfg.timers.mcbugtimer),
-                    vkv         = imgui.ImInt(cfg.timers.vkvtimer)
-                },
-                checkers = {
-                    checksize   = imgui.ImInt(cfg.other.checksize),
-                    checkfont   = imgui.ImBuffer(tostring(cfg.other.checkfont), 256),
-                    admcheck    = imgui.ImBool(cfg.admchecker.enable),
-                    playercheck = imgui.ImBool(cfg.playerChecker.enable),
-                    tempcheck   = imgui.ImBool(cfg.tempChecker.enable),
-                    tempwarning = imgui.ImBool(cfg.tempChecker.wadd),
-                    leadcheck   = imgui.ImBool(cfg.leadersChecker.enable),
-                    colornick   = imgui.ImBool(cfg.leadersChecker.cvetnick)
-                },
-                cheat = {
-                    whfont      = imgui.ImBuffer(tostring(cfg.other.whfont), 256),
-                    whsize      = imgui.ImInt(cfg.other.whsize),
-                    skeletwh    = imgui.ImBool(cfg.other.skeletwh),
-                    gm          = imgui.ImBool(cfg.cheat.autogm),
-                    airspeed    = imgui.ImFloat(cfg.cheat.airbrkspeed)
-                },
-                recon = {
-                    enable      = imgui.ImBool(cfg.recon.enable),
-                    fcoff       = imgui.ImFloat(cfg.recon.fCoff),
-                    scoff       = imgui.ImFloat(cfg.recon.sCoff),
-                    bsize       = imgui.ImFloat(cfg.recon.bSize),
-                    fsize       = imgui.ImFloat(cfg.recon.fFontSize),
-                    ssize       = imgui.ImFloat(cfg.recon.sFontSize)
-                }
-            }
-
         end
     end
+
+    -- Переменные настроек
+    imset = {
+        set = {
+            chatid      = imgui.ImBool(cfg.other.chatid),
+            trace       = imgui.ImBool(cfg.other.trace),
+            recon       = imgui.ImBool(cfg.other.reconw),
+            pass        = imgui.ImBool(cfg.other.passb),
+            apass       = imgui.ImBool(cfg.other.apassb),
+            sfchat      = imgui.ImBool(cfg.other.chatconsole),
+            joinquit    = imgui.ImBool(cfg.joinquit.enable),
+            autoupd     = imgui.ImBool(cfg.other.autoupdate),
+            killist     = imgui.ImBool(cfg.killlist.startenable),
+            socrpm      = imgui.ImBool(cfg.other.socrpm),
+            resend      = imgui.ImBool(cfg.other.resend),
+
+            passbuff    = imgui.ImBuffer(tostring(cfg.other.password), 256),
+            apassbuff   = imgui.ImBuffer(tostring(cfg.other.adminpass), 256),
+            hudfont     = imgui.ImBuffer(tostring(cfg.other.hudfont), 256),
+            killfont    = imgui.ImBuffer(tostring(cfg.other.killfont), 256),
+            spiar       = imgui.ImBuffer(u8(tostring(cfg.other.spiartext)), 256),
+
+            killsize    = imgui.ImInt(cfg.other.killsize),
+            hudsize     = imgui.ImInt(cfg.other.hudsize),
+            delay       = imgui.ImInt(cfg.other.delay)                
+        },
+        timers = {
+            sbiv        = imgui.ImInt(cfg.timers.sbivtimer),
+            csbiv       = imgui.ImInt(cfg.timers.csbivtimer),
+            cbug        = imgui.ImInt(cfg.timers.cbugtimer),
+            mnarko      = imgui.ImInt(cfg.timers.mnarkotimer),
+            mcbug       = imgui.ImInt(cfg.timers.mcbugtimer),
+            vkv         = imgui.ImInt(cfg.timers.vkvtimer)
+        },
+        checkers = {
+            checksize   = imgui.ImInt(cfg.other.checksize),
+            checkfont   = imgui.ImBuffer(tostring(cfg.other.checkfont), 256),
+            admcheck    = imgui.ImBool(cfg.admchecker.enable),
+            playercheck = imgui.ImBool(cfg.playerChecker.enable),
+            tempcheck   = imgui.ImBool(cfg.tempChecker.enable),
+            tempwarning = imgui.ImBool(cfg.tempChecker.wadd),
+            leadcheck   = imgui.ImBool(cfg.leadersChecker.enable),
+            colornick   = imgui.ImBool(cfg.leadersChecker.cvetnick)
+        },
+        cheat = {
+            whfont      = imgui.ImBuffer(tostring(cfg.other.whfont), 256),
+            whsize      = imgui.ImInt(cfg.other.whsize),
+            skeletwh    = imgui.ImBool(cfg.other.skeletwh),
+            gm          = imgui.ImBool(cfg.cheat.autogm),
+            airspeed    = imgui.ImFloat(cfg.cheat.airbrkspeed)
+        },
+        recon = {
+            enable      = imgui.ImBool(cfg.recon.enable),
+            fcoff       = imgui.ImFloat(cfg.recon.fCoff),
+            scoff       = imgui.ImFloat(cfg.recon.sCoff),
+            bsize       = imgui.ImFloat(cfg.recon.bSize),
+            fsize       = imgui.ImFloat(cfg.recon.fFontSize),
+            ssize       = imgui.ImFloat(cfg.recon.sFontSize)
+        }
+    }
+
     --Файл своих телепортов
     if not doesFileExist("moonloader/config/Admin Tools/tplist.json") then
         saveData(tplist, "moonloader/config/Admin Tools/tplist.json")
@@ -4269,7 +4270,7 @@ function sampev.onServerMessage(color, text)
 		end
     end
 
-    --Чат ID
+    --Чат ID [ChatID]
     if cfg.other.chatid then
 
         for i = 0, sampGetMaxPlayerId(false) do
@@ -5368,7 +5369,16 @@ function cheat(pam)
             atext("Игрок оффлайн")
         end
     else
-        atext("Введите: /cheat [id]")
+        if recon.id ~= -1 then
+            local lvl = sampGetPlayerScore(recon.id)
+            if lvl > 1 then
+                sampSendChat(("/warn %s 21 cheat"):format(recon.id))
+            else
+                sampSendChat(("/ban %s cheat"):format(recon.id))
+            end
+        else
+            atext("Введите /cheat [id]")
+        end
     end
 end
 
@@ -5662,116 +5672,121 @@ function admchat()
             else
                 nick, text = wtext:match('^ <ADM%-CHAT> (%S+): (.+)')
                 id = sampGetPlayerIdByNickname(nick)
-            end
+            end 
 
-            if cfg.other.admlvl > 1 and nick ~= mynick then
+            if nick and id and text then -- Проверка на ебучее наличие этих ебанных переменных, без них скрипт крашит к хуям --
 
-                if not (punkey.re.id or punkey.warn.id or punkey.ban.id or punkey.prison.id or punkey.auninvite.id or punkey.sban.id or punkey.pspawn.id or punkey.addabl.id) then
+                if cfg.other.admlvl > 1 and nick ~= mynick then
 
-                    if text:match('^re %d+') or text:match('^/re %d+') then
-                        if sampIsPlayerConnected(tonumber(text:match('re (%d+)'))) then
-                            if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('re (%d+)')))) then
-                                punkey.re.id = text:match('re (%d+)')
-                                punkey.re.nick = nick
-                                punkey.delay = os.time()
-                                atext(('Администратор %s [%s] просит зайти в слежку за игроком %s [%s]'):format(nick, id, sampGetPlayerNickname(punkey.re.id), punkey.re.id))
-                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                            end
-                        end
-                    end
+                    if not (punkey.re.id or punkey.warn.id or punkey.ban.id or punkey.prison.id or punkey.auninvite.id or punkey.sban.id or punkey.pspawn.id or punkey.addabl.id) then
 
-                    if text:match('^warn %d+ %d+ .+') or text:match('^/warn %d+ %d+ .+') then
-                        if sampIsPlayerConnected(tonumber(text:match('warn (%d+) %d+ .+'))) then
-                            if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('warn (%d+) %d+ .+')))) then
-                                punkey.warn.id, punkey.warn.day, punkey.warn.reason = text:match('warn (%d+) (%d+) (.+)')
-                                punkey.warn.admin = nick
-                                punkey.delay = os.time()
-                                atext(("Администратор %s [%s] хочет заварнить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.warn.id), punkey.warn.id, punkey.warn.reason))
-                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                            end
-                        end
-                    end
-
-                    if text:match('^ban %d+ .+') or text:match('^/ban %d+ .+') then
-                        if sampIsPlayerConnected(tonumber(text:match('ban (%d+) .+'))) then
-                            if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('ban (%d+) .+')))) then
-                                punkey.ban.id, punkey.ban.reason = text:match('ban (%d+) (.+)')
-                                punkey.ban.admin = nick
-                                punkey.delay = os.time()
-                                atext(("Администратор %s [%s] хочет забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.ban.id), punkey.ban.id, punkey.ban.reason))
-                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                            end
-                        end
-                    end
-
-                    if text:match('^prison %d+ %d+ .+') or text:match('^/prison %d+ %d+ .+') then
-                        if sampIsPlayerConnected(tonumber(text:match('prison (%d+) %d+ .+'))) then
-                            if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('prison (%d+) %d+ .+')))) then
-                                punkey.prison.id, punkey.prison.day, punkey.prison.reason = text:match('prison (%d+) (%d+) (.+)')
-                                punkey.prison.admin = nick
-                                punkey.delay = os.time()
-                                atext(("Администратор %s [%s] хочет посадить в присон игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.prison.id), punkey.prison.id, punkey.prison.reason))
-                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                            end
-                        end
-                    end
-
-                    if text:match('^pspawn %d+') or text:match('^/pspawn %d+') then
-                        if sampIsPlayerConnected(tonumber(text:match('pspawn (%d+)'))) then
-                            punkey.pspawn.id = text:match('pspawn (%d+)')
-                            punkey.pspawn.admin = nick
-                            punkey.delay = os.time()
-                            atext(("Администратор %s [%s] хочет заспавнить игрока %s [%s]"):format(nick, id, sampGetPlayerNickname(punkey.pspawn.id), punkey.pspawn.id))
-                            atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                        end
-                    end
-
-                    if cfg.other.admlvl >= 3 then
-
-                        if text:match("^/addabl %d+ %d+ %d+ .+") or text:match("^addabl %d+ %d+ %d+ .+") then
-                            if sampIsPlayerConnected(tonumber(text:match("addabl (%d+) %d+ %d+ .+"))) then
-                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match("addabl (%d+) %d+ %d+ .+")))) then
-                                    punkey.addabl.id, punkey.addabl.day, punkey.addabl.group, punkey.addabl.reason = text:match("addabl (%d+) (%d+) (%d+) (.+)")
-                                    punkey.addabl.admin = nick
+                        if text:match('^re %d+') or text:match('^/re %d+') then
+                            if sampIsPlayerConnected(tonumber(text:match('re (%d+)'))) then
+                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('re (%d+)')))) then
+                                    punkey.re.id = text:match('re (%d+)')
+                                    punkey.re.nick = nick
                                     punkey.delay = os.time()
-                                    atext(("Администратор %s [%s] хочет выдать ЧС игроку %s [%s]. Группа: %s. Причина: %s"):format(nick, id, sampGetPlayerNickname(punkey.addabl.id), punkey.addabl.id, punkey.addabl.group, punkey.addabl.reason))
+                                    atext(('Администратор %s [%s] просит зайти в слежку за игроком %s [%s]'):format(nick, id, sampGetPlayerNickname(punkey.re.id), punkey.re.id))
                                     atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
                                 end
                             end
                         end
 
-                    end
-
-                    if cfg.other.admlvl >= 4 then
-
-                        if text:match('^auninvite %d+ .+') or text:match('^/auninvite %d+ .+') then
-                            if sampIsPlayerConnected(tonumber(text:match('auninvite (%d+) .+'))) then
-                                punkey.auninvite.id, punkey.auninvite.reason = text:match('auninvite (%d+) (.+)')
-                                punkey.auninvite.admin = nick
-                                punkey.delay = os.time()
-                                atext(("Администратор %s [%s] хочет уволить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.auninvite.id), punkey.auninvite.id, punkey.auninvite.reason))
-                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                            end
-                        end
-
-                        if text:match('^sban %d+ .+') or text:match('^/sban %d+ .+') then
-                            if sampIsPlayerConnected(tonumber(text:match('sban (%d+) .+'))) then
-                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('sban (%d+) .+')))) then
-                                    punkey.sban.id, punkey.sban.reason = text:match('sban (%d+) (.+)')
-                                    punkey.sban.admin = nick
+                        if text:match('^warn %d+ %d+ .+') or text:match('^/warn %d+ %d+ .+') then
+                            if sampIsPlayerConnected(tonumber(text:match('warn (%d+) %d+ .+'))) then
+                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('warn (%d+) %d+ .+')))) then
+                                    punkey.warn.id, punkey.warn.day, punkey.warn.reason = text:match('warn (%d+) (%d+) (.+)')
+                                    punkey.warn.admin = nick
                                     punkey.delay = os.time()
-                                    atext(("Администратор %s [%s] хочет тихо забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.sban.id), punkey.sban.id, punkey.sban.reason))
+                                    atext(("Администратор %s [%s] хочет заварнить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.warn.id), punkey.warn.id, punkey.warn.reason))
                                     atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
                                 end
                             end
                         end
 
-                    end
+                        if text:match('^ban %d+ .+') or text:match('^/ban %d+ .+') then
+                            if sampIsPlayerConnected(tonumber(text:match('ban (%d+) .+'))) then
+                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('ban (%d+) .+')))) then
+                                    punkey.ban.id, punkey.ban.reason = text:match('ban (%d+) (.+)')
+                                    punkey.ban.admin = nick
+                                    punkey.delay = os.time()
+                                    atext(("Администратор %s [%s] хочет забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.ban.id), punkey.ban.id, punkey.ban.reason))
+                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                end
+                            end
+                        end
 
-                else
-                    atext(("У вас есть активный запрос на выдачу наказания. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                        if text:match('^prison %d+ %d+ .+') or text:match('^/prison %d+ %d+ .+') then
+                            if sampIsPlayerConnected(tonumber(text:match('prison (%d+) %d+ .+'))) then
+                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('prison (%d+) %d+ .+')))) then
+                                    punkey.prison.id, punkey.prison.day, punkey.prison.reason = text:match('prison (%d+) (%d+) (.+)')
+                                    punkey.prison.admin = nick
+                                    punkey.delay = os.time()
+                                    atext(("Администратор %s [%s] хочет посадить в присон игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.prison.id), punkey.prison.id, punkey.prison.reason))
+                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                end
+                            end
+                        end
+
+                        if text:match('^pspawn %d+') or text:match('^/pspawn %d+') then
+                            if sampIsPlayerConnected(tonumber(text:match('pspawn (%d+)'))) then
+                                punkey.pspawn.id = text:match('pspawn (%d+)')
+                                punkey.pspawn.admin = nick
+                                punkey.delay = os.time()
+                                atext(("Администратор %s [%s] хочет заспавнить игрока %s [%s]"):format(nick, id, sampGetPlayerNickname(punkey.pspawn.id), punkey.pspawn.id))
+                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                            end
+                        end
+
+                        if cfg.other.admlvl >= 3 then
+
+                            if text:match("^/addabl %d+ %d+ %d+ .+") or text:match("^addabl %d+ %d+ %d+ .+") then
+                                if sampIsPlayerConnected(tonumber(text:match("addabl (%d+) %d+ %d+ .+"))) then
+                                    if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match("addabl (%d+) %d+ %d+ .+")))) then
+                                        punkey.addabl.id, punkey.addabl.day, punkey.addabl.group, punkey.addabl.reason = text:match("addabl (%d+) (%d+) (%d+) (.+)")
+                                        punkey.addabl.admin = nick
+                                        punkey.delay = os.time()
+                                        atext(("Администратор %s [%s] хочет выдать ЧС игроку %s [%s]. Группа: %s. Причина: %s"):format(nick, id, sampGetPlayerNickname(punkey.addabl.id), punkey.addabl.id, punkey.addabl.group, punkey.addabl.reason))
+                                        atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                    end
+                                end
+                            end
+
+                        end
+
+                        if cfg.other.admlvl >= 4 then
+
+                            if text:match('^auninvite %d+ .+') or text:match('^/auninvite %d+ .+') then
+                                if sampIsPlayerConnected(tonumber(text:match('auninvite (%d+) .+'))) then
+                                    punkey.auninvite.id, punkey.auninvite.reason = text:match('auninvite (%d+) (.+)')
+                                    punkey.auninvite.admin = nick
+                                    punkey.delay = os.time()
+                                    atext(("Администратор %s [%s] хочет уволить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.auninvite.id), punkey.auninvite.id, punkey.auninvite.reason))
+                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                end
+                            end
+
+                            if text:match('^sban %d+ .+') or text:match('^/sban %d+ .+') then
+                                if sampIsPlayerConnected(tonumber(text:match('sban (%d+) .+'))) then
+                                    if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('sban (%d+) .+')))) then
+                                        punkey.sban.id, punkey.sban.reason = text:match('sban (%d+) (.+)')
+                                        punkey.sban.admin = nick
+                                        punkey.delay = os.time()
+                                        atext(("Администратор %s [%s] хочет тихо забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.sban.id), punkey.sban.id, punkey.sban.reason))
+                                        atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                    end
+                                end
+                            end
+
+                        end
+
+                    else
+                        atext(("У вас есть активный запрос на выдачу наказания. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                    end
                 end
+
             end
+
         end
 
     end
