@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.64)
+script_version(2.65)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -2507,13 +2507,14 @@ function imgui.OnDrawFrame()
         imgui.TextColored(ImVec4(255, 0, 0, 1), u8"Health:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.hp))
         imgui.TextColored(ImVec4(0, 49, 245, 1), u8"Car HP:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.carhp))
         imgui.TextColored(ImVec4(0, 49, 245, 1), u8"Speed:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.speed))
-        imgui.TextColored(ImVec4(255, 255, 0, 1), u8"Ping:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.ping))
-        imgui.TextColored(ImVec4(255, 255, 0, 1), u8"Ammo:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.ammo))
+        imgui.TextColored(ImVec4(225, 0, 255, 1), u8"Ammo:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.ammo))
         imgui.TextColored(ImVec4(225, 0, 255, 1), u8"Shot:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.shot))
         imgui.TextColored(ImVec4(225, 0, 255, 1), u8"Time Shot:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.timeshot))
-        imgui.TextColored(ImVec4(0, 255, 0, 1), u8"AFK Time:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.afktime))
         imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Engine:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.engine))
         imgui.TextColored(ImVec4(0, 255, 0, 1), u8"Pro Sport:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.prosport))
+        imgui.TextColored(ImVec4(255, 255, 0, 1), u8"AFK Time:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.afktime))
+        imgui.TextColored(ImVec4(255, 255, 0, 1), u8"Ping:"); imgui.SameLine(spacing); imgui.Text(('%s'):format(imtext.ping))
+        imgui.TextColored(ImVec4(255, 255, 0, 1), "Packet Loss:"); imgui.SameLine(spacing); imgui.Text(("%s"):format(imtext.packetloss))
         imgui.PopStyleVar()
         if data.imgui.menu == 7 then
             local wX, wY = imgui.GetWindowWidth(), imgui.GetWindowHeight()
@@ -2977,7 +2978,7 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Использование: /vkv [id]')
             end
 			if imgui.CollapsingHeader('/cheat', btn_size) then
-                imgui.TextWrapped(u8 'Описание: Забанить(1 уровень) / заварнить(2+ уровни) по причине "cheat"')
+                imgui.TextWrapped(u8 'Описание: Забанить(1 уровень) / заварнить(2+ уровни) по причине "cheat"\nВ реконе можно ид не указывать, сразу накажет игрока, за которым слежка')
                 imgui.TextWrapped(u8 'Использование: /cheat [id]')
             end
             if imgui.CollapsingHeader('/kills', btn_size) then
@@ -4313,7 +4314,7 @@ end
 
 function sampev.onTextDrawSetString(id, text)
     if id == 2187 then
-        imtext.lvl, imtext.warn, imtext.arm, imtext.hp, imtext.carhp, imtext.speed, imtext.ping, imtext.ammo, imtext.shot, imtext.timeshot, imtext.afktime, imtext.engine, imtext.prosport = text:match('~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)')
+        imtext.lvl, imtext.warn, imtext.arm, imtext.hp, imtext.carhp, imtext.speed, imtext.ammo, imtext.shot, imtext.timeshot, imtext.engine, imtext.prosport, imtext.afktime, imtext.ping, imtext.packetloss = text:match('~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)~n~(.+)')
     end
     if id == 2188 then
         if text:match('~w~.+~n~ID:') then
