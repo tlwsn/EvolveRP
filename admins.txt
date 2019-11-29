@@ -9,7 +9,6 @@ Ziggi_Shmiggi
 Thomas_Lawson
 Sam_Teller
 Riki_Maru
-Fill_Slipslide
 Vincent_Vinograd
 Santiago_Winston
 Morphius_Mulphers
@@ -43,3 +42,9 @@ Christian_Moon
 Riley_Evans
 Laymont_Murray
 Hayley_Lewis
+Adrian_Waters
+Trenton_Plitts
+Serega_Cocaine
+Juliette_Henderson
+Vlad_Lordi
+Ivan_Rockefeller
