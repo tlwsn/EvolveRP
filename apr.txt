@@ -13,7 +13,6 @@ Eazy_Williams
 Francis_Malomadro
 Maikl_Terano
 Morphius_Mulphers
-Fill_Slipslide
 Riki_Maru
 Yoshito_Nagasaki
 Elijah_Smith
@@ -33,7 +32,6 @@ Broderick_Mulphers
 August_Midtgaard
 Maxim_Rock
 Noe_Rodriguez
-Masson_Aoki
 Christian_Moon
 Riley_Evans
 Laymont_Murray
@@ -43,3 +41,9 @@ Mihail_Klimov
 Julio_Espejo
 Amaday_Hondez
 Annamae_Northwood
+Adrian_Waters
+Trenton_Plitts
+Serega_Cocaine
+Juliette_Henderson
+Vlad_Lordi
+Ivan_Rockefeller
