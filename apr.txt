@@ -13,7 +13,6 @@ Eazy_Williams
 Francis_Malomadro
 Maikl_Terano
 Morphius_Mulphers
-Riki_Maru
 Yoshito_Nagasaki
 Elijah_Smith
 Raul_Malomadro
@@ -47,3 +46,4 @@ Serega_Cocaine
 Juliette_Henderson
 Vlad_Lordi
 Ivan_Rockefeller
+Sam_Teller1
