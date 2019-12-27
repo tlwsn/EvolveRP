@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.65)
+script_version(2.66)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -55,6 +55,7 @@ local smsids                    = {}
 local admins                    = {}
 local nametagCoords             = {}
 local fonl                      = {}
+local chatB                     = {}
 local checkf                    = {f= {}}
 local oocLimit                  = {state = true, msg = ""}
 local mainwindow                = imgui.ImBool(false)
@@ -502,10 +503,21 @@ function saveData(table, path)
     end
 end
 
+function bgra_to_argb(bgra)
+    local b, g, r, a = explode_argb(bgra)
+    return join_argb(a, r, g, b)
+  end
+
 function argb_to_rgba(argb)
     local a, r, g, b = explode_argb(argb)
     return join_argb(r, g, b, a)
 end
+
+function set_argb_alpha(color, alpha)
+    local _, r, g, b = explode_argb(color)
+      return join_argb(alpha, r, g, b)
+end
+
 
 function explode_argb(argb)
     local a = bit.band(bit.rshift(argb, 24), 0xFF)
@@ -637,6 +649,7 @@ local cfg = {
         chatid = true
     }
 }
+
 local fraklist = {
     POLICE = {
         [1] = 'Кадет',
@@ -1841,15 +1854,22 @@ function main()
             thisScript():unload()
         end
     end
+
+    -- Включение кил-листа
     if cfg.killlist.startenable then killlistmode = 1 end
+    
     --Автоалогин
     if #tostring(cfg.other.adminpass) >=6 and cfg.other.apassb then autoal() end
+    
     --Автообновление
     if cfg.other.autoupdate then autoupdate("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/update.json", "https://evolve-rp.su/viewtopic.php?f=21&t=151439") end
+    
     --Запускаем ВХ
     lua_thread.create(wh)
+
     --Регистрируем быстрые ответы
     registerFastAnswer()
+
     --Загружаем список админов
     httpRequest("https://raw.githubusercontent.com/WhackerH/EvolveRP/master/admins.txt", nil, function(response, code, headers, status) 
         if response then
@@ -1862,7 +1882,9 @@ function main()
             print("Не удалось загрузить список админов")
         end
     end)
+
     --Регистрируем команды
+    sampRegisterChatCommand("checkSklad", checkSklad)
     sampRegisterChatCommand("oncapt", oncapt)
     sampRegisterChatCommand("vkv", vkv)
     sampRegisterChatCommand("ranks", ranks)
@@ -1910,10 +1932,13 @@ function main()
     sampRegisterChatCommand('addplayer', addplayer)
     sampRegisterChatCommand('delplayer', delplayer)
     sampRegisterChatCommand('deladm', deladm)
+    
     --Создаем шрифты
     initializeRender()
+    
     --Применяем стиль ImGui
     apply_custom_style()
+    
     --Регистрируем бинды
 	for k, v in pairs(tBindList) do
         rkeys.registerHotKey(v.v, true, onHotKey)
@@ -1931,6 +1956,7 @@ function main()
     pundenybind     = rkeys.registerHotKey(config_keys.pundeny.v, true, pundeny)
     whbind          = rkeys.registerHotKey(config_keys.whkey.v, true, whkey)
     skeletwhbind    = rkeys.registerHotKey(config_keys.skeletwhkey.v, true, skeletwh)
+    
     --Обработчик onWindowMessage
 	addEventHandler("onWindowMessage", function (msg, wparam, lparam)
         if msg == wm.WM_KEYDOWN then
@@ -1946,8 +1972,10 @@ function main()
             end
         end
     end)
+
     --АвтоГМ
     if cfg.cheat.autogm then funcsStatus.Inv = true end
+
     --Создаем потоки
     lua_thread.create(upd_locals)
     lua_thread.create(upd_checker)
@@ -1958,12 +1986,17 @@ function main()
     lua_thread.create(warningsKey)
     lua_thread.create(admchat)
     lua_thread.create(whon)
+
     --Загружаем список для чекеров
     loadUsers()
+
     --Загружаем анимации для флая
     requestAnimation("SWIM")
     requestAnimation("PARACHUTE")
+
+    --Беск цикл
     while true do wait(0)
+
         --Бесконечные патроны
         if not recon.state then
             unlimBullets(oCheat.unlimBullets.v)
@@ -2615,6 +2648,7 @@ function imgui.OnDrawFrame()
         if imgui.Button(u8 "Редактор чекера", btn_size) then checkerEdit.window.v = not checkerEdit.window.v end
         --if imgui.Button(u8 'Тюнинг авто', btn_size) then tunwindow.v = not tunwindow.v end
         imgui.End()
+
         if checkerEdit.window.v then
             imgui.SetNextWindowSize(imgui.ImVec2(780, 522), imgui.Cond.FirstUseEver)
             imgui.SetNextWindowPos(imgui.ImVec2(screenx/2, screeny/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
@@ -3080,6 +3114,10 @@ function imgui.OnDrawFrame()
             if imgui.CollapsingHeader('/oncapt', btn_size) then
                 imgui.TextWrapped(u8 'Описание: Начать / остановить запись отлетевших в гетто')
                 imgui.TextWrapped(u8 'Использование: /oncapt')
+            end
+            if imgui.CollapsingHeader("/checksklad") then
+                imgui.TextWrapped(u8 "Узнать сколько РП склада у банд")
+                imgui.TextWrapped(u8 'Использование: /checksklad')
             end
             imgui.End()
         end
@@ -3874,6 +3912,16 @@ function sampev.onSetPlayerPos()
     end
 end
 
+function sampev.onPlayerChatBubble(playerId, color, distance, duration, message)
+    if sampIsPlayerConnected(playerId) then
+        if not message:match("%[AFK%] %[%S+ секунд%]") then
+            color = bgra_to_argb(color)
+            --color = set_argb_alpha(color, 0xA0)
+            table.insert(chatB, {nick = sampGetPlayerNickname(playerId), id = playerId, color = color, message = message})
+        end
+    end
+end
+
 function sampev.onUnoccupiedSync(id, data)
     if data.roll.x >= 10000.0 or data.roll.y >= 10000.0 or data.roll.z >= 10000.0 or data.roll.x <= -10000.0 or data.roll.y <= -10000.0 or data.roll.z <= -10000.0 then
         cwid = id
@@ -3905,15 +3953,24 @@ function sampev.onServerMessage(color, text)
     otletfunc(text, color)
     --Лог в консоли сампфункса
     if cfg.other.chatconsole then sampfuncsLog(text) end
+
     --Получаем лвл админки
     if text:match('^ Вы авторизировались как модератор %d+ уровня$') then cfg.other.admlvl = tonumber(text:match('^ Вы авторизировались как модератор (%d+) уровня$')) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
     --Для выдачи наказаний по кнопке
     if cfg.other.admlvl > 1 and color == -10270806 then
-        if punkey.warn.id or punkey.ban.id or punkey.prison.id then
-            if text:find(sampGetPlayerNickname(punkey.warn.id)) or text:find(sampGetPlayerNickname(punkey.ban.id)) or text:find(sampGetPlayerNickname(punkey.prison.id)) then
-                if not text:find(mynick) then
-                    atext('Команду выполнил другой администратор')
-                    punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}, addabl = {}}
+        if punkey.re.id or punkey.warn.id or punkey.ban.id or punkey.prison.id or punkey.auninvite.id or punkey.sban.id or punkey.pspawn.id or punkey.addabl.id then
+            for k, v in pairs(punkey) do
+                if type(v) == "table" then
+                    if v.id ~= nil then
+                        if sampIsPlayerConnected(v.id) then
+                            if text:find(sampGetPlayerNickname(v.id)) then
+                                if not text:find(mynick) then
+                                    atext('Команду выполнил другой администратор')
+                                    punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}, addabl = {}}
+                                end
+                            end
+                        end
+                    end
                 end
             end
         end
@@ -4341,7 +4398,7 @@ function sampev.onShowTextDraw(id, textdraw)
 end
 
 function sampev.onSendSpectatorSync(d)
-    if cfg.recon.enable then
+    if cfg.recon.enable and recon.state then
         d.leftRightKeys = 0
         d.upDownKeys = 0
         d.keysData = 0
@@ -4395,32 +4452,49 @@ end
 
 function sampev.onTogglePlayerControllable(bool) if swork then return false end end
 
+function sampev.onAimSync(playerId, data)
+    if tonumber(playerId) == tonumber(traceid) then
+        if sampIsPlayerConnected(playerId) then
+            local file = io.open("moonloader/Admin Tools/aimdata.txt", "a")
+            file:write(("%s [%s] camMode: %s / weaponstate: %s / aimZ: %s\n"):format(sampGetPlayerNickname(playerId), playerId, data.camMode, data.weaponState, data.aimZ))
+            file:close()
+        end
+    end
+end
+
 function sampev.onBulletSync(playerId, data)
     if tonumber(playerId) == tonumber(traceid) then
-        BulletSync.lastId = BulletSync.lastId + 1
-		if BulletSync.lastId < 1 or BulletSync.lastId > BulletSync.maxLines then
-			BulletSync.lastId = 1
-		end
-        local id = BulletSync.lastId
-        --print(("%s [%s] / origin: %s %s %s / target: %s %s %s / type: %s"):format(sampGetPlayerNickname(playerId), playerId, data.origin.x, data.origin.y, data.origin.z, data.target.x, data.target.y, data.target.z, data.targetType))
-        if data.target.x ~= nil and data.target.y ~= nil and data.target.z ~= nil then 
-            if data.target.x <= 6 and  data.target.y <= 6 and data.target.z <= 0 then
-                if data.targetType == 1 then
-                    if data.targetId ~= 65535 then
-                        local tX, tY, tZ = getCharCoordinates(select(2, sampGetCharHandleBySampPlayerId(data.targetId)))
-                        data.target.x, data.target.y, data.target.z = tX, tY, tZ
+        if sampIsPlayerConnected(playerId) then
+            --------
+            local file = io.open("moonloader/Admin Tools/shotlog.txt", "a")
+            file:write(("%s [%s] origin: %s %s %s / target: %s %s %s / type: %s\n"):format(sampGetPlayerNickname(playerId), playerId, data.origin.x, data.origin.y, data.origin.z, data.target.x, data.target.y, data.target.z, data.targetType))
+            file:close()
+            --------
+            BulletSync.lastId = BulletSync.lastId + 1
+            if BulletSync.lastId < 1 or BulletSync.lastId > BulletSync.maxLines then
+                BulletSync.lastId = 1
+            end
+            local id = BulletSync.lastId
+            --print(("%s [%s] / origin: %s %s %s / target: %s %s %s / type: %s"):format(sampGetPlayerNickname(playerId), playerId, data.origin.x, data.origin.y, data.origin.z, data.target.x, data.target.y, data.target.z, data.targetType))
+            if data.target.x ~= nil and data.target.y ~= nil and data.target.z ~= nil then 
+                if data.target.x <= 6 and  data.target.y <= 6 and data.target.z <= 0 then
+                    if data.targetType == 1 then
+                        if data.targetId ~= 65535 then
+                            local tX, tY, tZ = getCharCoordinates(select(2, sampGetCharHandleBySampPlayerId(data.targetId)))
+                            data.target.x, data.target.y, data.target.z = tX, tY, tZ
+                        else
+                            data.targetType = 5
+                        end
                     else
                         data.targetType = 5
                     end
-                else
-                    data.targetType = 5
                 end
+                BulletSync[id].enable = true
+                BulletSync[id].tType = data.targetType
+                BulletSync[id].time = os.time() + 15
+                BulletSync[id].o.x, BulletSync[id].o.y, BulletSync[id].o.z = data.origin.x, data.origin.y, data.origin.z
+                BulletSync[id].t.x, BulletSync[id].t.y, BulletSync[id].t.z = data.target.x, data.target.y, data.target.z
             end
-            BulletSync[id].enable = true
-            BulletSync[id].tType = data.targetType
-            BulletSync[id].time = os.time() + 15
-            BulletSync[id].o.x, BulletSync[id].o.y, BulletSync[id].o.z = data.origin.x, data.origin.y, data.origin.z
-            BulletSync[id].t.x, BulletSync[id].t.y, BulletSync[id].t.z = data.target.x, data.target.y, data.target.z
         end
     end
 end
@@ -4441,24 +4515,28 @@ function sampev.onPlayerJoin(id, clist, isNPC, nick)
     for i, v in ipairs(checker.admins.loaded) do
 		if nick == v['nick'] then
             table.insert(checker.admins.online, {nick = nick, id = id, color = v['color'], text = v['text']})
+            rebuildUsers()
 			break
 		end
     end
     for i, v in ipairs(checker.players.loaded) do
 		if nick == v['nick'] then
-			table.insert(checker.players.online, {nick = nick, id = id, color = v['color'], text = v['text']})
+            table.insert(checker.players.online, {nick = nick, id = id, color = v['color'], text = v['text']})
+            rebuildUsers()
 			break
 		end
 	end
 	for i, v in ipairs(checker.temp.loaded) do
 		if nick == v['nick'] then
-			table.insert(checker.temp.online, {nick = nick, id = id, color = v['color'], text = v['text']})
+            table.insert(checker.temp.online, {nick = nick, id = id, color = v['color'], text = v['text']})
+            rebuildUsers()
 			break
 		end
     end
     for i, v in pairs(checker.leaders.loaded) do
         if nick == checker.leaders.loaded[i] then
             table.insert(checker.leaders.online, {nick = nick, id = id, frak = i})
+            rebuildUsers()
             break
         end
     end
@@ -4495,6 +4573,8 @@ function renders()
             local playerRenderPosY = cfg.playerChecker.posy
             local tempRenderPosY = cfg.tempChecker.posy
             local leadersRenderPosY = cfg.leadersChecker.posy
+            local chatBposx = 1920/2
+            local chatBposy = 1080/2
             local hposx, hposy, hposz = getCharCoordinates(PLAYER_PED)
             local hposint = getActiveInterior()
             screenx, screeny = getScreenResolution()
@@ -4503,6 +4583,7 @@ function renders()
             local hudheight = renderGetFontDrawHeight(hudfont)
             local killheight = renderGetFontDrawHeight(killfont)
             local hudtext = ""
+
             if #checker.temp.online == 0 then
                 tempRender = tempRenderPosY-(#checker.temp.online + 1)*checkerheight
             else
@@ -4523,6 +4604,15 @@ function renders()
             else
                 leaderRender = leadersRenderPosY - #checker.leaders.online*checkerheight
             end
+
+            --[[for k, v in pairs(chatB) do
+                local color = bit.tohex(ARGBtoRGB(v.color)):match("00(.+)")
+                renderFontDrawText(hudfont, ("%s | %s | %s [%s]: {%s}%s"):format(v.color, color, v.nick, v.id, color, v.message), chatBposx, chatBposy, -1)
+                chatBposy = chatBposy + renderGetFontDrawHeight(hudfont)
+            end]]
+
+            if #chatB > 7 then table.remove(chatB, 1) end
+
             if killlistmode == 1 then
                 local killsy = cfg.killlist.posy
                 for k, v in ipairs(tkilllist) do
@@ -4534,6 +4624,7 @@ function renders()
                     killsy = killsy + killheight
                 end
             end
+
             if cfg.joinquit.enable then
                 if notification_connect then
                     if localClock() - notification_connect.tick <= notification_connect.duration then
@@ -4663,7 +4754,7 @@ function check_keystrokes()
                 if isKeyJustPressed(key.VK_INSERT) then
                     funcsStatus.Inv = not funcsStatus.Inv
                 end
-                if isKeyJustPressed(config_keys.airbrkkey.v) then
+                if wasKeyPressed(config_keys.airbrkkey.v) then
                     airspeed = cfg.cheat.airbrkspeed
                     funcsStatus.AirBrk = not funcsStatus.AirBrk
                     if funcsStatus.AirBrk then
@@ -5036,21 +5127,30 @@ end
 
 function warningsKey()
     while true do wait(0)
-        local wtext, wprefix, wcolor, wpcolor = sampGetChatString(99)
-        if wtext:match('%[SWarning%]%:{%S+}  Игрок  %S+ %[%d+%] - .+') then -- Варнинги печени.
-            cwid = wtext:match('%[SWarning%]:%{%S+%}  Игрок  %S+ %[(%d+)%] - .+')
-        end
-        if wtext:match('<Warning> {%S+}%S+%[%d+%] .+') then --Варнинг раймонда
-            cwid = wtext:match('<Warning> {%S+}%S+%[(%d+)%] .+')
-        end
-        if wtext:match('<Warning> {%S+}%S+%[%d+%] {FFFFFF}.+') then --Варнинг женьки буэно
-            cwid = wtext:match('<Warning> {%S+}%S+%[(%d+)%] {FFFFFF}.+')
-        end
-        if wtext:match('Warning:{%S+} %S+%[(%d+)%] .+') then --Варнинг макарона (старый)
-            cwid = wtext:match('Warning:{%S+} %S+%[(%d+)%] .+')
-        end
-        if wtext:match('%[mkrn wrn%]%:{%S+} %S+%[%d+%] .+') then --Варнинг макарона (новый)
-            cwid = wtext:match('%[mkrn wrn%]:{%S+} %S+%[(%d+)%] .+')
+        local i = 99
+        while i > 1 do 
+            local wtext, wprefix, wcolor, wpcolor = sampGetChatString(i)
+            if wtext:match('%[SWarning%]%:{%S+}  Игрок  %S+ %[%d+%] - .+') then -- Варнинги печени.
+                cwid = wtext:match('%[SWarning%]:%{%S+%}  Игрок  %S+ %[(%d+)%] - .+')
+                break
+            end
+            if wtext:match('<Warning> {%S+}%S+%[%d+%] .+') then --Варнинг раймонда
+                cwid = wtext:match('<Warning> {%S+}%S+%[(%d+)%] .+')
+                break
+            end
+            if wtext:match('<Warning> {%S+}%S+%[%d+%] {FFFFFF}.+') then --Варнинг женьки буэно
+                cwid = wtext:match('<Warning> {%S+}%S+%[(%d+)%] {FFFFFF}.+')
+                break
+            end
+            if wtext:match('Warning:{%S+} %S+%[(%d+)%] .+') then --Варнинг макарона (старый)
+                cwid = wtext:match('Warning:{%S+} %S+%[(%d+)%] .+')
+                break
+            end
+            if wtext:match('%[mkrn wrn%]%:{%S+} %S+%[%d+%] .+') then --Варнинг макарона (новый)
+                cwid = wtext:match('%[mkrn wrn%]:{%S+} %S+%[(%d+)%] .+')
+                break
+            end
+            i = i - 1
         end
     end
 end
@@ -5412,7 +5512,7 @@ function cip(pam)
     local isRdata = false
     if #ips == 2 then
         atext('Идет проверка IP адресов. Ожидайте..')
-        local site = "http://f0328004.xsph.ru/?ip1="..ips[1].."&ip2="..ips[2]
+        local site = "http://a0380695.xsph.ru/?ip1="..ips[1].."&ip2="..ips[2]
         httpRequest(site, _, function(response, code, headers, status)
             if response then
                 rdata = decodeJson(response)
@@ -5461,7 +5561,7 @@ function givehb(pam)
                     if doesFileExist('moonloader/Admin Tools/hblist/'..params[2]..'.txt') then
                         atext('Начата выдача объектов игроку {66FF00}'..sampGetPlayerNickname(id)..' ['..id..']')
                         for line in io.lines('moonloader/Admin Tools/hblist/'..params[2]..'.txt') do
-                            sampSendChat('/hbject '..id..' '..line)
+                            sampSendChat('/hbject '..id..' '..u8:decode(line))
                             wait(cfg.other.delay)
                         end
                         atext('Выдача окончена')
@@ -6354,7 +6454,8 @@ function rebuildUsers()
     checker.temp.online     = {} 
     checker.leaders.online  = {}
     for k, v in pairs(checker) do
-        for i = 0, sampGetMaxPlayerId(false) do
+        local i = sampGetMaxPlayerId(false)
+        while i ~= -1 do
             if sampIsPlayerConnectedFixed(i) then
                 for k1, v1 in pairs(v.loaded) do
                     if type(v1) == 'string' then
@@ -6368,7 +6469,23 @@ function rebuildUsers()
                     end
                 end
             end
+            i = i -1
         end
+        --[[for i = 0, sampGetMaxPlayerId(false) do
+            if sampIsPlayerConnectedFixed(i) then
+                for k1, v1 in pairs(v.loaded) do
+                    if type(v1) == 'string' then
+                        if v1 == sampGetPlayerNickname(i) then
+                            table.insert(checker.leaders.online, {nick = v1, id = i, frak = k1})
+                        end
+                    else
+                        if v1.nick == sampGetPlayerNickname(i) then
+                            table.insert(v.online, {nick = v1.nick, color = v1.color, id = i, text = v1.text})
+                        end
+                    end
+                end
+            end
+        end]]
     end
 end
 
@@ -6758,4 +6875,29 @@ function TurnCamTo(coordX, coordY, coordZ)
     local FIXED_X = AngleX - (math.pi / 2 + 0.04)
     local FIXED_Z = AngleZ - (math.pi / 2 - 0.103)
     setCameraPositionUnfixed(-FIXED_Z, -FIXED_X)
+end
+
+function checkSklad()
+    local isDownloaded = false
+    local result
+    
+    atext("Идет загрузка данных..")
+    httpRequest("https://script.google.com/macros/s/AKfycbwbUxndx1iUJlTinfdyy5_xCCKGqkWJFmjph35Qyza5tkspeQs/exec", nil, function(response, code, headers, status)
+        if response then
+            result = decodeJson(response)
+            isDownloaded = true
+        else
+            isDownloaded = true
+        end
+    end)
+
+    lua_thread.create(function()
+        while not isDownloaded do wait(0) end
+        if result then
+            local text = "{FFFFFF}Банда\t{FFFFFF}Кол-во матов\nGrove\t"..result["GROVE"].."\nBallas\t"..result["BALLAS"].."\nVagos\t"..result["VAGOS"].."\nAztec\t"..result["AZTEC"].."\nRifa\t"..result["RIFA"]
+            sampShowDialog(2281337, "Кол-во матов | {AE433D}РП склад", text, "»", "x", 5)
+        else
+            atext("Произошла ошибка загрузки.")
+        end
+    end)
 end
