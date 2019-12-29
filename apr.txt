@@ -9,7 +9,6 @@ Edward_Franklin
 Eduardo_Carmone
 Thomas_Breezy
 Santiago_Winston
-Eazy_Williams
 Francis_Malomadro
 Maikl_Terano
 Morphius_Mulphers
@@ -50,6 +49,7 @@ Sam_Teller1
 Fabricio_Rodriguez
 Matthew_Willis
 Fricolass_Moretti
+Fear_Fallen
 Jey_Knockerz
 Dmitriy_Jaluijo
 Cavista_Wilson
