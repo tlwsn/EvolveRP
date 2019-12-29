@@ -28,7 +28,6 @@ Ente_Hokage
 Waka_Encore
 Undead_Outside
 Broderick_Mulphers
-August_Midtgaard
 Maxim_Rock
 Noe_Rodriguez
 Christian_Moon
@@ -36,7 +35,6 @@ Riley_Evans
 Laymont_Murray
 Hayley_Lewis
 Tema_Melnik
-Mihail_Klimov
 Julio_Espejo
 Amaday_Hondez
 Annamae_Northwood
@@ -46,7 +44,6 @@ Serega_Cocaine
 Juliette_Henderson
 Vlad_Lordi
 Ivan_Rockefeller
-Sam_Teller1
 Fabricio_Rodriguez
 Matthew_Willis
 Fricolass_Moretti
