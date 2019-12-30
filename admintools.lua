@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.66)
+script_version(2.67)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -222,6 +222,9 @@ local otletel = {
     vagos = {},
     aztec = {}
 }
+
+local sendMati = {}
+
 local recon = {
     {
         name = 'Change',
@@ -1541,7 +1544,7 @@ function main()
         end)
     end
     local directors = {'moonloader/Admin Tools', 'moonloader/Admin Tools/hblist', 'moonloader/config', 'moonloader/config/Admin Tools', 'moonloader/Admin Tools/Check Banned'}
-    local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt', 'moonloader/Admin Tools/punishjb.txt', 'moonloader/Admin Tools/punishlogs.txt', 'moonloader/Admin Tools/Check Banned/players.txt', "moonloader/Admin Tools/setmatlog.txt"}
+    local files = {'moonloader/Admin Tools/chatlog_all.txt', 'moonloader/config/Admin Tools/fa.txt', 'moonloader/Admin Tools/punishjb.txt', 'moonloader/Admin Tools/punishlogs.txt', 'moonloader/Admin Tools/Check Banned/players.txt'}
     --Проверяем и создаем папки
     for k, v in pairs(directors) do
 		if not doesDirectoryExist(v) then createDirectory(v) end
@@ -3976,6 +3979,21 @@ function sampev.onServerMessage(color, text)
         end
     end
 
+    -- Заполнение таблицы склада
+    if text:match("^ Администратор %S+ добавил %d+ материалов на склад фракции .+. Текущее состояние склада: %d+$") then
+        local nick, mati, banda = text:match("^ Администратор (%S+) добавил (%d+) материалов на склад фракции (.+). Текущее состояние склада: %d+$")
+        if nick == mynick then
+            if banda == "Grove" or banda == "Rifa" or banda == "Vagos" or banda == "Aztec" or banda == "Ballas" then
+                sendMati = {
+                    nick = nick,
+                    banda = banda, 
+                    mati = tonumber(mati)
+                }
+                atext(("Для заполнения данных в таблицу нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+            end
+        end
+    end
+
     --/checkb
     if ban.check and text:find("Игрок не найден") then 
         atext(("Игрок %s не заблокирован"):format(ban.nick)) 
@@ -5941,6 +5959,29 @@ function punaccept()
         punkey.addabl.id, punkey.addabl.day, punkey.addabl.group, punkey.addabl.reason, punkey.addabl.admin, punkey.delay = nil, nil, nil, nil, nil, nil
     end
 
+    if sendMati.nick then
+        atext("Начался процесс заполнения..")
+        local mtime = os.date('%d.%m.%Y %H:%M' , getTime(1))
+        link = ("date=%s&nick=%s&banda=%s&mats=%s"):format(mtime, sendMati.nick, sendMati.banda, sendMati.mati)
+        local fpath = os.getenv('TEMP') .. '\\sendmati.json'
+        downloadUrlToFile('https://script.google.com/macros/s/AKfycbw8Ml8EAY5zpVYjJf3YMrAP7ZAxmgX4aQ_ZfOdV5VLCjGr3UTM/exec?'..link, fpath, function(id, status, p1, p2)
+            if status == dlstatus.STATUS_ENDDOWNLOADDATA then
+                local f = io.open(fpath, 'r')
+                if f then
+                    local info = decodeJson(f:read('*a'))
+                    if info.message then
+                        atext("Таблица успешно заполнена.")
+                    else
+                        atext("Произошла ошибка заполнения таблицы.")
+                    end
+                end
+                f:close()
+                os.remove(fpath)
+            end
+        end)
+        sendMati = {}
+    end
+
 end
 
 function pundeny()
@@ -5948,6 +5989,8 @@ function pundeny()
         punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}, addabl = {}}
         atext('Выдача наказаний отменена')
     end
+
+    if sendMati.nick then atext("Заполнение в таблицу отменено.") sendMati = {} end
 end
 
 function whon()
@@ -6900,4 +6943,11 @@ function checkSklad()
             atext("Произошла ошибка загрузки.")
         end
     end)
+end
+
+
+function getTime(timezone)
+    local https = require 'ssl.https'
+    local time = https.request('http://alat.specihost.com/unix-time/')
+    return time and tonumber(time:match('^Current Unix Timestamp: <b>(%d+)</b>')) + (timezone or 0) * 60 * 60
 end
