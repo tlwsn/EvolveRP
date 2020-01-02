@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.67)
+script_version(2.68)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -428,7 +428,8 @@ local tBindList = {
         name = 'Бинд3'
     }
 }
-local punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}, addabl = {}}
+local punkey = {}
+local punkey = {}
 local flyInfo = {
     active = false,
     fly_active = false,
@@ -606,7 +607,7 @@ local cfg = {
         sFontSize = 1
     },
 	timers = {
-		sbivtimer = 30,
+		sbivtimer = 60,
 		csbivtimer = 60,
         cbugtimer = 60,
         mnarkotimer = 7,
@@ -649,7 +650,8 @@ local cfg = {
         resend = true,
         trace = true,
         spiartext = "Есть вопросы по игре? Задайте их нашим саппортам - /ask",
-        chatid = true
+        chatid = true,
+        disconnectlog = true
     }
 }
 
@@ -1606,6 +1608,7 @@ function main()
                 cfg.recon.sFontSize = 1
                 saveData(cfg, 'moonloader/config/Admin Tools/config.json')
             end
+            if cfg.other.disconnectlog == nil then cfg.other.disconnectlog = true end
             file:close()
         end
     end
@@ -1624,6 +1627,7 @@ function main()
             killist     = imgui.ImBool(cfg.killlist.startenable),
             socrpm      = imgui.ImBool(cfg.other.socrpm),
             resend      = imgui.ImBool(cfg.other.resend),
+            disconnect  = imgui.ImBool(cfg.other.disconnectlog),
 
             passbuff    = imgui.ImBuffer(tostring(cfg.other.password), 256),
             apassbuff   = imgui.ImBuffer(tostring(cfg.other.adminpass), 256),
@@ -1887,7 +1891,8 @@ function main()
     end)
 
     --Регистрируем команды
-    sampRegisterChatCommand("checkSklad", checkSklad)
+    sampRegisterChatCommand("checkghetto", checkghetto)
+    sampRegisterChatCommand("checkbikers", checkbikers)
     sampRegisterChatCommand("oncapt", oncapt)
     sampRegisterChatCommand("vkv", vkv)
     sampRegisterChatCommand("ranks", ranks)
@@ -2024,7 +2029,7 @@ function main()
         if punkey.delay ~= nil then
             if (os.time() - punkey.delay) > 20 then
                 atext('Время выдачи наказания истекло.')
-                punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}, addabl = {}}
+                punkey = {}
             end
         end
         --Киллист
@@ -3118,9 +3123,13 @@ function imgui.OnDrawFrame()
                 imgui.TextWrapped(u8 'Описание: Начать / остановить запись отлетевших в гетто')
                 imgui.TextWrapped(u8 'Использование: /oncapt')
             end
-            if imgui.CollapsingHeader("/checksklad") then
+            if imgui.CollapsingHeader("/checkghetto") then
                 imgui.TextWrapped(u8 "Узнать сколько РП склада у банд")
-                imgui.TextWrapped(u8 'Использование: /checksklad')
+                imgui.TextWrapped(u8 'Использование: /checkghetto')
+            end
+            if imgui.CollapsingHeader("/checkbikers") then
+                imgui.TextWrapped(u8 "Узнать сколько РП склада у байкеров")
+                imgui.TextWrapped(u8 'Использование: /checkbikers')
             end
             imgui.End()
         end
@@ -3278,10 +3287,11 @@ function imgui.OnDrawFrame()
 				if imadd.ToggleButton(u8 'Автологин##11', imset.set.pass) then cfg.other.passb = imset.set.pass.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автологин')
                 if imadd.ToggleButton(u8 'Автоалогин##11', imset.set.apass) then cfg.other.apassb = imset.set.apass.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автоалогин')
                 if imadd.ToggleButton(u8 'Чатлог в консоли##11', imset.set.sfchat) then cfg.other.chatconsole = imset.set.sfchat.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Чатлог в консоли')
-                if imadd.ToggleButton(u8 'joinquit##11', imset.set.joinquit) then cfg.joinquit.enable = imset.set.joinquit.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Лог подключившися/отключивашися игроков')
+                if imadd.ToggleButton(u8 'joinquit##11', imset.set.joinquit) then cfg.joinquit.enable = imset.set.joinquit.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Лог подключившися / отключившихся игроков')
                 if imadd.ToggleButton(u8 'autoupd##11', imset.set.autoupd) then cfg.other.autoupdate = imset.set.autoupd.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автообновление скрипта')
                 if imadd.ToggleButton(u8 'resend##11', imset.set.resend) then cfg.other.resend = imset.set.resend.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Писать "слежу" при переходе в рекон по репорту')
-                if imadd.ToggleButton(u8 'killlist##11', imset.set.killist) then cfg.killlist.startenable = imset.set.killist.v end; imgui.SameLine(); imgui.Text(u8 'Замененный кил-лист при входе в игру')
+                if imadd.ToggleButton(u8 'killlist##11', imset.set.killist) then cfg.killlist.startenable = imset.set.killist.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Замененный кил-лист при входе в игру')
+                if imadd.ToggleButton(u8 'diconnectlog', imset.set.disconnect) then cfg.other.disconnectlog = imset.set.disconnect saveData(cfg, 'moonloader/config/Admin Tools/config.json') end imgui.SameLine(); imgui.Text(u8 'Запись в файл отключившихся игроков')
                 if imadd.ToggleButton(u8 'socrpm', imset.set.socrpm) then cfg.other.socrpm = imset.set.socrpm.v
                     if cfg.other.socrpm then
                         registerFastAnswer()
@@ -3961,18 +3971,12 @@ function sampev.onServerMessage(color, text)
     if text:match('^ Вы авторизировались как модератор %d+ уровня$') then cfg.other.admlvl = tonumber(text:match('^ Вы авторизировались как модератор (%d+) уровня$')) saveData(cfg, 'moonloader/config/Admin Tools/config.json') end
     --Для выдачи наказаний по кнопке
     if cfg.other.admlvl > 1 and color == -10270806 then
-        if punkey.re.id or punkey.warn.id or punkey.ban.id or punkey.prison.id or punkey.auninvite.id or punkey.sban.id or punkey.pspawn.id or punkey.addabl.id then
-            for k, v in pairs(punkey) do
-                if type(v) == "table" then
-                    if v.id ~= nil then
-                        if sampIsPlayerConnected(v.id) then
-                            if text:find(sampGetPlayerNickname(v.id)) then
-                                if not text:find(mynick) then
-                                    atext('Команду выполнил другой администратор')
-                                    punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}, addabl = {}}
-                                end
-                            end
-                        end
+        if punkey.id then
+            if sampIsPlayerConnected(punkey.id) then
+                if text:find(sampGetPlayerNickname(punkey.id)) then
+                    if not text:find(mynick) then
+                        atext('Команду выполнил другой администратор')
+                        punkey = {}
                     end
                 end
             end
@@ -3987,9 +3991,20 @@ function sampev.onServerMessage(color, text)
                 sendMati = {
                     nick = nick,
                     banda = banda, 
-                    mati = tonumber(mati)
+                    mati = tonumber(mati),
+                    type = 1
                 }
-                atext(("Для заполнения данных в таблицу нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                atext(("Записать выданные %s матов на склад %s в таблицу?"):format(sendMati.mati, sendMati.banda))
+                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+            elseif banda == "Warlocks MC" or banda == "Mongols MC" or banda == "Pagans MC" then
+                sendMati = {
+                    nick = nick,
+                    banda = banda, 
+                    mati = tonumber(mati),
+                    type = 2
+                }
+                atext(("Записать выданные %s матов на склад %s в таблицу?"):format(sendMati.mati, sendMati.banda))
+                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
             end
         end
     end
@@ -4444,12 +4459,28 @@ end
 function sampev.onPlayerQuit(id, reason)
     local _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
     local color = ("%06X"):format(bit.band(sampGetPlayerColor(id), 0xFFFFFF))
+
     text_notify_disconnect('{ff0000}Отключился: {ffffff}'..sampGetPlayerNickname(id)..' ['..id..']')
+    
     if reason == 2 or reason == 1 then table.insert(wrecon, {nick = sampGetPlayerNickname(id), time = os.time()}) end
+    
     for k, v in pairs(checker) do
         for k1, v1 in pairs(v.online) do
             if v1.id == id then table.remove(v.online, k1) end
         end
+    end
+
+    if punkey.id then
+        if id == tonumber(punkey.id) then
+            atext("Требуемый игрок вышел из игры.")
+            punkey = {}
+        end
+    end
+
+    if cfg.other.disconnectlog then
+        local file = io.open("moonloader/Admin Tools/disconnectlog.txt", "a")
+        file:write(("[%s || %s] Отключился игрок: %s [%s]\n"):format(os.date('%d.%m.%Y'), os.date('%H:%M:%S'), sampGetPlayerNickname(id), id))
+        file:close()
     end
 end
 
@@ -4493,18 +4524,19 @@ function sampev.onBulletSync(playerId, data)
                 BulletSync.lastId = 1
             end
             local id = BulletSync.lastId
-            --print(("%s [%s] / origin: %s %s %s / target: %s %s %s / type: %s"):format(sampGetPlayerNickname(playerId), playerId, data.origin.x, data.origin.y, data.origin.z, data.target.x, data.target.y, data.target.z, data.targetType))
             if data.target.x ~= nil and data.target.y ~= nil and data.target.z ~= nil then 
-                if data.target.x <= 6 and  data.target.y <= 6 and data.target.z <= 0 then
-                    if data.targetType == 1 then
-                        if data.targetId ~= 65535 then
-                            local tX, tY, tZ = getCharCoordinates(select(2, sampGetCharHandleBySampPlayerId(data.targetId)))
-                            data.target.x, data.target.y, data.target.z = tX, tY, tZ
+                if type(data.target.x) == "number" and type(data.target.y) == "number" and type(data.target.z) == "number" then
+                    if data.target.x <= 6 and  data.target.y <= 6 and data.target.z <= 0 then
+                        if data.targetType == 1 then
+                            if data.targetId ~= 65535 then
+                                local tX, tY, tZ = getCharCoordinates(select(2, sampGetCharHandleBySampPlayerId(data.targetId)))
+                                data.target.x, data.target.y, data.target.z = tX, tY, tZ
+                            else
+                                data.targetType = 5
+                            end
                         else
                             data.targetType = 5
                         end
-                    else
-                        data.targetType = 5
                     end
                 end
                 BulletSync[id].enable = true
@@ -4577,182 +4609,6 @@ end
 function upd_locals()
     while true do wait(100)
         hfps = math.floor(mem.getfloat(0xB7CB50, 4, false))
-    end
-end
-
-function renders()
-    local tempRender = 0
-    local admRender = 0
-    local playerRender = 0
-    local leaderRender = 0
-    while true do wait(0)
-        if swork and not isPauseMenuActive() then
-            local admrenderPosY = cfg.admchecker.posy
-            local playerRenderPosY = cfg.playerChecker.posy
-            local tempRenderPosY = cfg.tempChecker.posy
-            local leadersRenderPosY = cfg.leadersChecker.posy
-            local chatBposx = 1920/2
-            local chatBposy = 1080/2
-            local hposx, hposy, hposz = getCharCoordinates(PLAYER_PED)
-            local hposint = getActiveInterior()
-            screenx, screeny = getScreenResolution()
-            local hpos = ("%0.2f %0.2f %0.2f"):format(hposx, hposy, hposz)
-            local checkerheight = renderGetFontDrawHeight(checkfont)
-            local hudheight = renderGetFontDrawHeight(hudfont)
-            local killheight = renderGetFontDrawHeight(killfont)
-            local hudtext = ""
-
-            if #checker.temp.online == 0 then
-                tempRender = tempRenderPosY-(#checker.temp.online + 1)*checkerheight
-            else
-                tempRender = tempRenderPosY - #checker.temp.online*checkerheight
-            end
-            if #checker.admins.online == 0 then
-                admRender = admrenderPosY-(#checker.admins.online+1)*checkerheight
-            else
-                admRender = admrenderPosY - #checker.admins.online*checkerheight
-            end
-            if #checker.players.online == 0 then
-                playerRender = playerRenderPosY - (#checker.players.online+1)*checkerheight
-            else
-                playerRender = playerRenderPosY - #checker.players.online*checkerheight
-            end
-            if #checker.leaders.online == 0 then
-                leaderRender = leadersRenderPosY - (#checker.leaders.online+1)*checkerheight
-            else
-                leaderRender = leadersRenderPosY - #checker.leaders.online*checkerheight
-            end
-
-            --[[for k, v in pairs(chatB) do
-                local color = bit.tohex(ARGBtoRGB(v.color)):match("00(.+)")
-                renderFontDrawText(hudfont, ("%s | %s | %s [%s]: {%s}%s"):format(v.color, color, v.nick, v.id, color, v.message), chatBposx, chatBposy, -1)
-                chatBposy = chatBposy + renderGetFontDrawHeight(hudfont)
-            end]]
-
-            if #chatB > 7 then table.remove(chatB, 1) end
-
-            if killlistmode == 1 then
-                local killsy = cfg.killlist.posy
-                for k, v in ipairs(tkilllist) do
-                    local killlenght = renderGetFontDrawTextLength(killfont,v['killer'])
-                    local gunlenght = renderGetFontDrawTextLength(gunfont, v['reason'])
-                    local deathlenght = renderGetFontDrawTextLength(killfont,v['killed'])
-                    renderFontDrawText(killfont, v['killer'], cfg.killlist.posx-killlenght-3, killsy, -1)
-                    renderFontDrawText(killfont, v['killed'], cfg.killlist.posx+cfg.other.killsize*1.35 ,killsy, -1)
-                    killsy = killsy + killheight
-                end
-            end
-
-            if cfg.joinquit.enable then
-                if notification_connect then
-                    if localClock() - notification_connect.tick <= notification_connect.duration then
-                        local alpha = 255 * math.min(1, notification_connect.duration - (localClock() - notification_connect.tick))
-                        local color = bit.bor(notification_connect.color, bit.lshift(alpha, 24))
-                        for k = #notification_connect.lines, 1, -1 do
-                            local text = notification_connect.lines[k]
-                            if #text > 0 then
-                                renderFontDrawText(hudfont, text, cfg.joinquit.joinposx, cfg.joinquit.joinposy, color)
-                            end
-                        end
-                    else
-                        notification_connect = nil
-                    end
-                end
-                if notification_disconnect then
-                    if localClock() - notification_disconnect.tick <= notification_disconnect.duration then
-                        local alpha = 255 * math.min(1, notification_disconnect.duration - (localClock() - notification_disconnect.tick))
-                        local color = bit.bor(notification_disconnect.color, bit.lshift(alpha, 24))
-                        for k = #notification_disconnect.lines, 1, -1 do
-                            local text = notification_disconnect.lines[k]
-                            if #text > 0 then
-                                renderFontDrawText(hudfont, text, cfg.joinquit.quitposx, cfg.joinquit.quitposy, color)
-                            end
-                        end
-                    else
-                        notification_disconnect = nil
-                    end
-                end
-            end
-
-            local mainColor     = ("%06X"):format(bit.band(config_colors.hudmain.color, 0xFFFFFF))
-            local secondColor   = ("%06X"):format(bit.band(config_colors.hudsecond.color, 0xFFFFFF))
-
-            if cfg.other.style == 1 then
-                hudtext = ('%s %s %s %s [%s %s] [FPS: %s]'):format(os.date("[%H:%M:%S]"), 
-                funcsStatus.Inv and '{'..secondColor..'}[Inv]{'..mainColor..'}' or '[Inv]', 
-                funcsStatus.AirBrk and '{'..secondColor..'}[AirBrk]{'..mainColor..'}' or '[AirBrk]', 
-                flyInfo.active and '{'..secondColor..'}[Fly]{'..mainColor..'}' or '[Fly]', 
-                hpos, 
-                hposint, 
-                hfps)
-            elseif cfg.other.style == 2 then
-                hudtext = ('%s {'..secondColor..'}/{'..mainColor..'} %s {'..secondColor..'}/{'..mainColor..'} %s {'..secondColor..'}/{'..mainColor..'} %s {'..secondColor..'}/{'..mainColor..'} %s %s {'..secondColor..'}/{'..mainColor..'} FPS: %s'):format(os.date("%H:%M:%S"), 
-                funcsStatus.Inv and '{'..secondColor..'}Inv{'..mainColor..'}' or 'Inv', 
-                funcsStatus.AirBrk and '{'..secondColor..'}AirBrk{'..mainColor..'}' or 'AirBrk', 
-                flyInfo.active and '{'..secondColor..'}Fly{'..mainColor..'}' or 'Fly', 
-                hpos, 
-                hposint, 
-                hfps)
-            elseif cfg.other.style == 3 then
-                hudtext = ('%s %s %s %s %s %s FPS: %s'):format(os.date("%H:%M:%S"), 
-                funcsStatus.Inv and '{'..secondColor..'}Inv{'..mainColor..'}' or 'Inv', 
-                funcsStatus.AirBrk and '{'..secondColor..'}AirBrk{'..mainColor..'}' or 'AirBrk', 
-                flyInfo.active and '{'..secondColor..'}Fly{'..mainColor..'}' or 'Fly', 
-                hpos, 
-                hposint, 
-                hfps)
-            end
-
-            renderFontDrawText(hudfont, hudtext, 0, screeny-hudheight, config_colors.hudmain.color)
-            
-            if cfg.admchecker.enable then
-                renderFontDrawText(checkfont, "Администрация онлайн ["..#checker.admins.online.."]:", cfg.admchecker.posx, admRender, 0xFF00FF00)
-                if #checker.admins.online > 0 then
-                    for k, v in pairs(checker.admins.online) do
-                        local cText = ("{%s}%s [%s] %s{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
-                        renderFontDrawText(checkfont, cText, cfg.admchecker.posx, (admrenderPosY - k*checkerheight)+checkerheight, -1)
-                    end
-                else
-                    renderFontDrawText(checkfont, "Чекер пуст", cfg.admchecker.posx, admrenderPosY, 0xFF808080)
-                end
-            end
-            if cfg.playerChecker.enable then
-                renderFontDrawText(checkfont, "Игроки онлайн ["..#checker.players.online.."]:", cfg.playerChecker.posx, playerRender, 0xFFFFFF00)
-                if #checker.players.online > 0 then
-                    for k, v in pairs(checker.players.online) do
-                        local cText = ("{%s}%s [%s] %s{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
-                        renderFontDrawText(checkfont, cText , cfg.playerChecker.posx, (playerRenderPosY - k*checkerheight)+checkerheight, -1)
-                    end
-                else
-                    renderFontDrawText(checkfont, "Чекер пуст", cfg.playerChecker.posx, playerRenderPosY, 0xFF808080)
-                end
-            end
-            if cfg.tempChecker.enable then
-                renderFontDrawText(checkfont, "Temp Чекер ["..#checker.temp.online.."]:", cfg.tempChecker.posx, tempRender, 0xFFFF0000)
-                if #checker.temp.online > 0 then
-                    for k, v in pairs(checker.temp.online) do
-                        local cText = ("{%s}%s [%s] %s{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
-                        renderFontDrawText(checkfont, cText, cfg.tempChecker.posx, (tempRenderPosY - k*checkerheight)+checkerheight, -1)
-                    end
-                else
-                    renderFontDrawText(checkfont, "Чекер пуст", cfg.tempChecker.posx, tempRenderPosY, 0xFF808080)
-                end
-            end
-            if cfg.leadersChecker.enable then
-                renderFontDrawText(checkfont, "Лидеры онлайн ["..#checker.leaders.online.."]:", cfg.leadersChecker.posx, leaderRender, 0xFFD76E00)
-                if #checker.leaders.online > 0 then
-                    for k, v in pairs(checker.leaders.online) do
-                        if cfg.leadersChecker.cvetnick then
-                            renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} {%s}%s',leaders1[v['frak']], v["nick"], v["id"], doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', leaders1[v['frak']], v['frak']) , cfg.leadersChecker.posx, (leadersRenderPosY - k*checkerheight)+checkerheight, -1)
-                        else
-                            renderFontDrawText(checkfont,string.format('%s [%s] %s{5aa0aa} {%s}%s',v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', leaders1[v['frak']], v['frak']) , cfg.leadersChecker.posx, (leadersRenderPosY - k*checkerheight)+checkerheight, -1)
-                        end
-                    end
-                else
-                    renderFontDrawText(checkfont, "Чекер пуст", cfg.leadersChecker.posx, leadersRenderPosY, 0xFF808080)
-                end
-            end
-        end
     end
 end
 
@@ -5793,189 +5649,176 @@ function admchat()
                 id = sampGetPlayerIdByNickname(nick)
             end 
 
-            if nick and id and text then -- Проверка на ебучее наличие этих ебанных переменных, без них скрипт крашит к хуям --
+            if nick and id and text then -- Проверка на ебучее наличие этих ебанных переменных, без них скрипт крашит к хуям
 
                 if cfg.other.admlvl > 1 and nick ~= mynick then
 
-                    if not (punkey.re.id or punkey.warn.id or punkey.ban.id or punkey.prison.id or punkey.auninvite.id or punkey.sban.id or punkey.pspawn.id or punkey.addabl.id) then
-
-                        if text:match('^re %d+') or text:match('^/re %d+') then
-                            if sampIsPlayerConnected(tonumber(text:match('re (%d+)'))) then
-                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('re (%d+)')))) then
-                                    punkey.re.id = text:match('re (%d+)')
-                                    punkey.re.nick = nick
-                                    punkey.delay = os.time()
-                                    atext(('Администратор %s [%s] просит зайти в слежку за игроком %s [%s]'):format(nick, id, sampGetPlayerNickname(punkey.re.id), punkey.re.id))
-                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                                end
-                            end
-                        end
-
-                        if text:match('^warn %d+ %d+ .+') or text:match('^/warn %d+ %d+ .+') then
-                            if sampIsPlayerConnected(tonumber(text:match('warn (%d+) %d+ .+'))) then
-                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('warn (%d+) %d+ .+')))) then
-                                    punkey.warn.id, punkey.warn.day, punkey.warn.reason = text:match('warn (%d+) (%d+) (.+)')
-                                    punkey.warn.admin = nick
-                                    punkey.delay = os.time()
-                                    atext(("Администратор %s [%s] хочет заварнить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.warn.id), punkey.warn.id, punkey.warn.reason))
-                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                                end
-                            end
-                        end
-
-                        if text:match('^ban %d+ .+') or text:match('^/ban %d+ .+') then
-                            if sampIsPlayerConnected(tonumber(text:match('ban (%d+) .+'))) then
-                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('ban (%d+) .+')))) then
-                                    punkey.ban.id, punkey.ban.reason = text:match('ban (%d+) (.+)')
-                                    punkey.ban.admin = nick
-                                    punkey.delay = os.time()
-                                    atext(("Администратор %s [%s] хочет забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.ban.id), punkey.ban.id, punkey.ban.reason))
-                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                                end
-                            end
-                        end
-
-                        if text:match('^prison %d+ %d+ .+') or text:match('^/prison %d+ %d+ .+') then
-                            if sampIsPlayerConnected(tonumber(text:match('prison (%d+) %d+ .+'))) then
-                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('prison (%d+) %d+ .+')))) then
-                                    punkey.prison.id, punkey.prison.day, punkey.prison.reason = text:match('prison (%d+) (%d+) (.+)')
-                                    punkey.prison.admin = nick
-                                    punkey.delay = os.time()
-                                    atext(("Администратор %s [%s] хочет посадить в присон игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.prison.id), punkey.prison.id, punkey.prison.reason))
-                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                                end
-                            end
-                        end
-
-                        if text:match('^pspawn %d+') or text:match('^/pspawn %d+') then
-                            if sampIsPlayerConnected(tonumber(text:match('pspawn (%d+)'))) then
-                                punkey.pspawn.id = text:match('pspawn (%d+)')
-                                punkey.pspawn.admin = nick
+                    if text:match('^re %d+') or text:match('^/re %d+') then
+                        if sampIsPlayerConnected(tonumber(text:match('re (%d+)'))) then
+                            if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('re (%d+)')))) then
+                                if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + "))) return end
+                                punkey.nick = nick
                                 punkey.delay = os.time()
-                                atext(("Администратор %s [%s] хочет заспавнить игрока %s [%s]"):format(nick, id, sampGetPlayerNickname(punkey.pspawn.id), punkey.pspawn.id))
+                                punkey.id = text:match('re (%d+)')
+                                punkey.type = "re"
+                                atext(('Администратор %s [%s] просит зайти в слежку за игроком %s [%s]'):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id))
+                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                            end
+                        end
+                    end
+
+                    if text:match('^warn %d+ %d+ .+') or text:match('^/warn %d+ %d+ .+') then
+                        if sampIsPlayerConnected(tonumber(text:match('warn (%d+) %d+ .+'))) then
+                            if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('warn (%d+) %d+ .+')))) then
+                                if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + "))) return end
+                                punkey.id, punkey.day, punkey.reason = text:match('warn (%d+) (%d+) (.+)')
+                                punkey.nick = nick
+                                punkey.delay = os.time()
+                                punkey.type = "warn"
+                                atext(("Администратор %s [%s] хочет заварнить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.reason))
+                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                            end
+                        end
+                    end
+
+                    if text:match('^ban %d+ .+') or text:match('^/ban %d+ .+') then
+                        if sampIsPlayerConnected(tonumber(text:match('ban (%d+) .+'))) then
+                            if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('ban (%d+) .+')))) then
+                                if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + "))) return end
+                                punkey.id, punkey.reason = text:match('ban (%d+) (.+)')
+                                punkey.nick = nick
+                                punkey.delay = os.time()
+                                punkey.type = "ban"
+                                atext(("Администратор %s [%s] хочет забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.reason))
+                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                            end
+                        end
+                    end
+
+                    if text:match('^prison %d+ %d+ .+') or text:match('^/prison %d+ %d+ .+') then
+                        if sampIsPlayerConnected(tonumber(text:match('prison (%d+) %d+ .+'))) then
+                            if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('prison (%d+) %d+ .+')))) then
+                                if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + "))) return end
+                                punkey.id, punkey.time, punkey.reason = text:match('prison (%d+) (%d+) (.+)')
+                                punkey.nick = nick
+                                punkey.delay = os.time()
+                                punkey.type = "prison"
+                                atext(("Администратор %s [%s] хочет посадить в присон игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.reason))
+                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                            end
+                        end
+                    end
+
+                    if text:match('^pspawn %d+') or text:match('^/pspawn %d+') then
+                        if sampIsPlayerConnected(tonumber(text:match('pspawn (%d+)'))) then
+                            if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + "))) return end
+                            punkey.id = text:match('pspawn (%d+)')
+                            punkey.nick = nick
+                            punkey.delay = os.time()
+                            punkey.type = "pspawn"
+                            atext(("Администратор %s [%s] хочет заспавнить игрока %s [%s]"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id))
+                            atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                        end
+                    end
+
+                    if cfg.other.admlvl >= 3 then
+                        if text:match("^/addabl %d+ %d+ %d+ .+") or text:match("^addabl %d+ %d+ %d+ .+") then
+                            if sampIsPlayerConnected(tonumber(text:match("addabl (%d+) %d+ %d+ .+"))) then
+                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match("addabl (%d+) %d+ %d+ .+")))) then
+                                    if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + "))) return end
+                                    punkey.id, punkey.day, punkey.group, punkey.reason = text:match("addabl (%d+) (%d+) (%d+) (.+)")
+                                    punkey.nick = nick
+                                    punkey.delay = os.time()
+                                    punkey.type = "abl"
+                                    atext(("Администратор %s [%s] хочет выдать ЧС игроку %s [%s]. Группа: %s. Причина: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.group, punkey.reason))
+                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                end
+                            end
+                        end
+                    end
+
+                    if cfg.other.admlvl >= 4 then
+                        if text:match('^auninvite %d+ .+') or text:match('^/auninvite %d+ .+') then
+                            if sampIsPlayerConnected(tonumber(text:match('auninvite (%d+) .+'))) then
+                                if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + "))) return end
+                                punkey.id, punkey.reason = text:match('auninvite (%d+) (.+)')
+                                punkey.nick = nick
+                                punkey.delay = os.time()
+                                punkey.type = "auninvite"
+                                atext(("Администратор %s [%s] хочет уволить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.reason))
                                 atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
                             end
                         end
 
-                        if cfg.other.admlvl >= 3 then
-
-                            if text:match("^/addabl %d+ %d+ %d+ .+") or text:match("^addabl %d+ %d+ %d+ .+") then
-                                if sampIsPlayerConnected(tonumber(text:match("addabl (%d+) %d+ %d+ .+"))) then
-                                    if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match("addabl (%d+) %d+ %d+ .+")))) then
-                                        punkey.addabl.id, punkey.addabl.day, punkey.addabl.group, punkey.addabl.reason = text:match("addabl (%d+) (%d+) (%d+) (.+)")
-                                        punkey.addabl.admin = nick
-                                        punkey.delay = os.time()
-                                        atext(("Администратор %s [%s] хочет выдать ЧС игроку %s [%s]. Группа: %s. Причина: %s"):format(nick, id, sampGetPlayerNickname(punkey.addabl.id), punkey.addabl.id, punkey.addabl.group, punkey.addabl.reason))
-                                        atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                                    end
-                                end
-                            end
-
-                        end
-
-                        if cfg.other.admlvl >= 4 then
-
-                            if text:match('^auninvite %d+ .+') or text:match('^/auninvite %d+ .+') then
-                                if sampIsPlayerConnected(tonumber(text:match('auninvite (%d+) .+'))) then
-                                    punkey.auninvite.id, punkey.auninvite.reason = text:match('auninvite (%d+) (.+)')
-                                    punkey.auninvite.admin = nick
+                        if text:match('^sban %d+ .+') or text:match('^/sban %d+ .+') then
+                            if sampIsPlayerConnected(tonumber(text:match('sban (%d+) .+'))) then
+                                if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('sban (%d+) .+')))) then
+                                    if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + "))) return end
+                                    punkey.id, punkey.reason = text:match('sban (%d+) (.+)')
+                                    punkey.nick = nick
                                     punkey.delay = os.time()
-                                    atext(("Администратор %s [%s] хочет уволить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.auninvite.id), punkey.auninvite.id, punkey.auninvite.reason))
+                                    punkey.type = "sban"
+                                    atext(("Администратор %s [%s] хочет тихо забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.reason))
                                     atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
                                 end
                             end
-
-                            if text:match('^sban %d+ .+') or text:match('^/sban %d+ .+') then
-                                if sampIsPlayerConnected(tonumber(text:match('sban (%d+) .+'))) then
-                                    if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('sban (%d+) .+')))) then
-                                        punkey.sban.id, punkey.sban.reason = text:match('sban (%d+) (.+)')
-                                        punkey.sban.admin = nick
-                                        punkey.delay = os.time()
-                                        atext(("Администратор %s [%s] хочет тихо забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.sban.id), punkey.sban.id, punkey.sban.reason))
-                                        atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
-                                    end
-                                end
-                            end
-
                         end
-
-                    else
-                        atext(("У вас есть активный запрос на выдачу наказания. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
                     end
                 end
-
             end
-
         end
-
     end
 end
 
 function punaccept()
 
-    if punkey.pspawn.id then
-        sampSendChat(("/pspawn %s"):format(punkey.pspawn.id))
-        punkey.pspawn.id, punkey.pspawn.nick, punkey.delay = nil, nil, nil
-    end
+    if punkey.id then
+        local admnick, admfam 
+        if punkey.nick then admnick, admfam = punkey.nick:match('(.+)_(.+)') end
 
-    if punkey.re.id then
-        sampSendChat(('/re %s'):format(punkey.re.id))
-        punkey.re.id, punkey.re.nick, punkey.delay = nil, nil
-    end
+        if punkey.type == "re" then sampSendChat("/re "..punkey.id) end
+        if punkey.type == "pspawn" then sampSendChat("/pspawn "..punkey.id) end
+        if punkey.type == "prison" then sampSendChat(('/prison %s %s %s • %s.%s'):format(punkey.id, punkey.time, punkey.reason, admnick:sub(1,1), admfam)) end
+        if punkey.type == "warn" then sampSendChat(('/warn %s %s %s • %s.%s'):format(punkey.id, punkey.day, punkey.reason, admnick:sub(1,1), admfam)) end
+        if punkey.type == "ban" then sampSendChat(('/ban %s %s • %s.%s'):format(punkey.id, punkey.reason, admnick:sub(1,1), admfam)) end
+        if punkey.type == "sban" then sampSendChat(('/sban %s %s • %s.%s'):format(punkey.id, punkey.reason, admnick:sub(1,1), admfam)) end
+        if punkey.type == "abl" then sampSendChat(("/addabl %s %s %s %s • %s.%s"):format(punkey.id, punkey.day, punkey.group, punkey.reason, admnick:sub(1,1), admfam)) end
+        if punkey.type == "auninvite" then sampSendChat(('/auninvite %s %s • %s.%s'):format(punkey.id, punkey.reason, admnick:sub(1,1), admfam)) end
 
-    if punkey.prison.id then
-        local admnick, admfam = punkey.prison.admin:match('(.+)_(.+)')
-        sampSendChat(('/prison %s %s %s • %s.%s'):format(punkey.prison.id, punkey.prison.day, punkey.prison.reason, admnick:sub(1,1), admfam))
-        punkey.prison.id, punkey.prison.day, punkey.prison.reason, punkey.prison.admin, punkey.delay = nil, nil, nil, nil, nil
-    end
-
-    if punkey.warn.id then
-        local admnick, admfam = punkey.warn.admin:match('(.+)_(.+)')
-        sampSendChat(('/warn %s %s %s • %s.%s'):format(punkey.warn.id, punkey.warn.day, punkey.warn.reason, admnick:sub(1,1), admfam))
-        punkey.warn.id, punkey.warn.day, punkey.warn.reason, punkey.warn.admin, punkey.delay = nil, nil, nil, nil, nil
-    end
-
-    if punkey.ban.id then
-        local admnick, admfam = punkey.ban.admin:match('(.+)_(.+)')
-        sampSendChat(('/ban %s %s • %s.%s'):format(punkey.ban.id, punkey.ban.reason, admnick:sub(1,1), admfam))
-        punkey.ban.id, punkey.ban.reason, punkey.ban.admin, punkey.delay = nil, nil, nil, nil
-    end
-
-    if punkey.sban.id then
-        local admnick, admfam = punkey.sban.admin:match('(.+)_(.+)')
-        sampSendChat(('/sban %s %s • %s.%s'):format(punkey.sban.id, punkey.sban.reason, admnick:sub(1,1), admfam))
-        punkey.sban.id, punkey.sban.reason, punkey.sban.admin, punkey.delay = nil, nil, nil, nil
-    end
-
-    if punkey.auninvite.id then
-        local admnick, admfam = punkey.auninvite.admin:match('(.+)_(.+)')
-        sampSendChat(('/auninvite %s %s • %s.%s'):format(punkey.auninvite.id, punkey.auninvite.reason, admnick:sub(1,1), admfam))
-        punkey.auninvite.id, punkey.auninvite.reason, punkey.auninvite.admin, punkey.delay = nil, nil, nil, nil
-    end
-
-    if punkey.addabl.id then
-        local admnick, admfam = punkey.addabl.admin:match('(.+)_(.+)')
-        sampSendChat(("/addabl %s %s %s %s • %s.%s"):format(punkey.addabl.id, punkey.addabl.day, punkey.addabl.group, punkey.addabl.reason, admnick:sub(1,1), admfam))
-        punkey.addabl.id, punkey.addabl.day, punkey.addabl.group, punkey.addabl.reason, punkey.addabl.admin, punkey.delay = nil, nil, nil, nil, nil, nil
+        punkey = {}
     end
 
     if sendMati.nick then
+        local ip, port = sampGetCurrentServerAddress()
+        if (ip..":"..port) ~= "185.169.134.67:7777" then atext("Функция доступна только на 01 сервере.") return end
+
         atext("Начался процесс заполнения..")
-        local mtime = os.date('%d.%m.%Y %H:%M' , getTime(1))
-        link = ("date=%s&nick=%s&banda=%s&mats=%s"):format(mtime, sendMati.nick, sendMati.banda, sendMati.mati)
+        local link
+
+        if sendMati.type == 1 then
+            local mtime = os.date('%d.%m.%Y %H:%M' , getTime())
+            link = ("https://script.google.com/macros/s/AKfycbw8Ml8EAY5zpVYjJf3YMrAP7ZAxmgX4aQ_ZfOdV5VLCjGr3UTM/exec?date=%s&nick=%s&banda=%s&mats=%s"):format(mtime, sendMati.nick, sendMati.banda, sendMati.mati)
+        elseif sendMati.type == 2 then
+            local mtime = os.date('%d.%m.%Y' , getTime())
+            link = ("https://script.google.com/macros/s/AKfycbx4SoAPCVcr3BhWW9HYaAllRClAhq565-IqMYFBFCmVxUldDSDN/exec?date=%s&nick=%s&banda=%s&mats=%s"):format(mtime, sendMati.nick, sendMati.banda, sendMati.mati)
+        end
+
         local fpath = os.getenv('TEMP') .. '\\sendmati.json'
-        downloadUrlToFile('https://script.google.com/macros/s/AKfycbw8Ml8EAY5zpVYjJf3YMrAP7ZAxmgX4aQ_ZfOdV5VLCjGr3UTM/exec?'..link, fpath, function(id, status, p1, p2)
+        downloadUrlToFile(link, fpath, function(id, status, p1, p2)
             if status == dlstatus.STATUS_ENDDOWNLOADDATA then
                 local f = io.open(fpath, 'r')
                 if f then
                     local info = decodeJson(f:read('*a'))
-                    if info.message then
+                    if info.success then
                         atext("Таблица успешно заполнена.")
                     else
-                        atext("Произошла ошибка заполнения таблицы.")
+                        atext("Произошла ошибка заполнения  таблицы.")
+                        if info.message then
+                            atext("Текст ошибки: "..u8:decode(info.message))
+                        end
                     end
+                    f:close()
                 end
-                f:close()
                 os.remove(fpath)
             end
         end)
@@ -5985,9 +5828,9 @@ function punaccept()
 end
 
 function pundeny()
-    if punkey.re.id or punkey.warn.id or punkey.ban.id or punkey.prison.id or punkey.auninvite.id or punkey.sban.id or punkey.pspawn.id or punkey.addabl.id then
-        punkey = {warn = {}, ban = {}, prison = {}, re = {}, sban = {}, auninvite = {}, pspawn = {}, addabl = {}}
-        atext('Выдача наказаний отменена')
+    if punkey.id then
+        punkey = {}
+        atext('Запись выданных матов отменена.')
     end
 
     if sendMati.nick then atext("Заполнение в таблицу отменено.") sendMati = {} end
@@ -6567,6 +6410,9 @@ function loadUsers()
             checker.leaders.loaded = decodeJson(f:read("*a"))
             f:close()
         end
+    else
+        saveData(leaders, 'moonloader/config/Admin Tools/leaders.json')
+        checker.leaders.loaded = leaders
     end
     --Заполнение админов из txt файла
     if txtLinesCounts('moonloader/config/Admin Tools/adminlist.txt') > 0 then
@@ -6920,7 +6766,10 @@ function TurnCamTo(coordX, coordY, coordZ)
     setCameraPositionUnfixed(-FIXED_Z, -FIXED_X)
 end
 
-function checkSklad()
+function checkghetto()
+    local ip, port = sampGetCurrentServerAddress()
+    if (ip..":"..port) ~= "185.169.134.67:7777" then atext("Функция доступна только на 01 сервере.") return end
+
     local isDownloaded = false
     local result
     
@@ -6946,8 +6795,263 @@ function checkSklad()
 end
 
 
-function getTime(timezone)
+function getTime()
     local https = require 'ssl.https'
-    local time = https.request('http://alat.specihost.com/unix-time/')
-    return time and tonumber(time:match('^Current Unix Timestamp: <b>(%d+)</b>')) + (timezone or 0) * 60 * 60
+    local time = https.request('http://worldtimeapi.org/api/timezone/Europe/Moscow.txt')
+    return tonumber(time:match("unixtime: (%d+)")) + 60 * 60
+end
+
+function renders()
+    while true do wait(0)
+        if swork and not isPauseMenuActive() then
+
+            screenx, screeny = getScreenResolution()
+            
+            local checkerheight = renderGetFontDrawHeight(checkfont)
+            local hudheight = renderGetFontDrawHeight(hudfont)
+            local killheight = renderGetFontDrawHeight(killfont)
+
+            local admrenderPosY = cfg.admchecker.posy
+            local playerRenderPosY = cfg.playerChecker.posy
+            local tempRenderPosY = cfg.tempChecker.posy
+            local leadersRenderPosY = cfg.leadersChecker.posy
+
+            local mainColor     = ("%06X"):format(bit.band(config_colors.hudmain.color, 0xFFFFFF))
+            local secondColor   = ("%06X"):format(bit.band(config_colors.hudsecond.color, 0xFFFFFF))
+
+            local hposx, hposy, hposz = getCharCoordinates(PLAYER_PED)
+            local hpos = ("%0.2f %0.2f %0.2f"):format(hposx, hposy, hposz)
+            local hposint = getActiveInterior()
+
+            if killlistmode == 1 then
+                local killsy = cfg.killlist.posy
+                for k, v in ipairs(tkilllist) do
+                    local killlenght = renderGetFontDrawTextLength(killfont,v['killer'])
+                    local gunlenght = renderGetFontDrawTextLength(gunfont, v['reason'])
+                    local deathlenght = renderGetFontDrawTextLength(killfont,v['killed'])
+                    renderFontDrawText(killfont, v['killer'], cfg.killlist.posx-killlenght-3, killsy, -1)
+                    renderFontDrawText(killfont, v['killed'], cfg.killlist.posx+cfg.other.killsize*1.35 ,killsy, -1)
+                    killsy = killsy + killheight
+                end
+            end
+
+            if cfg.joinquit.enable then
+                if notification_connect then
+                    if localClock() - notification_connect.tick <= notification_connect.duration then
+                        local alpha = 255 * math.min(1, notification_connect.duration - (localClock() - notification_connect.tick))
+                        local color = bit.bor(notification_connect.color, bit.lshift(alpha, 24))
+                        for k = #notification_connect.lines, 1, -1 do
+                            local text = notification_connect.lines[k]
+                            if #text > 0 then
+                                renderFontDrawText(hudfont, text, cfg.joinquit.joinposx, cfg.joinquit.joinposy, color)
+                            end
+                        end
+                    else
+                        notification_connect = nil
+                    end
+                end
+                if notification_disconnect then
+                    if localClock() - notification_disconnect.tick <= notification_disconnect.duration then
+                        local alpha = 255 * math.min(1, notification_disconnect.duration - (localClock() - notification_disconnect.tick))
+                        local color = bit.bor(notification_disconnect.color, bit.lshift(alpha, 24))
+                        for k = #notification_disconnect.lines, 1, -1 do
+                            local text = notification_disconnect.lines[k]
+                            if #text > 0 then
+                                renderFontDrawText(hudfont, text, cfg.joinquit.quitposx, cfg.joinquit.quitposy, color)
+                            end
+                        end
+                    else
+                        notification_disconnect = nil
+                    end
+                end
+            end
+
+            if cfg.other.style == 1 then
+                hudtext = ('%s %s %s %s [%s %s] [FPS: %s]'):format(os.date("[%H:%M:%S]"), 
+                funcsStatus.Inv and '{'..secondColor..'}[Inv]{'..mainColor..'}' or '[Inv]', 
+                funcsStatus.AirBrk and '{'..secondColor..'}[AirBrk]{'..mainColor..'}' or '[AirBrk]', 
+                flyInfo.active and '{'..secondColor..'}[Fly]{'..mainColor..'}' or '[Fly]', 
+                hpos, 
+                hposint, 
+                hfps)
+            elseif cfg.other.style == 2 then
+                hudtext = ('%s {'..secondColor..'}/{'..mainColor..'} %s {'..secondColor..'}/{'..mainColor..'} %s {'..secondColor..'}/{'..mainColor..'} %s {'..secondColor..'}/{'..mainColor..'} %s %s {'..secondColor..'}/{'..mainColor..'} FPS: %s'):format(os.date("%H:%M:%S"), 
+                funcsStatus.Inv and '{'..secondColor..'}Inv{'..mainColor..'}' or 'Inv', 
+                funcsStatus.AirBrk and '{'..secondColor..'}AirBrk{'..mainColor..'}' or 'AirBrk', 
+                flyInfo.active and '{'..secondColor..'}Fly{'..mainColor..'}' or 'Fly', 
+                hpos, 
+                hposint, 
+                hfps)
+            elseif cfg.other.style == 3 then
+                hudtext = ('%s %s %s %s %s %s FPS: %s'):format(os.date("%H:%M:%S"), 
+                funcsStatus.Inv and '{'..secondColor..'}Inv{'..mainColor..'}' or 'Inv', 
+                funcsStatus.AirBrk and '{'..secondColor..'}AirBrk{'..mainColor..'}' or 'AirBrk', 
+                flyInfo.active and '{'..secondColor..'}Fly{'..mainColor..'}' or 'Fly', 
+                hpos, 
+                hposint, 
+                hfps)
+            end
+
+            renderFontDrawText(hudfont, hudtext, 0, screeny-hudheight, config_colors.hudmain.color)
+
+            if cfg.admchecker.enable then
+                if #checker.admins.online > 0 then
+                    if screeny/2 < admrenderPosY then
+                        renderFontDrawText(checkfont, "Администрация онлайн ["..#checker.admins.online.."]:", cfg.admchecker.posx, admrenderPosY - (#checker.admins.online * checkerheight), 0xFF00FF00)
+                    else
+                        renderFontDrawText(checkfont, "Администрация онлайн ["..#checker.admins.online.."]:", cfg.admchecker.posx, admrenderPosY, 0xFF00FF00)
+                        admrenderPosY = admrenderPosY + checkerheight
+                    end
+
+                    if screeny/2 < admrenderPosY then
+
+                        for k, v in pairs(checker.admins.online) do
+                            local cText = ("{%s}%s [%s] %s{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
+                            renderFontDrawText(checkfont, cText, cfg.admchecker.posx, (admrenderPosY - k*checkerheight)+checkerheight, -1)
+                        end
+
+                    else
+
+                        for k, v in pairs(checker.admins.online) do
+                            local cText = ("{%s}%s [%s] %s{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
+                            renderFontDrawText(checkfont, cText, cfg.admchecker.posx, admrenderPosY + (#checker.admins.online - k)*checkerheight, -1)
+                        end
+
+                    end
+
+                else
+                    renderFontDrawText(checkfont, "Чекер администраторов пуст", cfg.admchecker.posx, admrenderPosY, 0xFF00FF00)
+                end
+            end
+
+            if cfg.playerChecker.enable then
+                if #checker.players.online > 0 then
+
+                    if screeny/2 < playerRenderPosY then
+                        renderFontDrawText(checkfont, "Игроки онлайн ["..#checker.players.online.."]:", cfg.playerChecker.posx, playerRenderPosY - (#checker.players.online * checkerheight), 0xFFFFFF00)
+                    else
+                        renderFontDrawText(checkfont, "Игроки онлайн ["..#checker.players.online.."]:", cfg.playerChecker.posx, playerRenderPosY, 0xFFFFFF00)
+                        playerRenderPosY = playerRenderPosY + checkerheight
+                    end
+
+                    if screeny/2 < playerRenderPosY then
+
+                        for k, v in pairs(checker.players.online) do
+                            local cText = ("{%s}%s [%s] %s{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
+                            renderFontDrawText(checkfont, cText, cfg.playerChecker.posx, (playerRenderPosY - k*checkerheight)+checkerheight, -1)
+                        end
+
+                    else
+
+                        for k, v in pairs(checker.players.online) do
+                            local cText = ("{%s}%s [%s] %s{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
+                            renderFontDrawText(checkfont, cText, cfg.playerChecker.posx, playerRenderPosY + (#checker.players.online - k)*checkerheight, -1)
+                        end
+
+                    end
+
+                else
+                    renderFontDrawText(checkfont, "Чекер игроков пуст", cfg.playerChecker.posx, playerRenderPosY, 0xFFFFFF00)
+                end
+            end
+
+            if cfg.tempChecker.enable then
+                if #checker.temp.online > 0 then
+
+                    if screeny/2 < tempRenderPosY then
+                        renderFontDrawText(checkfont, "Temp чекер ["..#checker.temp.online.."]:", cfg.tempChecker.posx, tempRenderPosY - (#checker.temp.online * checkerheight), 0xFFFF0000)
+                    else
+                        renderFontDrawText(checkfont, "Temp чекер ["..#checker.temp.online.."]:", cfg.tempChecker.posx, tempRenderPosY, 0xFFFF0000)
+                        tempRenderPosY = tempRenderPosY + checkerheight
+                    end
+
+                    if screeny/2 < tempRenderPosY then
+
+                        for k, v in pairs(checker.temp.online) do
+                            local cText = ("{%s}%s [%s] %s{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
+                            renderFontDrawText(checkfont, cText, cfg.tempChecker.posx, (tempRenderPosY - k*checkerheight)+checkerheight, -1)
+                        end
+
+                    else
+
+                        for k, v in pairs(checker.temp.online) do
+                            local cText = ("{%s}%s [%s] %s{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
+                            renderFontDrawText(checkfont, cText, cfg.tempChecker.posx, tempRenderPosY + (#checker.temp.online - k)*checkerheight, -1)
+                        end
+
+                    end
+
+                else
+                    renderFontDrawText(checkfont, "Temp чекер пуст", cfg.tempChecker.posx, tempRenderPosY, 0xFFFF0000)
+                end
+            end
+
+            if cfg.leadersChecker.enable then
+                if #checker.leaders.online > 0 then
+
+                    if screeny/2 < leadersRenderPosY then
+                        renderFontDrawText(checkfont, "Лидеры онлайн ["..#checker.leaders.online.."]:", cfg.leadersChecker.posx, leadersRenderPosY - (#checker.leaders.online * checkerheight), 0xFFD76E00)
+                    else
+                        renderFontDrawText(checkfont, "Лидеры онлайн ["..#checker.leaders.online.."]:", cfg.leadersChecker.posx, leadersRenderPosY, 0xFFD76E00)
+                        leadersRenderPosY = leadersRenderPosY + checkerheight
+                    end
+
+                    if screeny/2 < leadersRenderPosY then
+
+                        for k, v in pairs(checker.leaders.online) do
+                            local cText = ("{%s}%s [%s] %s{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
+                            if cfg.leadersChecker.cvetnick then
+                                renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} {%s}%s',leaders1[v['frak']], v["nick"], v["id"], doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', leaders1[v['frak']], v['frak']) , cfg.leadersChecker.posx, (leadersRenderPosY - k*checkerheight)+checkerheight, -1)
+                            else
+                                renderFontDrawText(checkfont,string.format('%s [%s] %s{5aa0aa} {%s}%s',v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', leaders1[v['frak']], v['frak']) , cfg.leadersChecker.posx, (leadersRenderPosY - k*checkerheight)+checkerheight, -1)
+                            end
+                        end
+
+                    else
+
+                        for k, v in pairs(checker.leaders.online) do
+                            local cText = ("{%s}%s [%s] %s{5AA0AA} %s"):format(v['color'], v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', v['text'])
+                            if cfg.leadersChecker.cvetnick then
+                                renderFontDrawText(checkfont,string.format('{%s}%s [%s] %s{5aa0aa} {%s}%s',leaders1[v['frak']], v["nick"], v["id"], doesCharExist(select(2, sampGetCharHandleBySampPlayerId(v["id"]))) and '{5aa0aa}(Р)' or '', leaders1[v['frak']], v['frak']) , cfg.leadersChecker.posx, leadersRenderPosY + (#checker.leaders.online - k)*checkerheight, -1)
+                            else
+                                renderFontDrawText(checkfont,string.format('%s [%s] %s{5aa0aa} {%s}%s',v["nick"], v["id"], select(1, sampGetCharHandleBySampPlayerId(v["id"])) and '{5aa0aa}(Р)' or '', leaders1[v['frak']], v['frak']) , cfg.leadersChecker.posx, leadersRenderPosY + (#checker.leaders.online - k)*checkerheight, -1)
+                            end
+                        end
+
+                    end
+
+                else
+                    renderFontDrawText(checkfont, "Чекер лидеров пуст", cfg.leadersChecker.posx, leadersRenderPosY, 0xFFD76E00)
+                end
+            end
+        end
+    end
+end
+
+function checkbikers()
+    local ip, port = sampGetCurrentServerAddress()
+    if (ip..":"..port) ~= "185.169.134.67:7777" then atext("Функция доступна только на 01 сервере.") return end
+
+    local isDownloaded = false
+    local result
+    
+    atext("Идет загрузка данных..")
+    httpRequest("https://script.google.com/macros/s/AKfycbwkwk2rUW4D03SGgIx7s7yXN8-atLsfk7Ipd07XNFScEGayAuo/exec", nil, function(response, code, headers, status)
+        if response then
+            result = decodeJson(response)
+            isDownloaded = true
+        else
+            isDownloaded = true
+        end
+    end)
+
+    lua_thread.create(function()
+        while not isDownloaded do wait(0) end
+        if result then
+            local text = "{FFFFFF}Мотоклуб\t{FFFFFF}Кол-во матов\nWarlocks MC\t"..result["WARLOCKSMC"].."\nPagans MC\t"..result["PAGANSMC"].."\nMongols MC\t"..result["MONGOLSMC"]
+            sampShowDialog(2281337, "Кол-во матов | {AE433D}РП склад", text, "»", "x", 5)
+        else
+            atext("Произошла ошибка загрузки.")
+        end
+    end)
 end
