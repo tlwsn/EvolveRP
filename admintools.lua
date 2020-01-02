@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.69)
+script_version(2.70)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -428,7 +428,6 @@ local tBindList = {
         name = 'Бинд3'
     }
 }
-local punkey = {}
 local punkey = {}
 local flyInfo = {
     active = false,
@@ -5656,13 +5655,15 @@ function admchat()
                     if text:match('^re %d+') or text:match('^/re %d+') then
                         if sampIsPlayerConnected(tonumber(text:match('re (%d+)'))) then
                             if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('re (%d+)')))) then
-                                if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + "))) return end
-                                punkey.nick = nick
-                                punkey.delay = os.time()
-                                punkey.id = text:match('re (%d+)')
-                                punkey.type = "re"
-                                atext(('Администратор %s [%s] просит зайти в слежку за игроком %s [%s]'):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id))
-                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                else
+                                    punkey.nick = nick
+                                    punkey.delay = os.time()
+                                    punkey.id = text:match('re (%d+)')
+                                    punkey.type = "re"
+                                    atext(('Администратор %s [%s] просит зайти в слежку за игроком %s [%s]'):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id))
+                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                end
                             end
                         end
                     end
@@ -5670,13 +5671,15 @@ function admchat()
                     if text:match('^warn %d+ %d+ .+') or text:match('^/warn %d+ %d+ .+') then
                         if sampIsPlayerConnected(tonumber(text:match('warn (%d+) %d+ .+'))) then
                             if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('warn (%d+) %d+ .+')))) then
-                                if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + "))) return end
-                                punkey.id, punkey.day, punkey.reason = text:match('warn (%d+) (%d+) (.+)')
-                                punkey.nick = nick
-                                punkey.delay = os.time()
-                                punkey.type = "warn"
-                                atext(("Администратор %s [%s] хочет заварнить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.reason))
-                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                else
+                                    punkey.id, punkey.day, punkey.reason = text:match('warn (%d+) (%d+) (.+)')
+                                    punkey.nick = nick
+                                    punkey.delay = os.time()
+                                    punkey.type = "warn"
+                                    atext(("Администратор %s [%s] хочет заварнить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.reason))
+                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                end
                             end
                         end
                     end
@@ -5684,13 +5687,15 @@ function admchat()
                     if text:match('^ban %d+ .+') or text:match('^/ban %d+ .+') then
                         if sampIsPlayerConnected(tonumber(text:match('ban (%d+) .+'))) then
                             if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('ban (%d+) .+')))) then
-                                if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + "))) return end
-                                punkey.id, punkey.reason = text:match('ban (%d+) (.+)')
-                                punkey.nick = nick
-                                punkey.delay = os.time()
-                                punkey.type = "ban"
-                                atext(("Администратор %s [%s] хочет забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.reason))
-                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                else
+                                    punkey.id, punkey.reason = text:match('ban (%d+) (.+)')
+                                    punkey.nick = nick
+                                    punkey.delay = os.time()
+                                    punkey.type = "ban"
+                                    atext(("Администратор %s [%s] хочет забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.reason))
+                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                end
                             end
                         end
                     end
@@ -5698,26 +5703,30 @@ function admchat()
                     if text:match('^prison %d+ %d+ .+') or text:match('^/prison %d+ %d+ .+') then
                         if sampIsPlayerConnected(tonumber(text:match('prison (%d+) %d+ .+'))) then
                             if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('prison (%d+) %d+ .+')))) then
-                                if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + "))) return end
-                                punkey.id, punkey.time, punkey.reason = text:match('prison (%d+) (%d+) (.+)')
-                                punkey.nick = nick
-                                punkey.delay = os.time()
-                                punkey.type = "prison"
-                                atext(("Администратор %s [%s] хочет посадить в присон игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.reason))
-                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                else    
+                                    punkey.id, punkey.time, punkey.reason = text:match('prison (%d+) (%d+) (.+)')
+                                    punkey.nick = nick
+                                    punkey.delay = os.time()
+                                    punkey.type = "prison"
+                                    atext(("Администратор %s [%s] хочет посадить в присон игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.reason))
+                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                end
                             end
                         end
                     end
 
                     if text:match('^pspawn %d+') or text:match('^/pspawn %d+') then
                         if sampIsPlayerConnected(tonumber(text:match('pspawn (%d+)'))) then
-                            if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + "))) return end
-                            punkey.id = text:match('pspawn (%d+)')
-                            punkey.nick = nick
-                            punkey.delay = os.time()
-                            punkey.type = "pspawn"
-                            atext(("Администратор %s [%s] хочет заспавнить игрока %s [%s]"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id))
-                            atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                            if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                            else
+                                punkey.id = text:match('pspawn (%d+)')
+                                punkey.nick = nick
+                                punkey.delay = os.time()
+                                punkey.type = "pspawn"
+                                atext(("Администратор %s [%s] хочет заспавнить игрока %s [%s]"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id))
+                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                            end
                         end
                     end
 
@@ -5725,13 +5734,15 @@ function admchat()
                         if text:match("^/addabl %d+ %d+ %d+ .+") or text:match("^addabl %d+ %d+ %d+ .+") then
                             if sampIsPlayerConnected(tonumber(text:match("addabl (%d+) %d+ %d+ .+"))) then
                                 if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match("addabl (%d+) %d+ %d+ .+")))) then
-                                    if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + "))) return end
-                                    punkey.id, punkey.day, punkey.group, punkey.reason = text:match("addabl (%d+) (%d+) (%d+) (.+)")
-                                    punkey.nick = nick
-                                    punkey.delay = os.time()
-                                    punkey.type = "abl"
-                                    atext(("Администратор %s [%s] хочет выдать ЧС игроку %s [%s]. Группа: %s. Причина: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.group, punkey.reason))
-                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                    if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                    else
+                                        punkey.id, punkey.day, punkey.group, punkey.reason = text:match("addabl (%d+) (%d+) (%d+) (.+)")
+                                        punkey.nick = nick
+                                        punkey.delay = os.time()
+                                        punkey.type = "abl"
+                                        atext(("Администратор %s [%s] хочет выдать ЧС игроку %s [%s]. Группа: %s. Причина: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.group, punkey.reason))
+                                        atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                    end
                                 end
                             end
                         end
@@ -5740,26 +5751,30 @@ function admchat()
                     if cfg.other.admlvl >= 4 then
                         if text:match('^auninvite %d+ .+') or text:match('^/auninvite %d+ .+') then
                             if sampIsPlayerConnected(tonumber(text:match('auninvite (%d+) .+'))) then
-                                if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + "))) return end
-                                punkey.id, punkey.reason = text:match('auninvite (%d+) (.+)')
-                                punkey.nick = nick
-                                punkey.delay = os.time()
-                                punkey.type = "auninvite"
-                                atext(("Администратор %s [%s] хочет уволить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.reason))
-                                atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                else    
+                                    punkey.id, punkey.reason = text:match('auninvite (%d+) (.+)')
+                                    punkey.nick = nick
+                                    punkey.delay = os.time()
+                                    punkey.type = "auninvite"
+                                    atext(("Администратор %s [%s] хочет уволить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.reason))
+                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                end
                             end
                         end
 
                         if text:match('^sban %d+ .+') or text:match('^/sban %d+ .+') then
                             if sampIsPlayerConnected(tonumber(text:match('sban (%d+) .+'))) then
                                 if not checkIntable(adminslist, sampGetPlayerNickname(tonumber(text:match('sban (%d+) .+')))) then
-                                    if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + "))) return end
-                                    punkey.id, punkey.reason = text:match('sban (%d+) (.+)')
-                                    punkey.nick = nick
-                                    punkey.delay = os.time()
-                                    punkey.type = "sban"
-                                    atext(("Администратор %s [%s] хочет тихо забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.reason))
-                                    atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                    if punkey.id then atext(("У вас уже есть активный запрос. Вы можете отменить его нажав {66FF00}%s{FFFFFF}."):format(table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                    else
+                                        punkey.id, punkey.reason = text:match('sban (%d+) (.+)')
+                                        punkey.nick = nick
+                                        punkey.delay = os.time()
+                                        punkey.type = "sban"
+                                        atext(("Администратор %s [%s] хочет тихо забанить игрока %s [%s] по причине: %s"):format(nick, id, sampGetPlayerNickname(punkey.id), punkey.id, punkey.reason))
+                                        atext(("Нажмите {66FF00}%s{FFFFFF} для подтверждения или {66FF00}%s{ffffff} для отмены"):format(table.concat(rkeys.getKeysName(config_keys.punaccept.v), " + "), table.concat(rkeys.getKeysName(config_keys.pundeny.v), " + ")))
+                                    end
                                 end
                             end
                         end
