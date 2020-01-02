@@ -1,5 +1,5 @@
 script_name('Admin Tools')
-script_version(2.68)
+script_version(2.69)
 script_author('Thomas_Lawson, Edward_Franklin')
 script_description('Admin Tools for Evolve RP')
 script_properties('work-in-pause')
@@ -3291,7 +3291,7 @@ function imgui.OnDrawFrame()
                 if imadd.ToggleButton(u8 'autoupd##11', imset.set.autoupd) then cfg.other.autoupdate = imset.set.autoupd.v; saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Автообновление скрипта')
                 if imadd.ToggleButton(u8 'resend##11', imset.set.resend) then cfg.other.resend = imset.set.resend.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Писать "слежу" при переходе в рекон по репорту')
                 if imadd.ToggleButton(u8 'killlist##11', imset.set.killist) then cfg.killlist.startenable = imset.set.killist.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end; imgui.SameLine(); imgui.Text(u8 'Замененный кил-лист при входе в игру')
-                if imadd.ToggleButton(u8 'diconnectlog', imset.set.disconnect) then cfg.other.disconnectlog = imset.set.disconnect saveData(cfg, 'moonloader/config/Admin Tools/config.json') end imgui.SameLine(); imgui.Text(u8 'Запись в файл отключившихся игроков')
+                if imadd.ToggleButton(u8 'diconnectlog', imset.set.disconnect) then cfg.other.disconnectlog = imset.set.disconnect.v saveData(cfg, 'moonloader/config/Admin Tools/config.json') end imgui.SameLine(); imgui.Text(u8 'Запись в файл отключившихся игроков')
                 if imadd.ToggleButton(u8 'socrpm', imset.set.socrpm) then cfg.other.socrpm = imset.set.socrpm.v
                     if cfg.other.socrpm then
                         registerFastAnswer()
