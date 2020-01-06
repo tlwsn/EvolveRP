@@ -1,6 +1,6 @@
 script_name("Activity") 
 script_authors({"Edward_Frankin", "Thomas_Lawson"})
-script_version("1.8")
+script_version("1.9")
 -----------------------------------------------------
 local sampev        = require "lib.samp.events"
 local imgui         = require "imgui"
@@ -285,7 +285,7 @@ function imgui.OnDrawFrame()
             imgui.Separator()
         end
 
-        if imgui.Button(u8 'Статистика по дням', btn_size) then weekonline.v = not weekonline.v end
+        if dostup then if imgui.Button(u8 'Статистика по дням', btn_size) then weekonline.v = not weekonline.v end end
         if imgui.Button(u8 'Статистика наказаний', btn_size) then punishments.v = not punishments.v end
         if imgui.Button(u8 'Перезагрузить скрипт', btn_size) then
             atext("Перезагружаемся...")
