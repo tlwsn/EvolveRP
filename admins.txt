@@ -8,13 +8,10 @@ Salvatore_Giordano
 Ziggi_Shmiggi
 Thomas_Lawson
 Sam_Teller
-Riki_Maru
 Vincent_Vinograd
 Santiago_Winston
 Morphius_Mulphers
 Eazy_Williams
-Francis_Malomadro
-Maikl_Terano
 Leonid_Litvinenko
 Butcher_Wezers
 Adolfo_Juarez
@@ -22,8 +19,6 @@ Berna_Breezy
 Native_Pechenkov
 Tobey_Marshall
 Game_Birds
-Borge_Hokage
-Raul_Malomadro
 Luis_Guerra
 Diego_Bailey
 Elijah_Smith
@@ -40,7 +35,6 @@ Christian_Moon
 Riley_Evans
 Laymont_Murray
 Hayley_Lewis
-Adrian_Waters
 Trenton_Plitts
 Serega_Cocaine
 Juliette_Henderson
@@ -52,5 +46,4 @@ Matthew_Willis
 Fricolass_Moretti
 Fear_Fallen
 Jey_Knockerz
-Dmitriy_Jaluijo
 Cavista_Wilson
