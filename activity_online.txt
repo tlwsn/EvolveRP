@@ -1,10 +1,6 @@
 Cavista_Wilson
 Diego_Bailey
-Angel_Espejo
-Ivan_Rockefeller
 Fear_Fallen
-Morphius_Mulphers
-Floyd_Mathers
 Reginald_Crane
 Brixton_Vandom
 Danya_Zimin
@@ -17,3 +13,4 @@ Emily_Breezy
 Fabricio_Rodriguez
 Sam_Teller
 Emma_Cooper
+Amelia_Holly
