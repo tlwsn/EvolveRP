@@ -35,11 +35,9 @@ Fear_Fallen
 Andrea_Moretti
 Raymond_Raylonds
 Justin_Mediano
-Torio_Harotti
 Manuel_Martini
 Cameron_Snookes
 Lorenzo_Fallen
-Marco_Espasito
 Dima_Larikov
 Curtis_Cooper
 Mickey_Knox
@@ -49,3 +47,4 @@ Bastiano_Tessaro
 Samuel_Givanov
 Leonid_Westwood
 Sam_Teller
+Leo_Markin
