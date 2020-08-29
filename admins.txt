@@ -21,11 +21,9 @@ Wesley_Lewis
 Gosha_Fantom
 Diego_Bailey
 Trenton_Plitts
-Chris_Curry
 Cavista_Wilson
 Fabricio_Rodriguez
 Diego_Serrano
-Benedict_Kaufman
 Alessandro_Fertitta
 Elijah_Smith
 Paulo_Rossi
@@ -38,7 +36,6 @@ Justin_Mediano
 Manuel_Martini
 Cameron_Snookes
 Lorenzo_Fallen
-Dima_Larikov
 Curtis_Cooper
 Mickey_Knox
 Dante_Green
@@ -47,4 +44,3 @@ Bastiano_Tessaro
 Samuel_Givanov
 Leonid_Westwood
 Sam_Teller
-Leo_Markin
