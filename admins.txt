@@ -25,7 +25,6 @@ Cavista_Wilson
 Fabricio_Rodriguez
 Diego_Serrano
 Alessandro_Fertitta
-Elijah_Smith
 Paulo_Rossi
 Emmett_Hoggarth
 Amelia_Holly
@@ -33,14 +32,15 @@ Fear_Fallen
 Andrea_Moretti
 Raymond_Raylonds
 Justin_Mediano
-Manuel_Martini
 Cameron_Snookes
 Lorenzo_Fallen
 Curtis_Cooper
-Mickey_Knox
 Dante_Green
 Shini_Kond
-Bastiano_Tessaro
 Samuel_Givanov
-Leonid_Westwood
 Sam_Teller
+Christian_Moon
+Aleksey_Efimenko
+Vincente_Rodriguez
+Junior_Veymar
+Ilywa_Surinov
