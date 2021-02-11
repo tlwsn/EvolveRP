@@ -1,4 +1,4 @@
-Maxim_Kudryavtsev
+awsMaxim_Kudryavtsev
 Jeysen_Prado
 Sergo_Cross
 Dwayne_Eagle
@@ -6,7 +6,6 @@ Ioan_Grozny
 Tellarion_Foldring
 Salvatore_Giordano
 Ziggi_Shmiggi
-Thomas_Lawson
 Vincent_Vinograd
 Leonid_Litvinenko
 Butcher_Wezers
