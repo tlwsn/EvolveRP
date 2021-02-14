@@ -1,5 +1,4 @@
 Cavista_Wilson
-Brixton_Vandom
 Alvin_Scerty
 Paulo_Rossi
 Sam_Teller
@@ -8,17 +7,14 @@ Thomas_Lawson
 Emmett_Hoggarth
 Christian_Moon
 Justin_Mediano
-Cameron_Snookes
 Curtis_Cooper
 Blissa_Timelies
 Raymond_Raylonds
 Artem_Davidson
 Salvatore_Maroni
-Gerasim_Morozov
 Sereja_Turbina
 Sauce_Heavenly
 Thomas_Morales
-Diego_Bailey
 Roberto_Oppenheimer
 Lil_Ballard
 Chris_Curry
