@@ -1,4 +1,4 @@
-Maxim_Kudryavtsev 
+lMaxim_Kudryavtsev 
 Jeysen_Prado 
 Tellarion_Foldring 
 Sergo_Cross 
@@ -36,7 +36,6 @@ Thomas_Morales
 Evgeny_Korolyov 
 Edward_Thawne 
 Mike_Corton 
-Elvin_Hill 
 Lavrentiy_Samoilov 
 Tony_Walking 
 Butcher_Wezers 
