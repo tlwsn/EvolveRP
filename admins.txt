@@ -83,10 +83,8 @@ Sauce_Heavenly
 Thomas_Lincoln 
 Ivan_Sina 
 Oxygen_Lopez 
-Julius_Visconti 
-Chris_Curry 
+Julius_Visconti  
 Salvatore_Maroni 
-Riko_Fernandes 
 Acrome_Price 
 Roberto_Oppenheimer 
 Olzhas_Hatez 
@@ -95,7 +93,6 @@ Neo_Jostkiy
 Kurt_Cobain 
 Lewinsky_Syntax 
 Antonio_Soto 
-Laymont_Morrar 
 Anthony_Cerezo 
 Jeremy_Sativa 
 Thomas_Lawson
