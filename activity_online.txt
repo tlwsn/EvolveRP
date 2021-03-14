@@ -1,4 +1,3 @@
-Cavista_Wilson
 Alvin_Scerty
 Paulo_Rossi
 Sam_Teller
@@ -10,7 +9,7 @@ Justin_Mediano
 Curtis_Cooper
 Blissa_Timelies
 Raymond_Raylonds
-Artem_Davidson
+Ken_Oxley
 Salvatore_Maroni
 Sereja_Turbina
 Roberto_Oppenheimer
