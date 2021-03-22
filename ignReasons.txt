@@ -130,7 +130,6 @@ dm in zz
 реклама
 офф.арест.жб
 офф
-follow
-cuff
-сбив
-sbiv
+абуз /crstats
+сбив /follow
+сбив /cuff
