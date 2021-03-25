@@ -1,5 +1,5 @@
 Alvin_Scerty
-Paulo_Rossi
+Evgeny_Korolyov
 Sam_Teller
 Emma_Cooper
 Thomas_Lawson
@@ -12,7 +12,6 @@ Raymond_Raylonds
 Ken_Oxley
 Salvatore_Maroni
 Sereja_Turbina
-Roberto_Oppenheimer
 Lil_Ballard
 Kurt_Cobain
 Quentin_Qween
@@ -22,7 +21,6 @@ Anthony_Cerezo
 Jeremy_Sativa
 Pavel_Karpov
 Oxygen_Loppez
-Ettienne_Uorriorz
 Ivan_Rockefeller
 Aleksey_Efimenko
 Fabricio_Rodriguez
