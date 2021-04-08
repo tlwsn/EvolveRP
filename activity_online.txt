@@ -10,7 +10,6 @@ Curtis_Cooper
 Blissa_Timelies
 Raymond_Raylonds
 Ken_Oxley
-Salvatore_Maroni
 Sereja_Turbina
 Lil_Ballard
 Kurt_Cobain
@@ -20,7 +19,6 @@ Julius_Visconti
 Anthony_Cerezo
 Jeremy_Sativa
 Pavel_Karpov
-Oxygen_Loppez
 Ivan_Rockefeller
 Aleksey_Efimenko
 Fabricio_Rodriguez
