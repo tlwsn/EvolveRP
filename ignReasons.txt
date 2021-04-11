@@ -139,3 +139,5 @@ zamenka dnk
 сбив наручников
 сбив тазера
 notrees
+sbiv /tazer
+sbiv /cuff
