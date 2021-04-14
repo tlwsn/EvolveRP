@@ -141,3 +141,4 @@ zamenka dnk
 notrees
 sbiv /tazer
 sbiv /cuff
+игра без столбов / деревьев
