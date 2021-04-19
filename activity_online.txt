@@ -1,5 +1,4 @@
-wAlvin_Scerty
-Evgeny_Korolyov
+Alvin_Scerty
 Sam_Teller
 Emma_Cooper
 Thomas_Lawson
@@ -9,7 +8,6 @@ Justin_Mediano
 Curtis_Cooper
 Blissa_Timelies
 Raymond_Raylonds
-Ken_Oxley
 Sereja_Turbina
 Lil_Ballard
 Kurt_Cobain
@@ -31,3 +29,4 @@ Gerasim_Morozov
 Tony_Walking
 Edward_Thawne
 Einsamer_Winterweg
+Jonny_Wilson
