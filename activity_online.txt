@@ -1,4 +1,4 @@
-Alvin_Scerty
+wAlvin_Scerty
 Evgeny_Korolyov
 Sam_Teller
 Emma_Cooper
@@ -30,5 +30,4 @@ Kamikoto_Lee
 Gerasim_Morozov
 Tony_Walking
 Edward_Thawne
-Jonny_Wilson
 Einsamer_Winterweg
