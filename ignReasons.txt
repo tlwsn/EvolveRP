@@ -13,6 +13,7 @@ neadekvat
 неадекватная личность
 неадекватное поведение
 неадек
+no textures
 neadek
 спринтхук
 sprinthook
