@@ -18,7 +18,6 @@ Jonny_Wilson
 Michael_Rojas
 Emily_Raylonds
 Alexander_Kuba
-Keny_Miller
 Sara_Chelsey
 Diego_Bailey
 Fear_Fallen
@@ -26,3 +25,4 @@ Benedict_Kaufman
 Salvatore_Maroni
 Misha_Shancev
 August_Montes
+Michael_Mepov
