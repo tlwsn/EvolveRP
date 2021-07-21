@@ -1,10 +1,10 @@
 {
     "admintools":{
         "url":"http://tlwsn.beget.tech/adm/admintools.luac",
-        "version":3.02
+        "version":3.03
     },
     "activity":{
         "url":"http://tlwsn.beget.tech/adm/activity.luac",
-        "version":"2.4"
+        "version":"2.5"
     }
 }
