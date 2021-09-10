@@ -8,6 +8,8 @@ off_ot_aresta_jb
 /q_ot_arresta
 /q_ot_arresta_jb
 off_arrest
+/qarrest
+qarrest
 неадекват
 neadekvat
 неадекватная личность
