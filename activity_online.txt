@@ -4,7 +4,6 @@ Emmett_Hoggarth
 Justin_Mediano
 Blissa_Timelies
 Quentin_Qween
-Pavel_Karpov
 Aleksey_Efimenko
 Vincente_Rodriguez
 Tony_Walking
@@ -12,7 +11,6 @@ Edward_Thawne
 Diana_Stounova
 Jonny_Wilson
 Michael_Rojas
-Sara_Chelsey
 Diego_Bailey
 Fear_Fallen
 Benedict_Kaufman
@@ -31,3 +29,4 @@ Jermian_Ramsey
 Kiryusha_Evens
 Alex_Reiner
 Sanya_Wakefield
+Cody_Randall
