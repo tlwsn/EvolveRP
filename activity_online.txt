@@ -10,19 +10,15 @@ Tony_Walking
 Edward_Thawne
 Diana_Stounova
 Jonny_Wilson
-Michael_Rojas
 Diego_Bailey
 Fear_Fallen
 Benedict_Kaufman
-Salvatore_Maroni
 August_Montes
 Dmitry_Klimov
 August_Montes
 Martin_Twix
 Madeline_Lovesome
 Santino_Makaveli
-Jim_Hunter
-Steven_Parks
 Joe_Armstrong
 Descone_Hellscream
 Jermian_Ramsey
@@ -33,3 +29,4 @@ Pabloz_Hernandez
 Ken_Oxley
 Kyle_Baker
 Artem_Davidson
+Lil_Ballard
