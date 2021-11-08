@@ -15,10 +15,8 @@ Fear_Fallen
 Benedict_Kaufman
 August_Montes
 John_Speed
-August_Montes
 Martin_Twix
 Madeline_Lovesome
-Santino_Makaveli
 Joe_Armstrong
 Descone_Hellscream
 Jermian_Ramsey
@@ -31,8 +29,6 @@ Kyle_Baker
 Artem_Davidson
 Lil_Ballard
 Xan_Je
-Legioner_Exage
-Minato_Hashimota
 Chris_Curry
 Jahseh_Roshev
 Noe_Rodriguez
@@ -40,3 +36,4 @@ Camilo_Wockeez
 Fabio_Navarro
 Sozin_Antrax
 Sui_Ishida
+Yara_Sap
